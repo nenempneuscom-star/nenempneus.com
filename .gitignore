@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Prisma generated
+/lib/generated/prisma
+
+# Logs de desenvolvimento
+build_log.txt
+help.txt
+tailwindcss-*.log
+test-connection.ts
+
+# Arquivos temporarios
+*.log
