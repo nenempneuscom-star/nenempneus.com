@@ -1,5 +1,7 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,6 +21,21 @@ export function CarrinhoSheet() {
 
     const totalItems = getTotalItems()
     const subtotal = getSubtotal()
+
+    const [isMounted, setIsMounted] = useState(false)
+
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
+
+    if (!isMounted) {
+        return (
+            <Button variant="outline" size="sm" className="relative">
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Carrinho
+            </Button>
+        )
+    }
 
     return (
         <Sheet>

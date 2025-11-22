@@ -1,3 +1,5 @@
+'use server'
+
 import { db } from './db'
 import { LOJA_SLUG } from './constants'
 
@@ -25,42 +27,8 @@ export async function getProdutosDestaque() {
 
         return produtos
     } catch (error) {
-        console.error('Erro ao buscar produtos (usando mock):', error)
-        // Fallback para dados mockados se não houver conexão
-        return [
-            {
-                id: 'mock-1',
-                nome: 'Pirelli P4 175/70R14 (Mock)',
-                slug: 'pirelli-p4-175-70-r14',
-                preco: 380,
-                estoque: 8,
-                specs: { marca: 'Pirelli', modelo: 'P4', aro: '14', largura: '175', perfil: '70', sulco: '7mm' }
-            },
-            {
-                id: 'mock-2',
-                nome: 'Goodyear EfficientGrip 185/65R15 (Mock)',
-                slug: 'goodyear-efficientgrip-185-65-r15',
-                preco: 420,
-                estoque: 6,
-                specs: { marca: 'Goodyear', modelo: 'EfficientGrip', aro: '15', largura: '185', perfil: '65', sulco: '6.5mm' }
-            },
-            {
-                id: 'mock-3',
-                nome: 'Michelin Primacy 195/55R16 (Mock)',
-                slug: 'michelin-primacy-195-55-r16',
-                preco: 520,
-                estoque: 4,
-                specs: { marca: 'Michelin', modelo: 'Primacy', aro: '16', largura: '195', perfil: '55', sulco: '8mm' }
-            },
-            {
-                id: 'mock-4',
-                nome: 'Bridgestone Turanza 205/60R16 (Mock)',
-                slug: 'bridgestone-turanza-205-60-r16',
-                preco: 480,
-                estoque: 5,
-                specs: { marca: 'Bridgestone', modelo: 'Turanza', aro: '16', largura: '205', perfil: '60', sulco: '7mm' }
-            }
-        ]
+        console.error('Erro ao buscar produtos:', error)
+        return []
     }
 }
 
