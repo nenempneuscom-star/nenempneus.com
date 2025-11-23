@@ -1,37 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { verifySession } from './lib/auth'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-    const { pathname } = request.nextUrl
-
-    // Rotas públicas
-    const publicPaths = ['/login', '/api/webhooks', '/api/auth']
-    const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
-
-    // Rotas admin protegidas
-    const isAdminPath = pathname.startsWith('/dashboard') ||
-        pathname.startsWith('/admin')
-
-    if (isAdminPath && !isPublicPath) {
-        const token = request.cookies.get('session')?.value
-
-        if (!token) {
-            return NextResponse.redirect(new URL('/login', request.url))
-        }
-
-        const session = await verifySession(token)
-
-        if (!session) {
-            return NextResponse.redirect(new URL('/login', request.url))
-        }
-    }
-
+    // Permitir acesso a tudo
     return NextResponse.next()
 }
 
 export const config = {
     matcher: [
-        '/dashboard/:path*',
-        '/admin/:path*',
+        /*
+         * Match all request paths except for the ones starting with:
+         * - api (API routes)
+         * - _next/static (static files)
+         * - _next/image (image optimization files)
+         * - favicon.ico (favicon file)
+         */
+        '/((?!api|_next/static|_next/image|favicon.ico).*)',
     ],
 }
+

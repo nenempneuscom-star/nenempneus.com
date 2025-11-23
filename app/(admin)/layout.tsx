@@ -1,24 +1,28 @@
-import { getSession } from '@/lib/auth'
+import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/admin/Sidebar'
+import { Header } from '@/components/admin/Header'
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const session = await getSession()
-
-  // Se não tem sessão e não está na página de login, redireciona
-  if (!session) {
-    return <>{children}</>
+  // Usuário mockado para acesso livre
+  const user = {
+    nome: 'Administrador',
+    email: 'admin@nenempneus.com',
+    role: 'admin'
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-gray-100">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto">
-        {children}
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header user={user} />
+        <main className="flex-1 overflow-y-auto p-8">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

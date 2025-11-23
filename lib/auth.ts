@@ -67,20 +67,28 @@ export async function authenticateUser(
     password: string
 ): Promise<{ success: boolean; user?: any; error?: string }> {
     try {
+        console.log('[Auth] Tentando autenticar:', email)
+
         const user = await db.usuario.findUnique({
             where: { email },
             include: { loja: true },
         })
 
         if (!user) {
+            console.log('[Auth] Usuário não encontrado')
             return { success: false, error: 'Usuário não encontrado' }
         }
 
+        console.log('[Auth] Usuário encontrado:', user.id)
+
         if (!user.ativo) {
+            console.log('[Auth] Usuário inativo')
             return { success: false, error: 'Usuário inativo' }
         }
 
+        console.log('[Auth] Verificando senha...')
         const isValid = await verifyPassword(password, user.senhaHash)
+        console.log('[Auth] Senha válida:', isValid)
 
         if (!isValid) {
             return { success: false, error: 'Senha incorreta' }
@@ -94,7 +102,7 @@ export async function authenticateUser(
 
         return { success: true, user }
     } catch (error) {
-        console.error('Erro na autenticação:', error)
+        console.error('[Auth] Erro na autenticação:', error)
         return { success: false, error: 'Erro no servidor' }
     }
 }

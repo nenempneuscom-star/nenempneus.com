@@ -9,10 +9,10 @@ const whatsapp = new WhatsAppClient()
 export async function POST(req: NextRequest) {
   try {
     // Verificar autenticacao
-    const session = await getSession()
-    if (!session) {
-      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
-    }
+    // const session = await getSession()
+    // if (!session) {
+    //   return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+    // }
 
     const { conversaId, mensagem } = await req.json()
 
