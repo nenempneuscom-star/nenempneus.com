@@ -1,6 +1,6 @@
 'use client'
 
-import { Shield, TrendingDown, Search, Truck } from 'lucide-react'
+import { Shield, TrendingDown, Search, Wrench } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 const features = [
@@ -20,9 +20,9 @@ const features = [
         description: 'Verificação detalhada de sulco, banda e estrutura'
     },
     {
-        icon: Truck,
-        title: 'Entrega Rápida',
-        description: 'Receba seu pedido com agilidade e praticidade'
+        icon: Wrench,
+        title: 'Instalação na Loja',
+        description: 'Compre online e instale diretamente em nossa loja'
     }
 ]
 

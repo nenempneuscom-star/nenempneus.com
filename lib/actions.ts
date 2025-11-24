@@ -36,6 +36,8 @@ export async function getProdutosDestaque() {
 export async function getProdutos(filtros?: {
     marca?: string
     aro?: string
+    largura?: string
+    perfil?: string
     precoMin?: number
     precoMax?: number
 }) {
@@ -53,23 +55,6 @@ export async function getProdutos(filtros?: {
             ativo: true,
         }
 
-        // Filtrar por marca
-        if (filtros?.marca && filtros.marca !== 'all') {
-            where.specs = {
-                path: ['marca'],
-                equals: filtros.marca,
-            }
-        }
-
-        // Filtrar por aro
-        if (filtros?.aro && filtros.aro !== 'all') {
-            where.specs = {
-                ...where.specs,
-                path: ['aro'],
-                equals: filtros.aro,
-            }
-        }
-
         // Filtrar por preço
         if (filtros?.precoMin !== undefined) {
             where.preco = { gte: filtros.precoMin }
@@ -78,12 +63,27 @@ export async function getProdutos(filtros?: {
             where.preco = { ...where.preco, lte: filtros.precoMax }
         }
 
-        const produtos = await db.produto.findMany({
+        // Buscar produtos
+        let produtos = await db.produto.findMany({
             where,
             orderBy: {
                 createdAt: 'desc',
             },
         })
+
+        // Filtrar por specs no JavaScript (mais confiável que JSON query do Prisma)
+        if (filtros?.marca && filtros.marca !== 'all') {
+            produtos = produtos.filter((p: any) => p.specs?.marca === filtros.marca)
+        }
+        if (filtros?.aro && filtros.aro !== 'all') {
+            produtos = produtos.filter((p: any) => String(p.specs?.aro) === String(filtros.aro))
+        }
+        if (filtros?.largura) {
+            produtos = produtos.filter((p: any) => String(p.specs?.largura) === String(filtros.largura))
+        }
+        if (filtros?.perfil) {
+            produtos = produtos.filter((p: any) => String(p.specs?.perfil) === String(filtros.perfil))
+        }
 
         return produtos
     } catch (error) {

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { BuscaMedidas } from './BuscaMedidas'
 
 export function Hero() {
     const [isVisible, setIsVisible] = useState(false)
@@ -34,10 +35,16 @@ export function Hero() {
 
                     <p className={`text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
                         }`}>
-                        Economize <span className="text-primary font-semibold">até 50%</span> com pneus recauchutados e seminovos.
+                        Economize <span className="text-primary font-semibold">até 50%</span> com pneus seminovos inspecionados.
                         <br className="hidden md:block" />
                         Garantia, segurança e qualidade para você e sua família.
                     </p>
+
+                    {/* Busca por medidas */}
+                    <div className={`mb-10 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                        }`}>
+                        <BuscaMedidas />
+                    </div>
 
                     <div className={`flex flex-col sm:flex-row gap-4 justify-center transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
                         }`}>

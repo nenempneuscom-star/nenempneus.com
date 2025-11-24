@@ -63,13 +63,13 @@ export function ProdutoCard({ id, nome, slug, preco, estoque, specs, imagemUrl }
                                     {specs.largura}/{specs.perfil}R{specs.aro}
                                 </div>
                             </div>
-
-                            {/* Aviso discreto */}
-                            <span className="absolute bottom-2 left-2 text-[10px] text-muted-foreground/50">
-                                *Imagem ilustrativa
-                            </span>
                         </>
                     )}
+
+                    {/* Aviso discreto - aparece em todos os casos */}
+                    <span className="absolute bottom-2 left-2 text-[10px] text-muted-foreground/50">
+                        *Imagem ilustrativa
+                    </span>
                 </div>
             </Link>
 
