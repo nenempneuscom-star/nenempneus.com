@@ -86,6 +86,7 @@ export default function CatalogoPage() {
                                         preco={Number(produto.preco)}
                                         estoque={produto.estoque}
                                         specs={produto.specs as any}
+                                        imagemUrl={produto.imagemUrl}
                                     />
                                 ))}
                             </div>

@@ -1,12 +1,14 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatPrice } from '@/lib/utils'
-import { ShoppingCart } from 'lucide-react'
+import { ShoppingCart, Check } from 'lucide-react'
 import { useState } from 'react'
+import { useCarrinhoStore } from '@/lib/store/carrinho-store'
 
 interface ProdutoCardProps {
     id: string
@@ -15,10 +17,13 @@ interface ProdutoCardProps {
     preco: number
     estoque: number
     specs: any
+    imagemUrl?: string | null
 }
 
-export function ProdutoCard({ id, nome, slug, preco, estoque, specs }: ProdutoCardProps) {
+export function ProdutoCard({ id, nome, slug, preco, estoque, specs, imagemUrl }: ProdutoCardProps) {
     const [isHovered, setIsHovered] = useState(false)
+    const [adicionado, setAdicionado] = useState(false)
+    const adicionarItem = useCarrinhoStore((state) => state.adicionarItem)
 
     return (
         <Card
@@ -31,26 +36,40 @@ export function ProdutoCard({ id, nome, slug, preco, estoque, specs }: ProdutoCa
                     {/* Background decoration */}
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                    {/* Animated circle */}
-                    <div className={`absolute inset-0 flex items-center justify-center transition-transform duration-500 ${isHovered ? 'scale-110' : 'scale-100'
-                        }`}>
-                        <div className="w-32 h-32 rounded-full border-2 border-primary/20 group-hover:border-primary/40 transition-colors" />
-                    </div>
-
-                    <div className={`text-center relative z-10 transition-transform duration-300 ${isHovered ? 'scale-110' : 'scale-100'
-                        }`}>
-                        <div className="text-6xl font-bold text-primary mb-2 transition-colors">
-                            {specs.aro}"
+                    {imagemUrl ? (
+                        /* Imagem real do produto */
+                        <div className={`relative w-full h-full transition-transform duration-300 ${isHovered ? 'scale-110' : 'scale-100'}`}>
+                            <Image
+                                src={imagemUrl}
+                                alt={nome}
+                                fill
+                                className="object-contain p-4"
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            />
                         </div>
-                        <div className="text-sm text-muted-foreground font-medium">
-                            {specs.largura}/{specs.perfil}R{specs.aro}
-                        </div>
-                    </div>
+                    ) : (
+                        /* Fallback: mostra o aro como ilustração */
+                        <>
+                            {/* Animated circle */}
+                            <div className={`absolute inset-0 flex items-center justify-center transition-transform duration-500 ${isHovered ? 'scale-110' : 'scale-100'}`}>
+                                <div className="w-32 h-32 rounded-full border-2 border-primary/20 group-hover:border-primary/40 transition-colors" />
+                            </div>
 
-                    {/* Aviso discreto */}
-                    <span className="absolute bottom-2 left-2 text-[10px] text-muted-foreground/50">
-                        *Imagem ilustrativa
-                    </span>
+                            <div className={`text-center relative z-10 transition-transform duration-300 ${isHovered ? 'scale-110' : 'scale-100'}`}>
+                                <div className="text-6xl font-bold text-primary mb-2 transition-colors">
+                                    {specs.aro}"
+                                </div>
+                                <div className="text-sm text-muted-foreground font-medium">
+                                    {specs.largura}/{specs.perfil}R{specs.aro}
+                                </div>
+                            </div>
+
+                            {/* Aviso discreto */}
+                            <span className="absolute bottom-2 left-2 text-[10px] text-muted-foreground/50">
+                                *Imagem ilustrativa
+                            </span>
+                        </>
+                    )}
                 </div>
             </Link>
 
@@ -94,9 +113,25 @@ export function ProdutoCard({ id, nome, slug, preco, estoque, specs }: ProdutoCa
                 <Button
                     size="sm"
                     className="group/btn relative overflow-hidden hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-primary/50"
+                    onClick={(e) => {
+                        e.preventDefault()
+                        adicionarItem({ id, nome, slug, preco, specs })
+                        setAdicionado(true)
+                        setTimeout(() => setAdicionado(false), 2000)
+                    }}
+                    disabled={estoque <= 0}
                 >
-                    <ShoppingCart className="h-4 w-4 mr-2 group-hover/btn:rotate-12 transition-transform" />
-                    <span className="relative z-10">Adicionar</span>
+                    {adicionado ? (
+                        <>
+                            <Check className="h-4 w-4 mr-2" />
+                            <span className="relative z-10">Adicionado!</span>
+                        </>
+                    ) : (
+                        <>
+                            <ShoppingCart className="h-4 w-4 mr-2 group-hover/btn:rotate-12 transition-transform" />
+                            <span className="relative z-10">Adicionar</span>
+                        </>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
                 </Button>
             </CardFooter>
