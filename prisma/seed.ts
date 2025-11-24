@@ -1,3 +1,7 @@
+import { config } from 'dotenv'
+// Forçar carregar .env antes de qualquer coisa
+config({ override: true })
+
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
