@@ -36,6 +36,7 @@ model Loja {
   produtos      Produto[]
   settings      Settings?
   usuarios      Usuario[]
+  cupons        Cupom[]
 
   @@map("lojas")
 }
@@ -58,27 +59,45 @@ model Usuario {
 }
 
 model Cliente {
-  id              String        @id @default(uuid())
-  lojaId          String        @map("loja_id")
-  nome            String
-  email           String?
-  telefone        String?
-  cpf             String?
-  veiculoMarca    String?       @map("veiculo_marca")
-  veiculoModelo   String?       @map("veiculo_modelo")
-  veiculoAno      Int?          @map("veiculo_ano")
-  veiculoPlaca    String?       @map("veiculo_placa")
-  totalCompras    Int           @default(0) @map("total_compras")
-  valorTotal      Decimal       @default(0) @map("valor_total") @db.Decimal(10, 2)
-  ultimaCompra    DateTime?     @map("ultima_compra")
-  tags            Json          @default("[]")
-  aceitaMarketing Boolean       @default(false) @map("aceita_marketing")
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
-  agendamentos    Agendamento[]
-  avaliacoes      Avaliacao[]
-  loja            Loja          @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-  pedidos         Pedido[]
+  id                  String        @id @default(uuid())
+  lojaId              String        @map("loja_id")
+  nome                String
+  email               String?
+  telefone            String?
+  cpf                 String?
+  // Campos legados de veiculo (mantidos por compatibilidade)
+  veiculoMarca        String?       @map("veiculo_marca")
+  veiculoModelo       String?       @map("veiculo_modelo")
+  veiculoAno          Int?          @map("veiculo_ano")
+  veiculoPlaca        String?       @map("veiculo_placa")
+  // Estatisticas
+  totalCompras        Int           @default(0) @map("total_compras")
+  valorTotal          Decimal       @default(0) @map("valor_total") @db.Decimal(10, 2)
+  ultimaCompra        DateTime?     @map("ultima_compra")
+  tags                Json          @default("[]")
+  aceitaMarketing     Boolean       @default(false) @map("aceita_marketing")
+  // Autenticacao por codigo
+  codigoVerificacao   String?       @map("codigo_verificacao")
+  codigoExpiraEm      DateTime?     @map("codigo_expira_em")
+  // Fidelidade
+  pontos              Int           @default(0)
+  // Notificacoes
+  notifWhatsapp       Boolean       @default(true) @map("notif_whatsapp")
+  notifEmail          Boolean       @default(false) @map("notif_email")
+  notifPromocoes      Boolean       @default(true) @map("notif_promocoes")
+  // Timestamps
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+  // Relations
+  agendamentos        Agendamento[]
+  avaliacoes          Avaliacao[]
+  loja                Loja          @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  pedidos             Pedido[]
+  veiculos            Veiculo[]
+  favoritos           Favorito[]
+  cuponsUsados        CupomUso[]
+  indicacoes          Indicacao[]   @relation("indicador")
+  indicadoPor         Indicacao?    @relation("indicado")
 
   @@index([lojaId])
   @@index([telefone])
@@ -121,6 +140,7 @@ model Produto {
   pedidoItems PedidoItem[]
   categoria   Categoria    @relation(fields: [categoriaId], references: [id])
   loja        Loja         @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  favoritos   Favorito[]
 
   @@unique([lojaId, slug])
   @@index([lojaId])
@@ -286,6 +306,116 @@ model Settings {
 
   @@map("settings")
 }
+
+// ==========================================
+// AREA DO CLIENTE - Novos Models
+// ==========================================
+
+model Veiculo {
+  id        String   @id @default(uuid())
+  clienteId String   @map("cliente_id")
+  apelido   String?  // Ex: "Meu Carro", "Carro da Esposa"
+  marca     String
+  modelo    String
+  ano       Int?
+  placa     String?
+  cor       String?
+  principal Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  cliente   Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@index([clienteId])
+  @@map("veiculos")
+}
+
+model Favorito {
+  id        String   @id @default(uuid())
+  clienteId String   @map("cliente_id")
+  produtoId String   @map("produto_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  cliente   Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  produto   Produto  @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+
+  @@unique([clienteId, produtoId])
+  @@index([clienteId])
+  @@index([produtoId])
+  @@map("favoritos")
+}
+
+model Cupom {
+  id              String     @id @default(uuid())
+  lojaId          String     @map("loja_id")
+  codigo          String
+  descricao       String?
+  tipo            String     @default("percentual") // percentual, fixo
+  valor           Decimal    @db.Decimal(10, 2)
+  minimo          Decimal?   @db.Decimal(10, 2) // valor minimo do pedido
+  usoMaximo       Int?       @map("uso_maximo") // quantas vezes pode ser usado no total
+  usoPorCliente   Int        @default(1) @map("uso_por_cliente") // quantas vezes por cliente
+  usosRealizados  Int        @default(0) @map("usos_realizados")
+  ativo           Boolean    @default(true)
+  validoAte       DateTime?  @map("valido_ate")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  loja            Loja       @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  usos            CupomUso[]
+
+  @@unique([lojaId, codigo])
+  @@index([lojaId])
+  @@index([codigo])
+  @@map("cupons")
+}
+
+model CupomUso {
+  id        String   @id @default(uuid())
+  cupomId   String   @map("cupom_id")
+  clienteId String   @map("cliente_id")
+  pedidoId  String?  @map("pedido_id")
+  valor     Decimal  @db.Decimal(10, 2) // valor do desconto aplicado
+  createdAt DateTime @default(now()) @map("created_at")
+  cupom     Cupom    @relation(fields: [cupomId], references: [id], onDelete: Cascade)
+  cliente   Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@index([cupomId])
+  @@index([clienteId])
+  @@map("cupom_usos")
+}
+
+model Indicacao {
+  id           String   @id @default(uuid())
+  lojaId       String   @map("loja_id")
+  indicadorId  String   @map("indicador_id")
+  indicadoId   String   @unique @map("indicado_id")
+  codigo       String   // codigo usado na indicacao
+  bonus        Decimal? @db.Decimal(10, 2) // bonus dado ao indicador
+  bonusUsado   Boolean  @default(false) @map("bonus_usado")
+  createdAt    DateTime @default(now()) @map("created_at")
+  indicador    Cliente  @relation("indicador", fields: [indicadorId], references: [id])
+  indicado     Cliente  @relation("indicado", fields: [indicadoId], references: [id])
+
+  @@index([lojaId])
+  @@index([indicadorId])
+  @@map("indicacoes")
+}
+
+model AlertaPreco {
+  id          String   @id @default(uuid())
+  clienteId   String   @map("cliente_id")
+  produtoId   String   @map("produto_id")
+  precoAlvo   Decimal  @map("preco_alvo") @db.Decimal(10, 2)
+  notificado  Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([clienteId, produtoId])
+  @@index([clienteId])
+  @@index([produtoId])
+  @@map("alertas_preco")
+}
+
+// ==========================================
+// FIM - Area do Cliente
+// ==========================================
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model analytics {

@@ -35,12 +35,12 @@ export function AgendamentosClient({ initialAgendamentos }: AgendamentosClientPr
     const [agendamentos] = useState(initialAgendamentos)
 
     // Agrupar por data
-    const groupedAgendamentos = agendamentos.reduce((acc, ag) => {
+    const groupedAgendamentos: Record<string, any[]> = agendamentos.reduce((acc: Record<string, any[]>, ag) => {
         const dateKey = format(new Date(ag.data), 'yyyy-MM-dd')
         if (!acc[dateKey]) acc[dateKey] = []
         acc[dateKey].push(ag)
         return acc
-    }, {} as Record<string, any[]>)
+    }, {})
 
     const getStatusConfig = (status: string) => {
         switch (status) {
