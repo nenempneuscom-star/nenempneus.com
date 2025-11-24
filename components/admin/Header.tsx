@@ -1,7 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { User, LogOut, Settings, UserCircle } from 'lucide-react'
+import Link from 'next/link'
+import { User, LogOut, Settings, UserCircle, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
@@ -50,6 +51,12 @@ export function Header({ user }: HeaderProps) {
             </div>
 
             <div className="flex items-center gap-4">
+                <Link href="/" target="_blank">
+                    <Button variant="outline" size="sm" className="gap-2">
+                        <ExternalLink className="h-4 w-4" />
+                        Ver Site
+                    </Button>
+                </Link>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -73,11 +80,11 @@ export function Header({ user }: HeaderProps) {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="cursor-pointer">
+                        <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/dashboard/perfil')}>
                             <UserCircle className="mr-2 h-4 w-4" />
                             Perfil
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="cursor-pointer">
+                        <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/dashboard/configuracoes')}>
                             <Settings className="mr-2 h-4 w-4" />
                             Configurações
                         </DropdownMenuItem>

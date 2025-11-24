@@ -96,7 +96,13 @@ export function AgendamentosClient({ initialAgendamentos }: AgendamentosClientPr
                                     <div key={ag.id} className="group relative flex gap-4 sm:gap-6">
                                         {/* Time Column */}
                                         <div className="flex flex-col items-center pt-1">
-                                            <span className="text-sm font-bold text-muted-foreground">{ag.hora}</span>
+                                            <span className="text-sm font-bold text-muted-foreground">
+                                                {ag.hora instanceof Date
+                                                    ? format(ag.hora, 'HH:mm')
+                                                    : typeof ag.hora === 'string'
+                                                        ? ag.hora.substring(0, 5)
+                                                        : format(new Date(ag.hora), 'HH:mm')}
+                                            </span>
                                             <div className="h-full w-px bg-border mt-2 group-last:hidden" />
                                         </div>
 
