@@ -48,6 +48,7 @@ model Usuario {
   email       String    @unique
   senhaHash   String    @map("senha_hash")
   role        String    @default("admin")
+  permissoes  Json      @default("{\"dashboard\":true,\"produtos\":true,\"pedidos\":true,\"agendamentos\":true,\"whatsapp\":true,\"configuracoes\":false,\"usuarios\":false}")
   ativo       Boolean   @default(true)
   ultimoLogin DateTime? @map("ultimo_login")
   createdAt   DateTime  @default(now()) @map("created_at")

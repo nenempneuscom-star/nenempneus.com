@@ -50,7 +50,7 @@ export default function SobrePage() {
                         Sobre a <span className="text-primary">Neném Pneus</span>
                     </h1>
                     <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                        Há mais de 20 anos no mercado, somos referência em pneus seminovos e recauchutados em Capivari de Baixo e região
+                        Há mais de 20 anos no mercado, somos referência em pneus seminovos inspecionados em Capivari de Baixo e região
                     </p>
                 </div>
             </section>

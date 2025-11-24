@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { PerfilClient } from '@/components/admin/perfil/PerfilClient'
+import { GerenciarUsuarios } from '@/components/admin/usuarios/GerenciarUsuarios'
 import { db } from '@/lib/db'
 
 export default async function PerfilPage() {
@@ -19,6 +20,7 @@ export default async function PerfilPage() {
             nome: true,
             email: true,
             role: true,
+            permissoes: true,
             createdAt: true,
         },
     })
@@ -26,6 +28,10 @@ export default async function PerfilPage() {
     if (!usuario) {
         redirect('/login')
     }
+
+    // Verificar se usuário pode gerenciar outros usuários
+    const permissoes = usuario.permissoes as any
+    const podeGerenciarUsuarios = usuario.role === 'supremo' || permissoes?.usuarios === true
 
     return (
         <div className="flex-1 space-y-8 p-8 pt-6">
@@ -35,6 +41,14 @@ export default async function PerfilPage() {
             </div>
 
             <PerfilClient usuario={usuario} />
+
+            {/* Seção de Gerenciamento de Usuários */}
+            {podeGerenciarUsuarios && (
+                <GerenciarUsuarios
+                    usuarioAtualId={usuario.id}
+                    usuarioRole={usuario.role}
+                />
+            )}
         </div>
     )
 }

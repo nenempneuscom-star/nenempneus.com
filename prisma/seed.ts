@@ -55,7 +55,7 @@ async function main() {
             lojaId: loja.id,
             nome: 'Pneus Seminovos',
             slug: 'pneus-seminovos',
-            descricao: 'Pneus recauchutados e seminovos de qualidade',
+            descricao: 'Pneus seminovos inspecionados de qualidade',
             ativo: true,
             ordem: 1,
         },
