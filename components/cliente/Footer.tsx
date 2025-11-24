@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Facebook, Instagram, MapPin, Phone, Mail } from 'lucide-react'
+import { Facebook, Instagram, MapPin, Phone, Mail, Lock } from 'lucide-react'
 import { LOJA_INFO } from '@/lib/constants'
 
 export function Footer() {
@@ -86,10 +86,18 @@ export function Footer() {
 
             {/* Bottom bar */}
             <div className="border-t border-border">
-                <div className="container mx-auto px-4 py-4">
-                    <p className="text-sm text-center text-muted-foreground">
+                <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
                         © {new Date().getFullYear()} Neném Pneus. Todos os direitos reservados.
                     </p>
+                    {/* Acesso admin discreto */}
+                    <Link
+                        href="/login"
+                        className="text-muted-foreground/30 hover:text-muted-foreground/50 transition-colors"
+                        title="Área restrita"
+                    >
+                        <Lock className="h-4 w-4" />
+                    </Link>
                 </div>
             </div>
         </footer>
