@@ -1,6 +1,8 @@
 import { getConversas } from '@/lib/admin/whatsapp'
 import { WhatsAppClient } from '@/components/admin/whatsapp/WhatsAppClient'
 
+export const dynamic = 'force-dynamic'
+
 export default async function WhatsAppPage() {
   const conversasRaw = await getConversas()
 

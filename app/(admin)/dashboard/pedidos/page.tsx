@@ -1,6 +1,8 @@
 import { getPedidos } from '@/lib/admin/pedidos'
 import { PedidosClient } from '@/components/admin/pedidos/PedidosClient'
 
+export const dynamic = 'force-dynamic'
+
 interface PageProps {
     searchParams: Promise<{
         status?: string

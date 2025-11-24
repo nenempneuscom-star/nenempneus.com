@@ -1,6 +1,8 @@
 import { getProdutos, getCategorias } from '@/lib/admin/produtos'
 import { ProdutosClient } from '@/components/admin/produtos/ProdutosClient'
 
+export const dynamic = 'force-dynamic'
+
 interface PageProps {
   searchParams: Promise<{
     categoriaId?: string
