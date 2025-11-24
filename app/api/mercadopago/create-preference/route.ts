@@ -1,8 +1,17 @@
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { mercadoPagoPreference } from '@/lib/mercadopago'
 
 export async function POST(req: NextRequest) {
     try {
+        // Verificar se Mercado Pago está configurado
+        if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
+            return NextResponse.json(
+                { success: false, error: 'Mercado Pago não configurado. Entre em contato com o suporte.' },
+                { status: 503 }
+            )
+        }
         const body = await req.json()
         const { pedidoId, items, total } = body
 

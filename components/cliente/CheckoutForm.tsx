@@ -15,6 +15,45 @@ import { useCarrinhoStore } from '@/lib/store/carrinho-store'
 import { Loader2 } from 'lucide-react'
 import { CalendarioAgendamento } from './CalendarioAgendamento'
 
+// Funções de formatação
+const formatarTelefone = (value: string) => {
+    const numbers = value.replace(/\D/g, '')
+    if (numbers.length <= 2) return numbers
+    if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`
+    if (numbers.length <= 11) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`
+}
+
+const formatarCPF = (value: string) => {
+    const numbers = value.replace(/\D/g, '')
+    if (numbers.length <= 3) return numbers
+    if (numbers.length <= 6) return `${numbers.slice(0, 3)}.${numbers.slice(3)}`
+    if (numbers.length <= 9) return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`
+    return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`
+}
+
+const formatarCEP = (value: string) => {
+    const numbers = value.replace(/\D/g, '')
+    if (numbers.length <= 5) return numbers
+    return `${numbers.slice(0, 5)}-${numbers.slice(5, 8)}`
+}
+
+const formatarPlaca = (value: string) => {
+    const upper = value.toUpperCase().replace(/[^A-Z0-9]/g, '')
+    // Placa Mercosul: ABC1D23 (7 caracteres)
+    // Placa antiga: ABC1234 (7 caracteres)
+    if (upper.length <= 3) return upper
+    if (upper.length <= 7) {
+        // Detecta se é Mercosul (letra na 5ª posição) ou antiga
+        const parte1 = upper.slice(0, 3)
+        const parte2 = upper.slice(3)
+        // Mercosul: ABC1D23 -> ABC-1D23
+        // Antiga: ABC1234 -> ABC-1234
+        return `${parte1}-${parte2}`
+    }
+    return `${upper.slice(0, 3)}-${upper.slice(3, 7)}`
+}
+
 export function CheckoutForm() {
     const router = useRouter()
     const { items, getSubtotal, limparCarrinho } = useCarrinhoStore()
@@ -132,14 +171,32 @@ export function CheckoutForm() {
                         </div>
                         <div>
                             <Label htmlFor="telefone">Telefone/WhatsApp *</Label>
-                            <Input id="telefone" {...register('telefone')} placeholder="(00) 00000-0000" />
+                            <Input
+                                id="telefone"
+                                {...register('telefone')}
+                                placeholder="(00) 00000-0000"
+                                onChange={(e) => {
+                                    e.target.value = formatarTelefone(e.target.value)
+                                    register('telefone').onChange(e)
+                                }}
+                                maxLength={15}
+                            />
                             {errors.telefone && (
                                 <p className="text-sm text-destructive mt-1">{errors.telefone.message}</p>
                             )}
                         </div>
                         <div>
                             <Label htmlFor="cpf">CPF</Label>
-                            <Input id="cpf" {...register('cpf')} placeholder="000.000.000-00" />
+                            <Input
+                                id="cpf"
+                                {...register('cpf')}
+                                placeholder="000.000.000-00"
+                                onChange={(e) => {
+                                    e.target.value = formatarCPF(e.target.value)
+                                    register('cpf').onChange(e)
+                                }}
+                                maxLength={14}
+                            />
                         </div>
                     </div>
                 </CardContent>
@@ -154,7 +211,16 @@ export function CheckoutForm() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <Label htmlFor="cep">CEP *</Label>
-                            <Input id="cep" {...register('cep')} placeholder="00000-000" />
+                            <Input
+                                id="cep"
+                                {...register('cep')}
+                                placeholder="00000-000"
+                                onChange={(e) => {
+                                    e.target.value = formatarCEP(e.target.value)
+                                    register('cep').onChange(e)
+                                }}
+                                maxLength={9}
+                            />
                             {errors.cep && (
                                 <p className="text-sm text-destructive mt-1">{errors.cep.message}</p>
                             )}
@@ -229,7 +295,16 @@ export function CheckoutForm() {
                         </div>
                         <div>
                             <Label htmlFor="veiculoPlaca">Placa</Label>
-                            <Input id="veiculoPlaca" {...register('veiculoPlaca')} placeholder="ABC-1234" />
+                            <Input
+                                id="veiculoPlaca"
+                                {...register('veiculoPlaca')}
+                                placeholder="ABC-1234 ou ABC-1D23"
+                                onChange={(e) => {
+                                    e.target.value = formatarPlaca(e.target.value)
+                                    register('veiculoPlaca').onChange(e)
+                                }}
+                                maxLength={8}
+                            />
                         </div>
                     </div>
                 </CardContent>

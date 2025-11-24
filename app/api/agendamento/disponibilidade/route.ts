@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { getSlotsDisponiveis } from '@/lib/agendamento'
 import { parseISO } from 'date-fns'
