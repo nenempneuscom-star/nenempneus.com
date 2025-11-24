@@ -8,31 +8,32 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
+import { LOJA_INFO } from '@/lib/constants'
 
 const contatoInfo = [
     {
         icon: Phone,
         title: 'Telefone',
-        value: '(48) 3XXX-XXXX',
+        value: LOJA_INFO.telefone,
         description: 'Ligue para nós'
     },
     {
         icon: MessageSquare,
         title: 'WhatsApp',
-        value: '(48) 9XXXX-XXXX',
+        value: LOJA_INFO.telefone,
         description: 'Chat direto'
     },
     {
         icon: Mail,
         title: 'E-mail',
-        value: 'contato@nenempneus.com',
+        value: LOJA_INFO.email,
         description: 'Envie uma mensagem'
     },
     {
         icon: MapPin,
         title: 'Endereço',
-        value: 'Rua Principal, 123',
-        description: 'Capivari de Baixo/SC'
+        value: `${LOJA_INFO.endereco}, ${LOJA_INFO.bairro}`,
+        description: `${LOJA_INFO.cidade}/${LOJA_INFO.estado} - CEP: ${LOJA_INFO.cep}`
     }
 ]
 
@@ -195,7 +196,7 @@ export default function ContatoPage() {
                         asChild
                         className="hover:scale-105 transition-all hover:shadow-xl"
                     >
-                        <Link href="https://wa.me/5548999999999" target="_blank">
+                        <Link href={`https://wa.me/${LOJA_INFO.whatsapp}`} target="_blank">
                             <MessageSquare className="h-5 w-5 mr-2" />
                             Falar no WhatsApp
                         </Link>

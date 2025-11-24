@@ -86,18 +86,25 @@ export function Footer() {
 
             {/* Bottom bar */}
             <div className="border-t border-border">
-                <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">
-                        © {new Date().getFullYear()} Neném Pneus. Todos os direitos reservados.
-                    </p>
-                    {/* Acesso admin discreto */}
-                    <Link
-                        href="/login"
-                        className="text-muted-foreground/30 hover:text-muted-foreground/50 transition-colors"
-                        title="Área restrita"
-                    >
-                        <Lock className="h-4 w-4" />
-                    </Link>
+                <div className="container mx-auto px-4 py-4">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-2">
+                        <div className="text-center md:text-left">
+                            <p className="text-sm text-muted-foreground">
+                                © {new Date().getFullYear()} {LOJA_INFO.razaoSocial}
+                            </p>
+                            <p className="text-xs text-muted-foreground/70">
+                                CNPJ: {LOJA_INFO.cnpj}
+                            </p>
+                        </div>
+                        {/* Acesso admin discreto */}
+                        <Link
+                            href="/login"
+                            className="text-muted-foreground/30 hover:text-muted-foreground/50 transition-colors"
+                            title="Área restrita"
+                        >
+                            <Lock className="h-4 w-4" />
+                        </Link>
+                    </div>
                 </div>
             </div>
         </footer>

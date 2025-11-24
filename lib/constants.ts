@@ -2,13 +2,16 @@ export const LOJA_SLUG = 'nenem-pneus'
 
 export const LOJA_INFO = {
     nome: 'Neném Pneus',
-    telefone: '(48) 99997-3889',
+    razaoSocial: 'HANDERSON FRANCISCO LTDA',
+    cnpj: '36.985.207/0001-00',
+    telefone: '(48) 9997-3889',
     whatsapp: '5548999973889',
-    email: 'contato@nenempneus.com',
-    endereco: 'Rua Principal, 123 - Centro',
+    email: 'handersonfrancisco55@gmail.com',
+    endereco: 'Av. Nereu Ramos, 740, Sala 01',
+    bairro: 'Centro',
     cidade: 'Capivari de Baixo',
     estado: 'SC',
-    cep: '88715-000',
+    cep: '88745-000',
 }
 
 export const NAVEGACAO = [
