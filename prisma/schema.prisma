@@ -3,164 +3,124 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-// ============================================
-// LOJAS (Multi-tenant core)
-// ============================================
 model Loja {
-  id        String   @id @default(uuid())
-  slug      String   @unique
-  nome      String
-  cnpj      String?
-  
-  email     String?
-  telefone  String?
-  whatsapp  String?
-  
-  endereco  String?
-  cidade    String?
-  estado    String?
-  cep       String?
-  
-  logoUrl       String?   @map("logo_url")
-  corPrimaria   String    @default("#FF6B00") @map("cor_primaria")
-  corSecundaria String    @default("#1A1A1A") @map("cor_secundaria")
-  
-  ativo     Boolean  @default(true)
-  plano     String   @default("basico")
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  
-  usuarios     Usuario[]
-  produtos     Produto[]
-  categorias   Categoria[]
-  pedidos      Pedido[]
-  agendamentos Agendamento[]
-  clientes     Cliente[]
-  conversas    ConversaWhatsApp[]
-  avaliacoes   Avaliacao[]
-  settings     Settings?
+  id            String             @id @default(uuid())
+  slug          String             @unique
+  nome          String
+  cnpj          String?
+  email         String?
+  telefone      String?
+  whatsapp      String?
+  endereco      String?
+  cidade        String?
+  estado        String?
+  cep           String?
+  logoUrl       String?            @map("logo_url")
+  corPrimaria   String             @default("#FF6B00") @map("cor_primaria")
+  corSecundaria String             @default("#1A1A1A") @map("cor_secundaria")
+  ativo         Boolean            @default(true)
+  plano         String             @default("basico")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+  agendamentos  Agendamento[]
+  avaliacoes    Avaliacao[]
+  categorias    Categoria[]
+  clientes      Cliente[]
+  conversas     ConversaWhatsApp[]
+  pedidos       Pedido[]
+  produtos      Produto[]
+  settings      Settings?
+  usuarios      Usuario[]
 
   @@map("lojas")
 }
 
-// ============================================
-// USUÁRIOS (Admin da loja)
-// ============================================
 model Usuario {
-  id       String   @id @default(uuid())
-  lojaId   String   @map("loja_id")
-  loja     Loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-  
+  id          String    @id @default(uuid())
+  lojaId      String    @map("loja_id")
   nome        String
-  email       String   @unique
-  senhaHash   String   @map("senha_hash")
-  
-  role        String   @default("admin")
-  ativo       Boolean  @default(true)
+  email       String    @unique
+  senhaHash   String    @map("senha_hash")
+  role        String    @default("admin")
+  ativo       Boolean   @default(true)
   ultimoLogin DateTime? @map("ultimo_login")
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  loja        Loja      @relation(fields: [lojaId], references: [id], onDelete: Cascade)
 
   @@index([lojaId])
   @@map("usuarios")
 }
 
-// ============================================
-// CLIENTES
-// ============================================
 model Cliente {
-  id       String @id @default(uuid())
-  lojaId   String @map("loja_id")
-  loja     Loja   @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-  
-  nome     String
-  email    String?
-  telefone String?
-  cpf      String?
-  
-  veiculoMarca  String? @map("veiculo_marca")
-  veiculoModelo String? @map("veiculo_modelo")
-  veiculoAno    Int?    @map("veiculo_ano")
-  veiculoPlaca  String? @map("veiculo_placa")
-  
-  totalCompras Int      @default(0) @map("total_compras")
-  valorTotal   Decimal  @default(0) @db.Decimal(10, 2) @map("valor_total")
-  ultimaCompra DateTime? @map("ultima_compra")
-  
-  tags Json @default("[]")
-  
-  aceitaMarketing Boolean @default(false) @map("aceita_marketing")
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  
-  pedidos      Pedido[]
-  agendamentos Agendamento[]
-  avaliacoes   Avaliacao[]
+  id              String        @id @default(uuid())
+  lojaId          String        @map("loja_id")
+  nome            String
+  email           String?
+  telefone        String?
+  cpf             String?
+  veiculoMarca    String?       @map("veiculo_marca")
+  veiculoModelo   String?       @map("veiculo_modelo")
+  veiculoAno      Int?          @map("veiculo_ano")
+  veiculoPlaca    String?       @map("veiculo_placa")
+  totalCompras    Int           @default(0) @map("total_compras")
+  valorTotal      Decimal       @default(0) @map("valor_total") @db.Decimal(10, 2)
+  ultimaCompra    DateTime?     @map("ultima_compra")
+  tags            Json          @default("[]")
+  aceitaMarketing Boolean       @default(false) @map("aceita_marketing")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  agendamentos    Agendamento[]
+  avaliacoes      Avaliacao[]
+  loja            Loja          @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  pedidos         Pedido[]
 
   @@index([lojaId])
   @@index([telefone])
   @@map("clientes")
 }
 
-// ============================================
-// CATEGORIAS
-// ============================================
 model Categoria {
-  id        String   @id @default(uuid())
-  lojaId    String   @map("loja_id")
-  loja      Loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-  
+  id        String    @id @default(uuid())
+  lojaId    String    @map("loja_id")
   nome      String
   slug      String
   descricao String?
-  ativo     Boolean  @default(true)
-  ordem     Int      @default(0)
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  
-  produtos Produto[]
+  ativo     Boolean   @default(true)
+  ordem     Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at")
+  loja      Loja      @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  produtos  Produto[]
 
   @@unique([lojaId, slug])
   @@index([lojaId])
   @@map("categorias")
 }
 
-// ============================================
-// PRODUTOS
-// ============================================
 model Produto {
-  id          String    @id @default(uuid())
-  lojaId      String    @map("loja_id")
-  loja        Loja      @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-  categoriaId String    @map("categoria_id")
-  categoria   Categoria @relation(fields: [categoriaId], references: [id])
-  
-  nome      String
-  slug      String
-  descricao String?
-  preco     Decimal   @db.Decimal(10, 2)
-  estoque   Int       @default(0)
-  
-  imagemUrl String? @map("imagem_url")
-  
-  specs    Json @default("{}")
-  veiculos Json @default("[]")
-  
-  ativo    Boolean @default(true)
-  destaque Boolean @default(false)
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  
+  id          String       @id @default(uuid())
+  lojaId      String       @map("loja_id")
+  categoriaId String       @map("categoria_id")
+  nome        String
+  slug        String
+  descricao   String?
+  preco       Decimal      @db.Decimal(10, 2)
+  estoque     Int          @default(0)
+  imagemUrl   String?      @map("imagem_url")
+  specs       Json         @default("{}")
+  veiculos    Json         @default("[]")
+  ativo       Boolean      @default(true)
+  destaque    Boolean      @default(false)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
   pedidoItems PedidoItem[]
+  categoria   Categoria    @relation(fields: [categoriaId], references: [id])
+  loja        Loja         @relation(fields: [lojaId], references: [id], onDelete: Cascade)
 
   @@unique([lojaId, slug])
   @@index([lojaId])
@@ -168,33 +128,24 @@ model Produto {
   @@map("produtos")
 }
 
-// ============================================
-// PEDIDOS
-// ============================================
 model Pedido {
-  id        String   @id @default(uuid())
-  lojaId    String   @map("loja_id")
-  loja      Loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-  clienteId String   @map("cliente_id")
-  cliente   Cliente  @relation(fields: [clienteId], references: [id])
-  
-  numero  String  @unique
-  
-  subtotal Decimal @db.Decimal(10, 2)
-  desconto Decimal @default(0) @db.Decimal(10, 2)
-  total    Decimal @db.Decimal(10, 2)
-  
-  status         String  @default("pendente")
-  temAgendamento Boolean @default(false) @map("tem_agendamento")
-  
-  observacoes String?
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  
-  items       PedidoItem[]
-  pagamentos  Pagamento[]
-  agendamento Agendamento?
+  id             String       @id @default(uuid())
+  lojaId         String       @map("loja_id")
+  clienteId      String       @map("cliente_id")
+  numero         String       @unique
+  subtotal       Decimal      @db.Decimal(10, 2)
+  desconto       Decimal      @default(0) @db.Decimal(10, 2)
+  total          Decimal      @db.Decimal(10, 2)
+  status         String       @default("pendente")
+  temAgendamento Boolean      @default(false) @map("tem_agendamento")
+  observacoes    String?
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  agendamento    Agendamento?
+  pagamentos     Pagamento[]
+  items          PedidoItem[]
+  cliente        Cliente      @relation(fields: [clienteId], references: [id])
+  loja           Loja         @relation(fields: [lojaId], references: [id], onDelete: Cascade)
 
   @@index([lojaId])
   @@index([clienteId])
@@ -203,97 +154,76 @@ model Pedido {
 }
 
 model PedidoItem {
-  id        String  @id @default(uuid())
-  pedidoId  String  @map("pedido_id")
-  pedido    Pedido  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
-  produtoId String  @map("produto_id")
-  produto   Produto @relation(fields: [produtoId], references: [id])
-  
+  id         String   @id @default(uuid())
+  pedidoId   String   @map("pedido_id")
+  produtoId  String   @map("produto_id")
   quantidade Int
-  precoUnit  Decimal @db.Decimal(10, 2) @map("preco_unit")
-  subtotal   Decimal @db.Decimal(10, 2)
-  
-  createdAt DateTime @default(now()) @map("created_at")
+  precoUnit  Decimal  @map("preco_unit") @db.Decimal(10, 2)
+  subtotal   Decimal  @db.Decimal(10, 2)
+  createdAt  DateTime @default(now()) @map("created_at")
+  pedido     Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  produto    Produto  @relation(fields: [produtoId], references: [id])
 
   @@index([pedidoId])
   @@index([produtoId])
   @@map("pedido_items")
 }
 
-// ============================================
-// PAGAMENTOS
-// ============================================
 model Pagamento {
-  id       String  @id @default(uuid())
-  pedidoId String  @map("pedido_id")
-  pedido   Pedido  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
-  
-  gateway String
-  metodo  String
-  status  String  @default("pendente")
-  valor   Decimal @db.Decimal(10, 2)
-  
-  mpPreferenceId String? @map("mp_preference_id")
-  mpPaymentId    String? @map("mp_payment_id")
-  mpStatus       String? @map("mp_status")
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  pedidoId       String   @map("pedido_id")
+  gateway        String
+  metodo         String
+  status         String   @default("pendente")
+  valor          Decimal  @db.Decimal(10, 2)
+  mpPreferenceId String?  @map("mp_preference_id")
+  mpPaymentId    String?  @map("mp_payment_id")
+  mpStatus       String?  @map("mp_status")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  pedido         Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
 
   @@index([pedidoId])
   @@index([mpPaymentId])
   @@map("pagamentos")
 }
 
-// ============================================
-// AGENDAMENTOS
-// ============================================
 model Agendamento {
-  id       String  @id @default(uuid())
-  lojaId   String  @map("loja_id")
-  loja     Loja    @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-  pedidoId String  @unique @map("pedido_id")
-  pedido   Pedido  @relation(fields: [pedidoId], references: [id])
-  clienteId String @map("cliente_id")
-  cliente   Cliente @relation(fields: [clienteId], references: [id])
-  
-  data DateTime @db.Date
-  hora DateTime @db.Time
-  
-  status           String  @default("confirmado")
-  lembreteEnviado  Boolean @default(false) @map("lembrete_enviado")
-  observacoes      String?
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id              String   @id @default(uuid())
+  lojaId          String   @map("loja_id")
+  pedidoId        String   @unique @map("pedido_id")
+  clienteId       String   @map("cliente_id")
+  data            DateTime @db.Date
+  hora            DateTime @db.Time(6)
+  status          String   @default("confirmado")
+  lembreteEnviado Boolean  @default(false) @map("lembrete_enviado")
+  observacoes     String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  cliente         Cliente  @relation(fields: [clienteId], references: [id])
+  loja            Loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  pedido          Pedido   @relation(fields: [pedidoId], references: [id])
 
-  @@unique([lojaId, data, hora, status], name: "unique_slot")
+  @@unique([lojaId, data, hora, status], map: "agendamentos_unique_slot_key")
   @@index([lojaId])
   @@index([clienteId])
   @@index([data, hora])
   @@map("agendamentos")
 }
 
-// ============================================
-// WHATSAPP
-// ============================================
 model ConversaWhatsApp {
-  id       String @id @default(uuid())
-  lojaId   String @map("loja_id")
-  loja     Loja   @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-  
-  telefone     String
-  nomeContato  String? @map("nome_contato")
-  
-  status           String   @default("ativa")
-  modo             String   @default("bot")
-  totalMensagens   Int      @default(0) @map("total_mensagens")
-  ultimaMensagemEm DateTime? @map("ultima_mensagem_em")
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  
-  mensagens MensagemWhatsApp[]
+  id               String             @id @default(uuid())
+  lojaId           String             @map("loja_id")
+  telefone         String
+  nomeContato      String?            @map("nome_contato")
+  status           String             @default("ativa")
+  modo             String             @default("bot")
+  totalMensagens   Int                @default(0) @map("total_mensagens")
+  ultimaMensagemEm DateTime?          @map("ultima_mensagem_em")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  loja             Loja               @relation(fields: [lojaId], references: [id], onDelete: Cascade)
+  mensagens        MensagemWhatsApp[]
 
   @@unique([lojaId, telefone])
   @@index([lojaId])
@@ -302,77 +232,107 @@ model ConversaWhatsApp {
 }
 
 model MensagemWhatsApp {
-  id          String            @id @default(uuid())
-  conversaId  String            @map("conversa_id")
-  conversa    ConversaWhatsApp  @relation(fields: [conversaId], references: [id], onDelete: Cascade)
-  
-  direcao   String
-  remetente String?
-  conteudo  String @db.Text
-  
-  waMessageId     String? @unique @map("wa_message_id")
-  processadoPorIa Boolean @default(false) @map("processado_por_ia")
-  
-  createdAt DateTime @default(now()) @map("created_at")
+  id              String           @id @default(uuid())
+  conversaId      String           @map("conversa_id")
+  direcao         String
+  remetente       String?
+  conteudo        String
+  waMessageId     String?          @unique @map("wa_message_id")
+  processadoPorIa Boolean          @default(false) @map("processado_por_ia")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  conversa        ConversaWhatsApp @relation(fields: [conversaId], references: [id], onDelete: Cascade)
 
   @@index([conversaId])
   @@index([waMessageId])
   @@map("mensagens_whatsapp")
 }
 
-// ============================================
-// AVALIAÇÕES
-// ============================================
 model Avaliacao {
-  id        String  @id @default(uuid())
-  lojaId    String  @map("loja_id")
-  loja      Loja    @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-  clienteId String  @map("cliente_id")
-  cliente   Cliente @relation(fields: [clienteId], references: [id])
-  
+  id         String   @id @default(uuid())
+  lojaId     String   @map("loja_id")
+  clienteId  String   @map("cliente_id")
   nota       Int
   comentario String?
-  aprovado   Boolean @default(true)
-  
-  createdAt DateTime @default(now()) @map("created_at")
+  aprovado   Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+  cliente    Cliente  @relation(fields: [clienteId], references: [id])
+  loja       Loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
 
   @@index([lojaId])
   @@index([clienteId])
   @@map("avaliacoes")
 }
 
-// ============================================
-// SETTINGS (Configurações por loja)
-// ============================================
 model Settings {
-  id     String @id @default(uuid())
-  lojaId String @unique @map("loja_id")
-  loja   Loja   @relation(fields: [lojaId], references: [id], onDelete: Cascade)
-  
-  // Agendamentos
-  horarioInicio     DateTime @default(dbgenerated("'08:00:00'::time")) @db.Time @map("horario_inicio")
-  horarioFim        DateTime @default(dbgenerated("'18:00:00'::time")) @db.Time @map("horario_fim")
+  id                String   @id @default(uuid())
+  lojaId            String   @unique @map("loja_id")
+  horarioInicio     DateTime @default(dbgenerated("'08:00:00'::time without time zone")) @map("horario_inicio") @db.Time(6)
+  horarioFim        DateTime @default(dbgenerated("'18:00:00'::time without time zone")) @map("horario_fim") @db.Time(6)
   intervaloSlots    Int      @default(60) @map("intervalo_slots")
   clientesPorSlot   Int      @default(2) @map("clientes_por_slot")
-  diasFuncionamento Json     @default("[1,2,3,4,5,6]") @map("dias_funcionamento")
-  
-  // Pagamentos
-  formasPagamento Json    @default("[\"pix\",\"cartao\"]") @map("formas_pagamento")
-  modoPagamento   String  @default("hibrido") @map("modo_pagamento")
-  descontoPix     Decimal @default(5) @db.Decimal(5, 2) @map("desconto_pix")
-  
-  // WhatsApp Bot
-  modoBot          String  @default("comercial") @map("modo_bot")
-  botAtivo         Boolean @default(true) @map("bot_ativo")
-  palavrasHumano   Json    @default("[\"atendente\",\"humano\"]") @map("palavras_humano")
-  
-  // Notificações
-  notifWhatsapp Boolean @default(true) @map("notif_whatsapp")
-  notifEmail    Boolean @default(true) @map("notif_email")
-  lembreteHoras Int     @default(24) @map("lembrete_horas")
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  diasFuncionamento Json     @default("[1, 2, 3, 4, 5, 6]") @map("dias_funcionamento")
+  formasPagamento   Json     @default("[\"pix\", \"cartao\"]") @map("formas_pagamento")
+  modoPagamento     String   @default("hibrido") @map("modo_pagamento")
+  descontoPix       Decimal  @default(5) @map("desconto_pix") @db.Decimal(5, 2)
+  modoBot           String   @default("comercial") @map("modo_bot")
+  botAtivo          Boolean  @default(true) @map("bot_ativo")
+  palavrasHumano    Json     @default("[\"atendente\", \"humano\"]") @map("palavras_humano")
+  notifWhatsapp     Boolean  @default(true) @map("notif_whatsapp")
+  notifEmail        Boolean  @default(true) @map("notif_email")
+  lembreteHoras     Int      @default(24) @map("lembrete_horas")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  loja              Loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
 
   @@map("settings")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model analytics {
+  id                              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projeto_id                      String
+  total_prompts_gerados           Int?      @default(0)
+  total_refinamentos              Int?      @default(0)
+  total_tokens_usados             Int?      @default(0)
+  taxa_sucesso_primeira_tentativa Float?    @default(0)
+  tempo_medio_resolucao_minutos   Int?      @default(0)
+  created_at                      DateTime? @default(now()) @db.Timestamp(6)
+  updated_at                      DateTime? @default(now()) @db.Timestamp(6)
+
+  @@index([projeto_id], map: "idx_analytics_projeto")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model refinamentos {
+  id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projeto_id        String
+  problema_original String
+  prompt_original   String
+  prompt_refinado   String
+  tipo_refinamento  String
+  resolvido         Boolean?
+  tokens_usados     Int?
+  created_at        DateTime? @default(now()) @db.Timestamp(6)
+  updated_at        DateTime? @default(now()) @db.Timestamp(6)
+
+  @@index([projeto_id], map: "idx_refinamentos_projeto")
+  @@index([resolvido], map: "idx_refinamentos_resolvido")
+  @@index([tipo_refinamento], map: "idx_refinamentos_tipo")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model solucoes_efetivas {
+  id               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  projeto_id       String
+  tipo_problema    String
+  contexto         String
+  solucao          String
+  tipo_refinamento String?
+  vezes_usado      Int?      @default(1)
+  taxa_sucesso     Float?    @default(100)
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
+  updated_at       DateTime? @default(now()) @db.Timestamp(6)
+
+  @@index([projeto_id], map: "idx_solucoes_projeto")
+  @@index([tipo_problema], map: "idx_solucoes_tipo")
 }
