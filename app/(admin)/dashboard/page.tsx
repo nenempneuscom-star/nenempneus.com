@@ -13,6 +13,9 @@ import {
 
 import { DashboardHeader } from '@/components/admin/DashboardHeader'
 
+// Forçar renderização dinâmica para evitar erros de build
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   // const session = await getSession()
   // if (!session) {

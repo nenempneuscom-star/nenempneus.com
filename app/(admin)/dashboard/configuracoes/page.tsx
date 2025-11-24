@@ -1,6 +1,9 @@
 import { getSettings } from '@/lib/admin/settings'
 import { ConfiguracoesClient } from '@/components/admin/configuracoes/ConfiguracoesClient'
 
+// Forçar renderização dinâmica para evitar erros de build
+export const dynamic = 'force-dynamic'
+
 export default async function ConfiguracoesPage() {
   const settingsRaw = await getSettings()
 
