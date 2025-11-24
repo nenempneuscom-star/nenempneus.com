@@ -103,7 +103,6 @@ export function BuscaMedidas() {
                         <SelectValue placeholder="Largura" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="" disabled>Largura</SelectItem>
                         {medidas.larguras.map((l) => (
                             <SelectItem key={l} value={l}>{l}</SelectItem>
                         ))}
@@ -115,7 +114,6 @@ export function BuscaMedidas() {
                         <SelectValue placeholder="Perfil" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="" disabled>Perfil</SelectItem>
                         {perfisDisponiveis.map((p) => (
                             <SelectItem key={p} value={p}>{p}</SelectItem>
                         ))}
@@ -127,7 +125,6 @@ export function BuscaMedidas() {
                         <SelectValue placeholder="Aro" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="" disabled>Aro</SelectItem>
                         {arosDisponiveis.map((a) => (
                             <SelectItem key={a} value={a}>{a}</SelectItem>
                         ))}
