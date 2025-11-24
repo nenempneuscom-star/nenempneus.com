@@ -67,7 +67,9 @@ export function AgendamentosClient({ initialAgendamentos }: AgendamentosClientPr
                     </CardContent>
                 </Card>
             ) : (
-                Object.entries(groupedAgendamentos).sort().map(([date, items]) => (
+                Object.keys(groupedAgendamentos).sort().map((date) => {
+                    const items = groupedAgendamentos[date]
+                    return (
                     <div key={date} className="relative">
                         {/* Date Header */}
                         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur py-4 mb-4 border-b flex items-center gap-3">
@@ -163,7 +165,7 @@ export function AgendamentosClient({ initialAgendamentos }: AgendamentosClientPr
                             })}
                         </div>
                     </div>
-                ))
+                )})
             )}
         </div>
     )
