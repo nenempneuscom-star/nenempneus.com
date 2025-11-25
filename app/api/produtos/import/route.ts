@@ -92,10 +92,10 @@ export async function POST(request: NextRequest) {
 
     // Ler arquivo Excel
     const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    const uint8Array = new Uint8Array(arrayBuffer)
 
     const workbook = new ExcelJS.Workbook()
-    await workbook.xlsx.load(buffer)
+    await workbook.xlsx.load(uint8Array)
 
     const worksheet = workbook.getWorksheet('Produtos')
     if (!worksheet) {
