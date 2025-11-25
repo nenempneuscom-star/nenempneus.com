@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-// import { getSession } from '@/lib/auth'
+import { getSession } from '@/lib/auth'
 import { getStats, getPedidosRecentes } from '@/lib/admin/stats'
 import { StatsCard } from '@/components/admin/StatsCard'
 import { RecentOrders } from '@/components/admin/RecentOrders'
@@ -17,10 +17,10 @@ import { DashboardHeader } from '@/components/admin/DashboardHeader'
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
-  // const session = await getSession()
-  // if (!session) {
-  //   redirect('/login')
-  // }
+  const session = await getSession()
+  if (!session) {
+    redirect('/login')
+  }
 
   const stats = await getStats()
   const pedidosRecentes = await getPedidosRecentes()

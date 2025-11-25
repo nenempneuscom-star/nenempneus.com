@@ -1,17 +1,38 @@
 import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/admin/Sidebar'
 import { Header } from '@/components/admin/Header'
+import { getSession } from '@/lib/auth'
+import { db } from '@/lib/db'
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // Usuário mockado para acesso livre
+  // Verificar sessão
+  const session = await getSession()
+  if (!session) {
+    redirect('/login')
+  }
+
+  // Buscar dados completos do usuário
+  const usuario = await db.usuario.findUnique({
+    where: { id: session.userId },
+    select: {
+      nome: true,
+      email: true,
+      role: true,
+    }
+  })
+
+  if (!usuario) {
+    redirect('/login')
+  }
+
   const user = {
-    nome: 'Administrador',
-    email: 'admin@nenempneus.com',
-    role: 'admin'
+    nome: usuario.nome,
+    email: usuario.email,
+    role: usuario.role
   }
 
   return (
