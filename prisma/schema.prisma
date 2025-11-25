@@ -301,6 +301,7 @@ model Settings {
   notifWhatsapp     Boolean  @default(true) @map("notif_whatsapp")
   notifEmail        Boolean  @default(true) @map("notif_email")
   lembreteHoras     Int      @default(24) @map("lembrete_horas")
+  featureFlags      Json     @default("{\"importacaoEmMassa\":false,\"exportacaoRelatorios\":true,\"notificacoesWhatsapp\":true}") @map("feature_flags")
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
   loja              Loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)

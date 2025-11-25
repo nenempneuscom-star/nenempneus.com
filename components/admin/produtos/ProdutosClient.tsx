@@ -14,6 +14,7 @@ import {
   EyeOff,
   Loader2,
   Filter,
+  Upload,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -37,6 +38,8 @@ import {
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { ImageUpload } from '@/components/admin/ImageUpload'
+import { ImportDialog } from '@/components/admin/produtos/ImportDialog'
+import { useFeatureFlag } from '@/hooks/use-feature-flag'
 
 interface Categoria {
   id: string
@@ -83,8 +86,12 @@ export function ProdutosClient({
   const [search, setSearch] = useState('')
   const [categoriaFiltro, setCategoriaFiltro] = useState('')
 
+  // Feature flag para importação em massa
+  const importacaoHabilitada = useFeatureFlag('importacaoEmMassa')
+
   // Modal states
   const [modalAberto, setModalAberto] = useState(false)
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [produtoEditando, setProdutoEditando] = useState<Produto | null>(null)
   const [salvando, setSalvando] = useState(false)
   const [deletando, setDeletando] = useState<string | null>(null)
@@ -285,10 +292,18 @@ export function ProdutosClient({
             Gerencie o catalogo de pneus da loja. {total} produto(s) cadastrado(s).
           </p>
         </div>
-        <Button onClick={abrirModalNovo}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Produto
-        </Button>
+        <div className="flex gap-2">
+          {importacaoHabilitada && (
+            <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+              <Upload className="mr-2 h-4 w-4" />
+              Importar Excel
+            </Button>
+          )}
+          <Button onClick={abrirModalNovo}>
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Produto
+          </Button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -683,6 +698,12 @@ export function ProdutosClient({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de Importação */}
+      <ImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+      />
     </>
   )
 }

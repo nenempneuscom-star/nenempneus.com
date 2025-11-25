@@ -21,6 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/components/ui/use-toast'
+import { FeatureFlagsSection } from './FeatureFlagsSection'
 
 interface Settings {
     horarioInicio: string
@@ -86,10 +87,11 @@ export function ConfiguracoesClient({ initialSettings }: ConfiguracoesClientProp
     return (
         <div className="space-y-6 relative pb-20">
             <Tabs defaultValue="agendamento" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+                <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
                     <TabsTrigger value="agendamento">Agendamento</TabsTrigger>
                     <TabsTrigger value="pagamento">Pagamento</TabsTrigger>
                     <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
+                    <TabsTrigger value="recursos">Recursos</TabsTrigger>
                 </TabsList>
 
                 {/* Agendamento */}
@@ -293,6 +295,11 @@ export function ConfiguracoesClient({ initialSettings }: ConfiguracoesClientProp
                             </div>
                         </CardContent>
                     </Card>
+                </TabsContent>
+
+                {/* Recursos Avançados / Feature Flags */}
+                <TabsContent value="recursos" className="space-y-4 mt-6">
+                    <FeatureFlagsSection />
                 </TabsContent>
             </Tabs>
 
