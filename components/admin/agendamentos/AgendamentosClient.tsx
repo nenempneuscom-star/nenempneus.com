@@ -44,9 +44,36 @@ interface AgendamentosClientProps {
 
 export function AgendamentosClient({ initialAgendamentos }: AgendamentosClientProps) {
     const router = useRouter()
-    const [agendamentos] = useState(initialAgendamentos)
+    const [agendamentos, setAgendamentos] = useState(initialAgendamentos)
     const [detalhesAberto, setDetalhesAberto] = useState(false)
     const [agendamentoSelecionado, setAgendamentoSelecionado] = useState<any>(null)
+    const [cancelando, setCancelando] = useState<string | null>(null)
+
+    const handleCancelarAgendamento = async (id: string) => {
+        if (!confirm('Tem certeza que deseja cancelar este agendamento?')) return
+
+        setCancelando(id)
+        try {
+            const res = await fetch(`/api/admin/agendamentos/${id}`, {
+                method: 'DELETE'
+            })
+
+            if (res.ok) {
+                // Atualizar lista localmente
+                setAgendamentos(agendamentos.map(ag =>
+                    ag.id === id ? { ...ag, status: 'cancelado' } : ag
+                ))
+                router.refresh()
+            } else {
+                const data = await res.json()
+                alert(data.error || 'Erro ao cancelar agendamento')
+            }
+        } catch (error) {
+            alert('Erro ao cancelar agendamento')
+        } finally {
+            setCancelando(null)
+        }
+    }
 
     // Agrupar por data
     const groupedAgendamentos: Record<string, any[]> = agendamentos.reduce((acc: Record<string, any[]>, ag) => {
@@ -187,15 +214,11 @@ export function AgendamentosClient({ initialAgendamentos }: AgendamentosClientPr
                                                                 <DropdownMenuSeparator />
                                                                 <DropdownMenuItem
                                                                     className="text-red-600 focus:text-red-600"
-                                                                    onClick={() => {
-                                                                        if (confirm('Tem certeza que deseja cancelar este agendamento?')) {
-                                                                            // TODO: Implementar cancelamento
-                                                                            console.log('Cancelar', ag.id)
-                                                                        }
-                                                                    }}
+                                                                    onClick={() => handleCancelarAgendamento(ag.id)}
+                                                                    disabled={cancelando === ag.id || ag.status === 'cancelado'}
                                                                 >
                                                                     <Ban className="h-4 w-4 mr-2" />
-                                                                    Cancelar
+                                                                    {cancelando === ag.id ? 'Cancelando...' : 'Cancelar'}
                                                                 </DropdownMenuItem>
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
