@@ -92,6 +92,44 @@ export function PedidosClient({ initialPedidos, total, pages }: PedidosClientPro
         }
     }
 
+    const handleExport = () => {
+        // Preparar dados para CSV
+        const csvData = initialPedidos.map(pedido => ({
+            'Nº Pedido': pedido.numero,
+            'Cliente': pedido.cliente.nome,
+            'Email': pedido.cliente.email || '',
+            'Telefone': pedido.cliente.telefone || '',
+            'Status': pedido.status,
+            'Data': formatDate(pedido.createdAt),
+            'Total': Number(pedido.total).toFixed(2)
+        }))
+
+        // Converter para CSV
+        if (csvData.length === 0) {
+            alert('Nenhum pedido para exportar')
+            return
+        }
+
+        const headers = Object.keys(csvData[0])
+        const csvContent = [
+            headers.join(','),
+            ...csvData.map(row => headers.map(header => `"${row[header as keyof typeof row]}"`).join(','))
+        ].join('\n')
+
+        // Criar blob e download
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+        const link = document.createElement('a')
+        const url = URL.createObjectURL(blob)
+
+        link.setAttribute('href', url)
+        link.setAttribute('download', `pedidos_${new Date().toISOString().split('T')[0]}.csv`)
+        link.style.visibility = 'hidden'
+
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
+
     return (
         <div className="space-y-4">
             {/* Filters & Actions */}
@@ -122,7 +160,7 @@ export function PedidosClient({ initialPedidos, total, pages }: PedidosClientPro
                     </Select>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline">
+                    <Button variant="outline" onClick={handleExport}>
                         <Download className="mr-2 h-4 w-4" />
                         Exportar
                     </Button>
