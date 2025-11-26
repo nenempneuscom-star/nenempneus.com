@@ -62,7 +62,7 @@ export async function GET() {
 
     // Adicionar validação de dados para categoria
     // Nota: As categorias devem corresponder aos slugs das categorias no banco de dados
-    worksheet.dataValidations.add('F3:F502', {
+    ;(worksheet as any).dataValidations.add('F3:F502', {
       type: 'list',
       allowBlank: false,
       formulae: ['"pneus,servicos,acessorios,baterias,oleos"'],
@@ -73,7 +73,7 @@ export async function GET() {
     })
 
     // Adicionar validação de dados para status
-    worksheet.dataValidations.add('G3:G502', {
+    ;(worksheet as any).dataValidations.add('G3:G502', {
       type: 'list',
       allowBlank: false,
       formulae: ['"ativo,inativo"'],
