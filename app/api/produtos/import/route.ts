@@ -9,6 +9,9 @@ import {
   type ProdutoImportData
 } from '@/lib/import-validation'
 
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 // POST /api/produtos/import
 export async function POST(request: NextRequest) {
   try {
