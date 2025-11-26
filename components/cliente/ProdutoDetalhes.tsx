@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -17,15 +17,31 @@ interface ProdutoDetalhesProps {
 export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
     const router = useRouter()
     const [quantidade, setQuantidade] = useState(1)
+    const [parcelasMaximas, setParcelasMaximas] = useState(12)
+    const [taxaJuros, setTaxaJuros] = useState(0)
     const { adicionarItem } = useCarrinhoStore()
 
     const specs = produto.specs as any
     const veiculos = produto.veiculos as any[]
 
-    // Parcelamento (valores de exemplo - devem vir do admin)
-    const parcelas = 12
-    const taxaJuros = 0 // Taxa de exemplo
-    const valorParcela = (Number(produto.preco) * quantidade) / parcelas
+    // Buscar configurações de parcelamento
+    useEffect(() => {
+        async function fetchSettings() {
+            try {
+                const res = await fetch('/api/settings')
+                if (res.ok) {
+                    const data = await res.json()
+                    setParcelasMaximas(data.parcelasMaximas || 12)
+                    setTaxaJuros(Number(data.taxaJuros) || 0)
+                }
+            } catch (error) {
+                console.error('Erro ao buscar settings:', error)
+            }
+        }
+        fetchSettings()
+    }, [])
+
+    const valorParcela = (Number(produto.preco) * quantidade) / parcelasMaximas
 
     const handleAdicionarCarrinho = () => {
         adicionarItem(
@@ -156,7 +172,7 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
                             </span>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                            ou {parcelas}x de {formatPrice(valorParcela)} {taxaJuros === 0 ? 'sem juros' : `(${taxaJuros}% a.m.)`}
+                            ou {parcelasMaximas}x de {formatPrice(valorParcela)} {taxaJuros === 0 ? 'sem juros' : `(${taxaJuros}% a.m.)`}
                         </div>
                     </div>
 
