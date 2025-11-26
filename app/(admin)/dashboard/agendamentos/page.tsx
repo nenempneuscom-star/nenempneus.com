@@ -2,6 +2,7 @@ import { getAgendamentos } from '@/lib/admin/agendamentos'
 import { AgendamentosClient } from '@/components/admin/agendamentos/AgendamentosClient'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
+import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,9 +30,11 @@ export default async function AgendamentosPage({ searchParams }: PageProps) {
                     <h2 className="text-3xl font-bold tracking-tight">Agendamentos</h2>
                     <p className="text-muted-foreground">Gerencie sua agenda de instalações e serviços.</p>
                 </div>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Novo Agendamento
+                <Button asChild>
+                    <Link href="/dashboard/agendamentos/novo">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Novo Agendamento
+                    </Link>
                 </Button>
             </div>
 
