@@ -3,9 +3,10 @@ import { db } from '@/lib/db'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params
     const pedidoNumero = params.id
 
     // Buscar pedido com todos os relacionamentos
