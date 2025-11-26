@@ -295,6 +295,8 @@ model Settings {
   formasPagamento   Json     @default("[\"pix\", \"cartao\"]") @map("formas_pagamento")
   modoPagamento     String   @default("hibrido") @map("modo_pagamento")
   descontoPix       Decimal  @default(5) @map("desconto_pix") @db.Decimal(5, 2)
+  parcelasMaximas   Int      @default(12) @map("parcelas_maximas")
+  taxaJuros         Decimal  @default(0) @map("taxa_juros") @db.Decimal(5, 2)
   modoBot           String   @default("comercial") @map("modo_bot")
   botAtivo          Boolean  @default(true) @map("bot_ativo")
   palavrasHumano    Json     @default("[\"atendente\", \"humano\"]") @map("palavras_humano")

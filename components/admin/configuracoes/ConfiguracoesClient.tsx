@@ -30,6 +30,8 @@ interface Settings {
     clientesPorSlot: number
     formasPagamento: string[]
     descontoPix: number
+    parcelasMaximas: number
+    taxaJuros: number
     botAtivo: boolean
     modoBot: string
 }
@@ -245,6 +247,75 @@ export function ConfiguracoesClient({ initialSettings }: ConfiguracoesClientProp
                             )}
                         </CardContent>
                     </Card>
+
+                    {/* Parcelamento */}
+                    {settings.formasPagamento.includes('cartao') && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <CreditCard className="h-5 w-5 text-primary" />
+                                    Parcelamento
+                                </CardTitle>
+                                <CardDescription>
+                                    Configure as opções de parcelamento no cartão de crédito.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <Label>Parcelas Máximas</Label>
+                                        <Select
+                                            value={String(settings.parcelasMaximas)}
+                                            onValueChange={(v) => handleChange('parcelasMaximas', Number(v))}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="1">À vista (sem parcelas)</SelectItem>
+                                                <SelectItem value="2">2x</SelectItem>
+                                                <SelectItem value="3">3x</SelectItem>
+                                                <SelectItem value="4">4x</SelectItem>
+                                                <SelectItem value="5">5x</SelectItem>
+                                                <SelectItem value="6">6x</SelectItem>
+                                                <SelectItem value="8">8x</SelectItem>
+                                                <SelectItem value="10">10x</SelectItem>
+                                                <SelectItem value="12">12x</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            Número máximo de parcelas oferecidas
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label>Taxa de Juros (% a.m.)</Label>
+                                        <div className="relative">
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                step="0.01"
+                                                value={settings.taxaJuros}
+                                                onChange={(e) => handleChange('taxaJuros', Number(e.target.value))}
+                                                className="pr-8"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">%</span>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            {settings.taxaJuros === 0 ? '✓ Sem juros' : `Taxa aplicada: ${settings.taxaJuros}% a.m.`}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <p className="text-sm text-blue-900">
+                                        <strong>Exemplo:</strong> Um produto de R$ 400,00 parcelado em {settings.parcelasMaximas}x {settings.taxaJuros === 0 ? 'sem juros' : `com ${settings.taxaJuros}% a.m. de juros`} = {settings.parcelasMaximas}x de R$ {(400 / settings.parcelasMaximas).toFixed(2)}
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </TabsContent>
 
                 {/* WhatsApp */}

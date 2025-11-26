@@ -19,6 +19,8 @@ export async function getSettings() {
     diasFuncionamento: settings.diasFuncionamento as number[],
     palavrasHumano: settings.palavrasHumano as string[],
     descontoPix: Number(settings.descontoPix),
+    parcelasMaximas: settings.parcelasMaximas || 12,
+    taxaJuros: Number(settings.taxaJuros) || 0,
   }
 }
 
@@ -35,6 +37,8 @@ export async function updateSettings(data: {
   clientesPorSlot?: number
   formasPagamento?: string[]
   descontoPix?: number
+  parcelasMaximas?: number
+  taxaJuros?: number
   botAtivo?: boolean
   modoBot?: string
 }) {
@@ -74,6 +78,14 @@ export async function updateSettings(data: {
 
   if (data.descontoPix !== undefined) {
     updateData.descontoPix = data.descontoPix
+  }
+
+  if (data.parcelasMaximas !== undefined) {
+    updateData.parcelasMaximas = data.parcelasMaximas
+  }
+
+  if (data.taxaJuros !== undefined) {
+    updateData.taxaJuros = data.taxaJuros
   }
 
   if (data.botAtivo !== undefined) {
