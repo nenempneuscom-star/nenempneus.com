@@ -1,6 +1,5 @@
 'use client'
 
-import { Metadata } from 'next'
 import { Shield, Award, TrendingDown, Users, MapPin, Clock } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -47,7 +46,7 @@ export default function SobrePage() {
                 <div className={`relative container mx-auto px-4 text-center transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
                     }`}>
                     <h1 className="text-4xl md:text-6xl font-bold mb-6">
-                        Sobre a <span className="text-primary">Neném Pneus</span>
+                        Sobre a <span className="text-primary">NenemPneus.com</span>
                     </h1>
                     <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
                         Há mais de 20 anos no mercado, somos referência em pneus seminovos inspecionados em Capivari de Baixo e região

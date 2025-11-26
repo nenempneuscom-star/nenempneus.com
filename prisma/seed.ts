@@ -16,7 +16,7 @@ async function main() {
         update: {},
         create: {
             slug: 'nenem-pneus',
-            nome: 'Neném Pneus',
+            nome: 'NenemPneus.com',
             email: 'contato@nenempneus.com',
             whatsapp: '5548999973889',
             telefone: '(48) 99997-3889',
@@ -197,7 +197,7 @@ async function main() {
         update: {},
         create: {
             lojaId: loja.id,
-            nome: 'Admin Neném',
+            nome: 'Admin NenemPneus',
             email: 'admin@nenempneus.com',
             senhaHash: senhaHash,
             role: 'admin',

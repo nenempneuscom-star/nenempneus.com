@@ -53,7 +53,7 @@ export function Features() {
                 <div className={`text-center mb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
                     }`}>
                     <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                        Por que escolher a <span className="text-primary">Neném Pneus</span>?
+                        Por que escolher a <span className="text-primary">NenemPneus.com</span>?
                     </h2>
                     <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
                         Comprometidos com qualidade, segurança e o melhor atendimento para você
