@@ -22,6 +22,24 @@ export default function PedidoSucessoPage() {
                 if (!response.ok) throw new Error('Pedido não encontrado')
                 const data = await response.json()
                 setPedido(data.pedido)
+
+                // GTM Event: purchase
+                if (typeof window !== 'undefined' && (window as any).dataLayer) {
+                    (window as any).dataLayer.push({
+                        event: 'purchase',
+                        ecommerce: {
+                            transaction_id: data.pedido.numero,
+                            value: data.pedido.total,
+                            currency: 'BRL',
+                            items: data.pedido.items?.map((item: any) => ({
+                                item_id: item.produto.id,
+                                item_name: item.produto.nome,
+                                price: item.precoUnitario,
+                                quantity: item.quantidade
+                            })) || []
+                        }
+                    })
+                }
             } catch (error) {
                 console.error(error)
             } finally {

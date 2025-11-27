@@ -246,7 +246,29 @@ export default function CarrinhoPage() {
                                         <span className="text-primary">{formatPrice(total)}</span>
                                     </div>
 
-                                    <Button asChild className="w-full" size="lg">
+                                    <Button
+                                        asChild
+                                        className="w-full"
+                                        size="lg"
+                                        onClick={() => {
+                                            // GTM Event: begin_checkout
+                                            if (typeof window !== 'undefined' && (window as any).dataLayer) {
+                                                (window as any).dataLayer.push({
+                                                    event: 'begin_checkout',
+                                                    ecommerce: {
+                                                        currency: 'BRL',
+                                                        value: total,
+                                                        items: items.map((item) => ({
+                                                            item_id: item.id,
+                                                            item_name: item.nome,
+                                                            price: item.preco,
+                                                            quantity: item.quantidade
+                                                        }))
+                                                    }
+                                                })
+                                            }
+                                        }}
+                                    >
                                         <Link href="/checkout">
                                             Finalizar Compra
                                             <ArrowRight className="ml-2 h-5 w-5" />

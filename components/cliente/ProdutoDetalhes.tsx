@@ -55,6 +55,25 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
             quantidade
         )
 
+        // GTM Event: add_to_cart
+        if (typeof window !== 'undefined' && (window as any).dataLayer) {
+            (window as any).dataLayer.push({
+                event: 'add_to_cart',
+                ecommerce: {
+                    currency: 'BRL',
+                    value: Number(produto.preco) * quantidade,
+                    items: [{
+                        item_id: produto.id,
+                        item_name: produto.nome,
+                        item_brand: specs.marca,
+                        item_category: produto.categoria.nome,
+                        price: Number(produto.preco),
+                        quantity: quantidade
+                    }]
+                }
+            })
+        }
+
         // Feedback com toast
         toast.success(`${quantidade} ${quantidade === 1 ? 'unidade' : 'unidades'} adicionada(s)!`, {
             description: produto.nome,
