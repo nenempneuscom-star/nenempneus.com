@@ -25,14 +25,14 @@ export function Footer() {
                         </p>
                         <div className="flex gap-4">
                             <Link
-                                href="https://facebook.com"
+                                href="https://www.facebook.com/share/17krnjq8AE/?mibextid=wwXIfr"
                                 target="_blank"
                                 className="hover:text-primary transition-colors"
                             >
                                 <Facebook className="h-5 w-5" />
                             </Link>
                             <Link
-                                href="https://instagram.com"
+                                href="https://www.instagram.com/nenem.pneus?igsh=cm4zb3FzemJrbnZk&utm_source=qr"
                                 target="_blank"
                                 className="hover:text-primary transition-colors"
                             >
