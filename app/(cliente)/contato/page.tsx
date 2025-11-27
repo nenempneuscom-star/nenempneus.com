@@ -14,7 +14,7 @@ const contatoInfo = [
     {
         icon: MessageSquare,
         title: 'WhatsApp',
-        value: LOJA_INFO.telefone,
+        value: LOJA_INFO.whatsappDisplay,
         description: 'Atendimento rápido',
         href: `https://wa.me/${LOJA_INFO.whatsapp}?text=${encodeURIComponent('Olá! Vim do site e gostaria de saber mais sobre os pneus.')}`,
         highlight: true

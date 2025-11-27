@@ -12,7 +12,7 @@ export function Footer() {
                     <div>
                         <Link href="/" className="inline-block mb-4">
                             <Image
-                                src="/logo.png"
+                                src="/logoT.png"
                                 alt="NenemPneus.com"
                                 width={150}
                                 height={50}
@@ -85,7 +85,7 @@ export function Footer() {
                                     className="flex items-center gap-2 text-green-600 hover:text-green-500 font-medium transition-colors"
                                 >
                                     <MessageCircle className="h-5 w-5" />
-                                    <span>{LOJA_INFO.telefone}</span>
+                                    <span>{LOJA_INFO.whatsappDisplay}</span>
                                 </Link>
                             </li>
                             <li className="flex items-start gap-2">

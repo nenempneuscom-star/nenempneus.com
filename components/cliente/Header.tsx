@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Phone } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
 import { LOJA_INFO, LOJA_NOME_DISPLAY, NAVEGACAO } from '@/lib/constants'
 import { CarrinhoSheet } from './CarrinhoSheet'
 
@@ -11,10 +11,14 @@ export function Header() {
             <div className="bg-primary text-primary-foreground">
                 <div className="container mx-auto px-4 py-2 flex items-center justify-between text-sm">
                     <div className="flex items-center gap-4">
-                        <span className="flex items-center gap-2">
-                            <Phone className="h-4 w-4" />
-                            {LOJA_INFO.telefone}
-                        </span>
+                        <Link
+                            href={`https://wa.me/${LOJA_INFO.whatsapp}`}
+                            target="_blank"
+                            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                        >
+                            <MessageCircle className="h-4 w-4" />
+                            {LOJA_INFO.whatsappDisplay}
+                        </Link>
                         <span>{LOJA_INFO.email}</span>
                     </div>
                     <div>
@@ -29,7 +33,7 @@ export function Header() {
                     {/* Logo */}
                     <Link href="/" className="flex items-center">
                         <Image
-                            src="/logo.png"
+                            src="/logoT.png"
                             alt="NenemPneus.com"
                             width={180}
                             height={60}
