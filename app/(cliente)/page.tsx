@@ -1,5 +1,7 @@
 import { Hero } from '@/components/cliente/Hero'
 import { Features } from '@/components/cliente/Features'
+import Depoimentos from '@/components/cliente/Depoimentos'
+import FAQ from '@/components/cliente/FAQ'
 import { ProdutoCard } from '@/components/cliente/ProdutoCard'
 import { getProdutosDestaque } from '@/lib/actions'
 import { Button } from '@/components/ui/button'
@@ -57,6 +59,12 @@ export default async function HomePage() {
                     </div>
                 )}
             </section>
+
+            {/* Depoimentos */}
+            <Depoimentos />
+
+            {/* FAQ */}
+            <FAQ />
 
             {/* CTA Final */}
             <section className="relative bg-gradient-to-br from-primary/90 to-primary text-primary-foreground py-20 overflow-hidden">

@@ -56,6 +56,11 @@ export function Footer() {
                                     Contato
                                 </Link>
                             </li>
+                            <li>
+                                <Link href="/garantia" className="hover:text-primary transition-colors">
+                                    Garantia
+                                </Link>
+                            </li>
                         </ul>
                     </div>
 
