@@ -19,6 +19,7 @@ export default function RootLayout({
     <html lang="pt-BR">
       <head>
         <GoogleTagManager />
+        <script src="https://sdk.mercadopago.com/js/v2" async />
       </head>
       <body className={inter.className}>
         <GoogleTagManagerNoScript />

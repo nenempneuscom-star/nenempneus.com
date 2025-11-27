@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
             )
         }
         const body = await req.json()
-        const { pedidoId, items, servicos = [], total } = body
+        const { pedidoId, items, servicos = [], total, payer, deviceId } = body
 
         // Criar array de items incluindo pneus e serviços
         const mpItems = [
@@ -23,6 +23,8 @@ export async function POST(req: NextRequest) {
             ...items.map((item: any) => ({
                 id: item.id,
                 title: item.nome,
+                description: `Pneu ${item.specs?.marca || ''} ${item.specs?.modelo || ''} - ${item.specs?.largura}/${item.specs?.perfil}R${item.specs?.aro}`.trim(),
+                category_id: 'vehicles',
                 quantity: item.quantidade,
                 unit_price: item.preco,
             })),
@@ -35,6 +37,8 @@ export async function POST(req: NextRequest) {
                 return {
                     id: servico.id,
                     title: descricao,
+                    description: descricao,
+                    category_id: 'services',
                     quantity: 1,
                     unit_price: servico.preco,
                 }
@@ -44,6 +48,14 @@ export async function POST(req: NextRequest) {
         const preference = await mercadoPagoPreference.create({
             body: {
                 items: mpItems,
+                payer: payer ? {
+                    name: payer.name,
+                    surname: payer.surname,
+                    email: payer.email,
+                    phone: payer.phone,
+                    identification: payer.identification,
+                    address: payer.address,
+                } : undefined,
                 back_urls: {
                     success: `${process.env.NEXT_PUBLIC_BASE_URL}/pedido/${pedidoId}/sucesso`,
                     failure: `${process.env.NEXT_PUBLIC_BASE_URL}/pedido/${pedidoId}/falha`,
@@ -53,6 +65,9 @@ export async function POST(req: NextRequest) {
                 notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/mercadopago`,
                 external_reference: pedidoId,
                 statement_descriptor: 'NENEM PNEUS',
+                metadata: deviceId ? {
+                    device_id: deviceId
+                } : undefined,
             },
         })
 

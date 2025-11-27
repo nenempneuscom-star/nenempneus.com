@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -14,6 +14,12 @@ import { criarPedido } from '@/lib/actions'
 import { useCarrinhoStore } from '@/lib/store/carrinho-store'
 import { Loader2 } from 'lucide-react'
 import { CalendarioAgendamento } from './CalendarioAgendamento'
+
+declare global {
+    interface Window {
+        MercadoPago: any
+    }
+}
 
 // Funções de formatação
 const formatarTelefone = (value: string) => {
@@ -59,6 +65,7 @@ export function CheckoutForm() {
     const { items, servicos, getSubtotal, getTotalServicos, getTotal, limparCarrinho } = useCarrinhoStore()
     const [loading, setLoading] = useState(false)
     const [agendamento, setAgendamento] = useState<{ data: string; hora: string } | null>(null)
+    const [deviceId, setDeviceId] = useState<string | null>(null)
 
     const {
         register,
@@ -67,6 +74,37 @@ export function CheckoutForm() {
     } = useForm<CheckoutFormData>({
         resolver: zodResolver(checkoutSchema),
     })
+
+    // Inicializar MercadoPago SDK para capturar device_id
+    useEffect(() => {
+        const initMercadoPago = async () => {
+            try {
+                if (typeof window !== 'undefined' && window.MercadoPago) {
+                    const mp = new window.MercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY, {
+                        locale: 'pt-BR'
+                    })
+
+                    // Capturar device_id
+                    await mp.getIdentificationTypes()
+                    if (mp.deviceId) {
+                        setDeviceId(mp.deviceId)
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao inicializar MercadoPago SDK:', error)
+            }
+        }
+
+        // Aguardar o script do MercadoPago carregar
+        if (typeof window !== 'undefined') {
+            if (window.MercadoPago) {
+                initMercadoPago()
+            } else {
+                window.addEventListener('load', initMercadoPago)
+                return () => window.removeEventListener('load', initMercadoPago)
+            }
+        }
+    }, [])
 
     const onSubmit = async (data: CheckoutFormData) => {
         setLoading(true)
@@ -124,6 +162,25 @@ export function CheckoutForm() {
                     items,
                     servicos,
                     total,
+                    deviceId: deviceId,
+                    payer: {
+                        name: data.nome.split(' ')[0],
+                        surname: data.nome.split(' ').slice(1).join(' ') || data.nome.split(' ')[0],
+                        email: data.email,
+                        phone: {
+                            area_code: data.telefone.replace(/\D/g, '').slice(0, 2),
+                            number: data.telefone.replace(/\D/g, '').slice(2),
+                        },
+                        identification: data.cpf ? {
+                            type: 'CPF',
+                            number: data.cpf.replace(/\D/g, ''),
+                        } : undefined,
+                        address: {
+                            zip_code: data.cep.replace(/\D/g, ''),
+                            street_name: data.endereco,
+                            street_number: data.numero,
+                        },
+                    },
                 }),
             })
 
