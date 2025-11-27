@@ -8,6 +8,10 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'NenemPneus.com - Pneus Seminovos de Qualidade',
   description: 'Pneus seminovos com até 50% de desconto. Garantia e segurança.',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({

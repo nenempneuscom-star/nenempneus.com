@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <!-- Vermelho da engrenagem -->
+    <linearGradient id="redGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#d32f2f"/>
+      <stop offset="50%" style="stop-color:#e53935"/>
+      <stop offset="100%" style="stop-color:#b71c1c"/>
+    </linearGradient>
+
+    <!-- Gradiente metálico -->
+    <linearGradient id="rimGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#707070"/>
+      <stop offset="50%" style="stop-color:#a0a0a0"/>
+      <stop offset="100%" style="stop-color:#606060"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background circular escuro -->
+  <circle cx="32" cy="32" r="30" fill="#1a1a1a"/>
+
+  <!-- Aro externo metálico -->
+  <circle cx="32" cy="32" r="28" fill="none" stroke="url(#rimGradient)" stroke-width="3"/>
+
+  <!-- Engrenagem vermelha (pneu com dentes) -->
+  <path transform="translate(32, 32)" d="
+    M 0 -22
+    L 4 -20 L 6 -24 L 10 -19 L 14 -22 L 15 -17 L 20 -16 L 17 -11 L 22 -7 L 19 -4
+    L 22 0 L 19 4 L 22 7 L 17 11 L 20 16 L 15 17 L 14 22 L 10 19 L 6 24 L 4 20
+    L 0 22
+    L -4 20 L -6 24 L -10 19 L -14 22 L -15 17 L -20 16 L -17 11 L -22 7 L -19 4
+    L -22 0 L -19 -4 L -22 -7 L -17 -11 L -20 -16 L -15 -17 L -14 -22 L -10 -19 L -6 -24 L -4 -20
+    Z
+  " fill="url(#redGradient)"/>
+
+  <!-- Centro da roda -->
+  <circle cx="32" cy="32" r="10" fill="#1c1c1c"/>
+  <circle cx="32" cy="32" r="10" fill="none" stroke="#404040" stroke-width="1"/>
+
+  <!-- Raios simplificados -->
+  <g stroke="#505050" stroke-width="1.5">
+    <line x1="32" y1="25" x2="32" y2="39"/>
+    <line x1="25" y1="32" x2="39" y2="32"/>
+  </g>
+
+  <!-- Centro -->
+  <circle cx="32" cy="32" r="3" fill="#303030"/>
+</svg>

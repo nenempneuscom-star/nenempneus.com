@@ -33,7 +33,7 @@ export function Header() {
                     {/* Logo */}
                     <Link href="/" className="flex items-center">
                         <Image
-                            src="/logoT.png"
+                            src="/logo.svg"
                             alt="NenemPneus.com"
                             width={180}
                             height={60}
