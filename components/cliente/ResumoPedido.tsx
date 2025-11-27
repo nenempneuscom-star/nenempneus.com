@@ -10,6 +10,7 @@ import {
 } from '@/lib/store/carrinho-store'
 import { formatPrice } from '@/lib/utils'
 import { Wrench } from 'lucide-react'
+import { SelosSeguranca } from './SelosSeguranca'
 
 export function ResumoPedido() {
     const { items, servicos, getSubtotal, getTotalItems, getTotalServicos, getTotal } = useCarrinhoStore()
@@ -88,6 +89,9 @@ export function ResumoPedido() {
                         <span className="text-primary">{formatPrice(total)}</span>
                     </div>
                 </div>
+
+                {/* Selos de Segurança */}
+                <SelosSeguranca />
             </CardContent>
         </Card>
     )

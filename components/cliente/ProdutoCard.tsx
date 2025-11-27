@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatPrice } from '@/lib/utils'
-import { ShoppingCart, Check, Zap } from 'lucide-react'
+import { ShoppingCart, Check, Zap, Flame, Tag } from 'lucide-react'
 import { useState } from 'react'
 import { useCarrinhoStore } from '@/lib/store/carrinho-store'
 import { toast } from 'sonner'
@@ -20,9 +20,10 @@ interface ProdutoCardProps {
     estoque: number
     specs: any
     imagemUrl?: string | null
+    destaque?: 'mais-vendido' | 'oferta' | null
 }
 
-export function ProdutoCard({ id, nome, slug, preco, estoque, specs, imagemUrl }: ProdutoCardProps) {
+export function ProdutoCard({ id, nome, slug, preco, estoque, specs, imagemUrl, destaque }: ProdutoCardProps) {
     const router = useRouter()
     const [isHovered, setIsHovered] = useState(false)
     const [adicionado, setAdicionado] = useState(false)
@@ -58,6 +59,20 @@ export function ProdutoCard({ id, nome, slug, preco, estoque, specs, imagemUrl }
                 <div className="relative aspect-square bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center p-8 overflow-hidden">
                     {/* Background decoration */}
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                    {/* Badge de Destaque */}
+                    {destaque === 'mais-vendido' && (
+                        <div className="absolute top-2 left-2 z-20 bg-orange-500 text-white px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 shadow-lg animate-pulse">
+                            <Flame className="h-3 w-3" />
+                            Mais Vendido
+                        </div>
+                    )}
+                    {destaque === 'oferta' && (
+                        <div className="absolute top-2 left-2 z-20 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 shadow-lg">
+                            <Tag className="h-3 w-3" />
+                            Oferta
+                        </div>
+                    )}
 
                     {imagemUrl ? (
                         /* Imagem real do produto */
