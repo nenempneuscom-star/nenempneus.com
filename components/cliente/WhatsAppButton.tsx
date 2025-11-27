@@ -2,6 +2,7 @@
 
 import { MessageCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { LOJA_INFO } from '@/lib/constants'
 
 export default function WhatsAppButton() {
     const [isVisible, setIsVisible] = useState(false)
@@ -13,9 +14,8 @@ export default function WhatsAppButton() {
     }, [])
 
     const handleClick = () => {
-        const phoneNumber = '5548999999999' // SUBSTITUIR pelo número real
         const message = 'Olá! Vim do site e gostaria de saber mais sobre os pneus.'
-        const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`
+        const url = `https://wa.me/${LOJA_INFO.whatsapp}?text=${encodeURIComponent(message)}`
         window.open(url, '_blank')
     }
 

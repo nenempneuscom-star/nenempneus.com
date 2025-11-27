@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Facebook, Instagram, MapPin, Phone, Mail } from 'lucide-react'
+import { Facebook, Instagram, MapPin, MessageCircle, Mail } from 'lucide-react'
 import { LOJA_INFO, LOJA_NOME_COMPLETO } from '@/lib/constants'
 
 export function Footer() {
@@ -77,6 +77,17 @@ export function Footer() {
                     <div>
                         <h3 className="text-lg font-bold mb-4">Contato</h3>
                         <ul className="space-y-3 text-sm">
+                            {/* WhatsApp - Principal */}
+                            <li>
+                                <Link
+                                    href={`https://wa.me/${LOJA_INFO.whatsapp}?text=${encodeURIComponent('Olá! Vim do site e gostaria de saber mais sobre os pneus.')}`}
+                                    target="_blank"
+                                    className="flex items-center gap-2 text-green-600 hover:text-green-500 font-medium transition-colors"
+                                >
+                                    <MessageCircle className="h-5 w-5" />
+                                    <span>{LOJA_INFO.telefone}</span>
+                                </Link>
+                            </li>
                             <li className="flex items-start gap-2">
                                 <MapPin className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                                 <span>
@@ -85,13 +96,9 @@ export function Footer() {
                                     CEP: {LOJA_INFO.cep}
                                 </span>
                             </li>
-                            <li className="flex items-center gap-2">
-                                <Phone className="h-5 w-5 text-primary" />
-                                <span>{LOJA_INFO.telefone}</span>
-                            </li>
-                            <li className="flex items-center gap-2">
-                                <Mail className="h-5 w-5 text-primary" />
-                                <span>{LOJA_INFO.email}</span>
+                            <li className="flex items-center gap-2 text-muted-foreground/70">
+                                <Mail className="h-5 w-5" />
+                                <span className="text-xs">{LOJA_INFO.email}</span>
                             </li>
                         </ul>
                     </div>

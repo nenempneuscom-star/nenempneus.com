@@ -1,6 +1,6 @@
 'use client'
 
-import { Phone, Mail, MapPin, Send, MessageSquare } from 'lucide-react'
+import { Mail, MapPin, Send, MessageSquare } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -12,28 +12,24 @@ import { LOJA_INFO } from '@/lib/constants'
 
 const contatoInfo = [
     {
-        icon: Phone,
-        title: 'Telefone',
-        value: LOJA_INFO.telefone,
-        description: 'Ligue para nós'
-    },
-    {
         icon: MessageSquare,
         title: 'WhatsApp',
         value: LOJA_INFO.telefone,
-        description: 'Chat direto'
-    },
-    {
-        icon: Mail,
-        title: 'E-mail',
-        value: LOJA_INFO.email,
-        description: 'Envie uma mensagem'
+        description: 'Atendimento rápido',
+        href: `https://wa.me/${LOJA_INFO.whatsapp}?text=${encodeURIComponent('Olá! Vim do site e gostaria de saber mais sobre os pneus.')}`,
+        highlight: true
     },
     {
         icon: MapPin,
         title: 'Endereço',
         value: `${LOJA_INFO.endereco}, ${LOJA_INFO.bairro}`,
         description: `${LOJA_INFO.cidade}/${LOJA_INFO.estado} - CEP: ${LOJA_INFO.cep}`
+    },
+    {
+        icon: Mail,
+        title: 'E-mail',
+        value: LOJA_INFO.email,
+        description: 'Para assuntos formais'
     }
 ]
 
@@ -66,32 +62,50 @@ export default function ContatoPage() {
 
             {/* Informações de Contato */}
             <section className="container mx-auto px-4 py-16 -mt-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
                     {contatoInfo.map((item, index) => {
                         const Icon = item.icon
+                        const content = (
+                            <CardContent className="p-6 text-center">
+                                <div className={`mb-4 inline-flex p-4 rounded-full transition-all duration-300 ${item.highlight
+                                    ? 'bg-green-500/20 group-hover:bg-green-500/30 group-hover:scale-110'
+                                    : 'bg-primary/10 group-hover:bg-primary/20 group-hover:scale-110'
+                                    }`}>
+                                    <Icon className={`h-6 w-6 ${item.highlight ? 'text-green-600' : 'text-primary'}`} />
+                                </div>
+                                <h3 className={`font-semibold text-lg mb-1 transition-colors ${item.highlight
+                                    ? 'text-green-600 group-hover:text-green-500'
+                                    : 'group-hover:text-primary'
+                                    }`}>
+                                    {item.title}
+                                </h3>
+                                <p className="text-sm font-medium text-foreground mb-1">
+                                    {item.value}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    {item.description}
+                                </p>
+                            </CardContent>
+                        )
+
                         return (
                             <Card
                                 key={index}
-                                className={`group hover:border-primary/50 transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/10 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-                                    }`}
+                                className={`group transition-all duration-500 hover:-translate-y-2 hover:shadow-xl ${item.highlight
+                                    ? 'border-green-500/50 hover:border-green-500 hover:shadow-green-500/20'
+                                    : 'hover:border-primary/50 hover:shadow-primary/10'
+                                    } ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
                                 style={{
                                     transitionDelay: isVisible ? `${200 + index * 100}ms` : '0ms'
                                 }}
                             >
-                                <CardContent className="p-6 text-center">
-                                    <div className="mb-4 inline-flex p-4 rounded-full bg-primary/10 group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
-                                        <Icon className="h-6 w-6 text-primary" />
-                                    </div>
-                                    <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
-                                        {item.title}
-                                    </h3>
-                                    <p className="text-sm font-medium text-foreground mb-1">
-                                        {item.value}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {item.description}
-                                    </p>
-                                </CardContent>
+                                {item.href ? (
+                                    <Link href={item.href} target="_blank">
+                                        {content}
+                                    </Link>
+                                ) : (
+                                    content
+                                )}
                             </Card>
                         )
                     })}
