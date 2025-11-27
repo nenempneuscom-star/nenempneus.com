@@ -51,7 +51,7 @@ export default function ContatoPage() {
 
                 <div className={`relative container mx-auto px-4 text-center transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
                     }`}>
-                    <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                    <h1 className="text-4xl md:text-6xl font-bold mb-6 title-logo-style">
                         Entre em <span className="text-primary">Contato</span>
                     </h1>
                     <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
@@ -117,9 +117,9 @@ export default function ContatoPage() {
                 <div className="max-w-2xl mx-auto">
                     <div className={`transition-all duration-1000 delay-600 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
                         }`}>
-                        <Card className="border-primary/20">
+                        <Card className="border-primary/20 card-metallic">
                             <CardContent className="p-8">
-                                <h2 className="text-3xl font-bold mb-2 text-center">Envie uma Mensagem</h2>
+                                <h2 className="text-3xl font-bold mb-2 text-center title-logo-style">Envie uma Mensagem</h2>
                                 <p className="text-muted-foreground text-center mb-8">
                                     Preencha o formulário abaixo e entraremos em contato em breve
                                 </p>

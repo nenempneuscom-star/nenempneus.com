@@ -6,9 +6,9 @@ import { CarrinhoSheet } from './CarrinhoSheet'
 
 export function Header() {
     return (
-        <header className="border-b">
+        <header className="border-b border-border/50">
             {/* Top bar */}
-            <div className="bg-primary text-primary-foreground">
+            <div className="bg-gradient-to-r from-primary via-primary to-primary/90 text-primary-foreground">
                 <div className="container mx-auto px-4 py-2 flex items-center justify-between text-sm">
                     <div className="flex items-center gap-4">
                         <Link
@@ -48,9 +48,10 @@ export function Header() {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className="text-sm font-medium hover:text-primary transition-colors"
+                                className="text-sm font-medium hover:text-primary transition-colors relative group"
                             >
                                 {item.nome}
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
                             </Link>
                         ))}
                     </nav>

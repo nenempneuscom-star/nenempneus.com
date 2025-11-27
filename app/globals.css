@@ -10,8 +10,8 @@
     --popover: 0 0% 12%;
     --popover-foreground: 0 0% 98%;
 
-    /* NenemPneus.com Primary: #E63946 (Vermelho) - HSL: 355° 78% 56% */
-    --primary: 355 78% 56%;
+    /* NenemPneus.com Primary: #D32F2F (Vermelho da Logo) - HSL: 0° 65% 51% */
+    --primary: 0 65% 51%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary: Preto suave */
@@ -20,13 +20,20 @@
 
     --muted: 0 0% 18%;
     --muted-foreground: 0 0% 70%;
-    --accent: 0 0% 18%;
-    --accent-foreground: 0 0% 98%;
+
+    /* Accent: Prata metálico da logo */
+    --accent: 0 0% 75%;
+    --accent-foreground: 0 0% 10%;
+
+    /* Metallic: Gradiente metálico inspirado na logo */
+    --metallic: 0 0% 85%;
+    --metallic-dark: 0 0% 45%;
+
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 355 78% 56%;
+    --ring: 0 65% 51%;
     --radius: 0.5rem;
   }
 
@@ -37,19 +44,21 @@
     --card-foreground: 0 0% 98%;
     --popover: 0 0% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 355 78% 56%;
+    --primary: 0 65% 51%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 14.9%;
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 14.9%;
     --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 0 0% 75%;
+    --accent-foreground: 0 0% 10%;
+    --metallic: 0 0% 85%;
+    --metallic-dark: 0 0% 45%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
-    --ring: 355 78% 56%;
+    --ring: 0 65% 51%;
   }
 
   * {
@@ -110,4 +119,171 @@
 .animate-gradient {
   background-size: 200% auto;
   animation: gradient 3s ease infinite;
+}
+
+/* ========================================
+   HARMONIZAÇÃO COM A LOGO - NenemPneus.com
+   ======================================== */
+
+/* Efeito Metálico/Prata (inspirado no texto da logo) */
+.text-metallic {
+  background: linear-gradient(
+    180deg,
+    hsl(0, 0%, 95%) 0%,
+    hsl(0, 0%, 70%) 25%,
+    hsl(0, 0%, 85%) 50%,
+    hsl(0, 0%, 60%) 75%,
+    hsl(0, 0%, 80%) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Borda metálica */
+.border-metallic {
+  border-image: linear-gradient(
+    90deg,
+    hsl(0, 0%, 45%),
+    hsl(0, 0%, 85%),
+    hsl(0, 0%, 45%)
+  ) 1;
+}
+
+/* Linha decorativa vermelha (inspirada na linha da logo) */
+.line-accent {
+  position: relative;
+}
+
+.line-accent::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, hsl(var(--primary)), transparent);
+  border-radius: 2px;
+}
+
+.line-accent-center::after {
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary)), transparent);
+}
+
+/* Engrenagem decorativa (background sutil) */
+.gear-pattern {
+  position: relative;
+}
+
+.gear-pattern::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -100px;
+  transform: translateY(-50%);
+  width: 200px;
+  height: 200px;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%23ffffff' d='M50 10 L55 25 L70 20 L65 35 L80 40 L65 50 L80 60 L65 65 L70 80 L55 75 L50 90 L45 75 L30 80 L35 65 L20 60 L35 50 L20 40 L35 35 L30 20 L45 25 Z'/%3E%3Ccircle cx='50' cy='50' r='15' fill='none' stroke='%23ffffff' stroke-width='3'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+/* Animação de rotação suave para engrenagens */
+@keyframes gear-rotate {
+  from {
+    transform: translateY(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+.gear-pattern-animated::before {
+  animation: gear-rotate 30s linear infinite;
+}
+
+/* Gradiente metálico para backgrounds */
+.bg-metallic-gradient {
+  background: linear-gradient(
+    135deg,
+    hsl(0, 0%, 20%) 0%,
+    hsl(0, 0%, 30%) 25%,
+    hsl(0, 0%, 15%) 50%,
+    hsl(0, 0%, 25%) 75%,
+    hsl(0, 0%, 18%) 100%
+  );
+}
+
+/* Efeito de brilho metálico em hover */
+.metallic-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.metallic-shine::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.metallic-shine:hover::before {
+  left: 100%;
+}
+
+/* Títulos com estilo da logo */
+.title-logo-style {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+/* Separador com linha vermelha (como na logo) */
+.separator-red {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.separator-red::before,
+.separator-red::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary)), transparent);
+}
+
+/* Card com borda metálica sutil */
+.card-metallic {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
+    linear-gradient(135deg, hsl(0, 0%, 30%), hsl(0, 0%, 50%), hsl(0, 0%, 30%)) border-box;
+}
+
+/* Botão com efeito metálico */
+.btn-metallic {
+  background: linear-gradient(
+    180deg,
+    hsl(0, 0%, 85%) 0%,
+    hsl(0, 0%, 65%) 50%,
+    hsl(0, 0%, 75%) 100%
+  );
+  color: hsl(0, 0%, 10%);
+  border: 1px solid hsl(0, 0%, 50%);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
 }

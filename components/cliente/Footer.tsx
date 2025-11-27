@@ -5,7 +5,7 @@ import { LOJA_INFO, LOJA_NOME_COMPLETO } from '@/lib/constants'
 
 export function Footer() {
     return (
-        <footer className="bg-secondary text-secondary-foreground mt-auto">
+        <footer className="bg-secondary text-secondary-foreground mt-auto bg-metallic-gradient">
             <div className="container mx-auto px-4 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Sobre */}
@@ -43,7 +43,7 @@ export function Footer() {
 
                     {/* Links */}
                     <div>
-                        <h3 className="text-lg font-bold mb-4">Links Úteis</h3>
+                        <h3 className="text-lg font-bold mb-4 line-accent">Links Úteis</h3>
                         <ul className="space-y-2 text-sm">
                             <li>
                                 <Link href="/" className="hover:text-primary transition-colors">
@@ -75,7 +75,7 @@ export function Footer() {
 
                     {/* Contato */}
                     <div>
-                        <h3 className="text-lg font-bold mb-4">Contato</h3>
+                        <h3 className="text-lg font-bold mb-4 line-accent">Contato</h3>
                         <ul className="space-y-3 text-sm">
                             {/* WhatsApp - Principal */}
                             <li>

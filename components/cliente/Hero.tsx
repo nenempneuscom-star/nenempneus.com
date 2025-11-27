@@ -25,12 +25,12 @@ export function Hero() {
             <div className="relative container mx-auto px-4 py-24 md:py-32">
                 <div className={`max-w-4xl mx-auto text-center transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
                     }`}>
-                    <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+                    <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight title-logo-style">
                         <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary to-primary/60 animate-gradient">
                             Pneus Seminovos
                         </span>
                         <br />
-                        <span className="text-foreground">de Qualidade</span>
+                        <span className="text-metallic">de Qualidade</span>
                     </h1>
 
                     <p className={`text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
@@ -63,7 +63,7 @@ export function Hero() {
                             size="lg"
                             variant="outline"
                             asChild
-                            className="hover:scale-105 hover:bg-primary/10 hover:border-primary transition-all duration-300"
+                            className="hover:scale-105 hover:bg-primary/10 hover:border-primary transition-all duration-300 metallic-shine"
                         >
                             <Link href="/contato">
                                 Fale Conosco

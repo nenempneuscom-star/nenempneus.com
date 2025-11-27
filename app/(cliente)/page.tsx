@@ -20,11 +20,14 @@ export default async function HomePage() {
             <Features />
 
             {/* Produtos Destaque */}
-            <section className="container mx-auto px-4 py-20">
+            <section className="container mx-auto px-4 py-20 gear-pattern overflow-hidden">
                 <div className="text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4 title-logo-style">
                         Produtos em <span className="text-primary">Destaque</span>
                     </h2>
+                    <div className="separator-red max-w-md mx-auto mb-4">
+                        <span className="text-muted-foreground text-sm">QUALIDADE GARANTIDA</span>
+                    </div>
                     <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
                         Confira nossas melhores ofertas de pneus seminovos com qualidade garantida
                     </p>
@@ -68,7 +71,7 @@ export default async function HomePage() {
             <FAQ />
 
             {/* CTA Final */}
-            <section className="relative bg-gradient-to-br from-primary/90 to-primary text-primary-foreground py-20 overflow-hidden">
+            <section className="relative bg-gradient-to-br from-primary/90 to-primary text-primary-foreground py-20 overflow-hidden gear-pattern gear-pattern-animated">
                 {/* Decorative elements */}
                 <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-10 right-10 w-64 h-64 bg-white rounded-full blur-3xl" />
@@ -76,7 +79,7 @@ export default async function HomePage() {
                 </div>
 
                 <div className="relative container mx-auto px-4 text-center">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 title-logo-style">
                         Encontre o Pneu Ideal para seu Veículo
                     </h2>
                     <p className="text-lg md:text-xl mb-8 opacity-90 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-150">
@@ -87,7 +90,7 @@ export default async function HomePage() {
                         size="lg"
                         variant="secondary"
                         asChild
-                        className="animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300 hover:scale-105 transition-all hover:shadow-xl"
+                        className="animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300 hover:scale-105 transition-all hover:shadow-xl metallic-shine"
                     >
                         <Link href="/catalogo">
                             Ver Catálogo Completo

@@ -51,7 +51,7 @@ export function ProdutoCard({ id, nome, slug, preco, estoque, specs, imagemUrl, 
 
     return (
         <Card
-            className="group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-2"
+            className="group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-2 card-metallic metallic-shine"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
