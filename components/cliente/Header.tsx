@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Phone } from 'lucide-react'
 import { LOJA_INFO, LOJA_NOME_DISPLAY, NAVEGACAO } from '@/lib/constants'
 import { CarrinhoSheet } from './CarrinhoSheet'
@@ -26,12 +27,15 @@ export function Header() {
             <div className="container mx-auto px-4 py-4">
                 <div className="flex items-center justify-between">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2">
-                        <div className="text-2xl font-bold">
-                            <span className="text-primary">Nenem</span>
-                            <span className="text-foreground">Pneus</span>
-                            <span className="text-primary">.com</span>
-                        </div>
+                    <Link href="/" className="flex items-center">
+                        <Image
+                            src="/logo.png"
+                            alt="NenemPneus.com"
+                            width={180}
+                            height={60}
+                            className="h-12 w-auto"
+                            priority
+                        />
                     </Link>
 
                     {/* Navigation */}

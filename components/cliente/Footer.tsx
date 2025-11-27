@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Facebook, Instagram, MapPin, Phone, Mail } from 'lucide-react'
 import { LOJA_INFO, LOJA_NOME_COMPLETO } from '@/lib/constants'
 
@@ -9,7 +10,15 @@ export function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Sobre */}
                     <div>
-                        <h3 className="text-lg font-bold mb-4">{LOJA_NOME_COMPLETO}</h3>
+                        <Link href="/" className="inline-block mb-4">
+                            <Image
+                                src="/logo.png"
+                                alt="NenemPneus.com"
+                                width={150}
+                                height={50}
+                                className="h-10 w-auto"
+                            />
+                        </Link>
                         <p className="text-sm text-muted-foreground mb-4">
                             Pneus seminovos de qualidade com até 50% de desconto.
                             Garantia e segurança para você e sua família.
