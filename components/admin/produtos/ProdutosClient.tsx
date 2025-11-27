@@ -205,7 +205,21 @@ export function ProdutosClient({
       })
 
       if (response.ok) {
+        const data = await response.json()
         setModalAberto(false)
+
+        // Atualizar lista local imediatamente
+        if (produtoEditando) {
+          // Edição: atualizar produto existente
+          setProdutos(prev => prev.map(p =>
+            p.id === produtoEditando.id ? { ...p, ...data.produto } : p
+          ))
+        } else {
+          // Criação: adicionar novo produto
+          setProdutos(prev => [data.produto, ...prev])
+        }
+
+        // Refresh para garantir sincronização
         router.refresh()
       } else {
         const data = await response.json()
