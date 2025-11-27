@@ -12,7 +12,7 @@ export function Footer() {
                     <div>
                         <Link href="/" className="inline-block mb-4">
                             <Image
-                                src="/logo.svg"
+                                src="/logoT.png"
                                 alt="NenemPneus.com"
                                 width={150}
                                 height={50}
