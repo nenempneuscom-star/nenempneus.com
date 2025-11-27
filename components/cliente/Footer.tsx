@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Facebook, Instagram, MapPin, MessageCircle, Mail } from 'lucide-react'
+import { Facebook, Instagram, MapPin, MessageCircle, Mail, Lock } from 'lucide-react'
 import { LOJA_INFO, LOJA_NOME_COMPLETO } from '@/lib/constants'
 
 export function Footer() {
@@ -108,7 +108,14 @@ export function Footer() {
             {/* Bottom bar */}
             <div className="border-t border-border">
                 <div className="container mx-auto px-4 py-4">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                    <div className="flex items-center gap-4">
+                        <Link
+                            href="/login"
+                            className="text-muted-foreground/30 hover:text-muted-foreground/50 transition-colors"
+                            title="Área restrita"
+                        >
+                            <Lock className="h-3 w-3" />
+                        </Link>
                         <div className="text-center md:text-left">
                             <p className="text-sm text-muted-foreground">
                                 © {new Date().getFullYear()} {LOJA_INFO.razaoSocial}
@@ -117,12 +124,6 @@ export function Footer() {
                                 CNPJ: {LOJA_INFO.cnpj}
                             </p>
                         </div>
-                        <Link
-                            href="/login"
-                            className="text-xs text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors"
-                        >
-                            Área restrita
-                        </Link>
                     </div>
                 </div>
             </div>
