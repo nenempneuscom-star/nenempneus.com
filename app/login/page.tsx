@@ -70,7 +70,6 @@ export default function LoginPage() {
                                 <Input
                                     id="email"
                                     type="email"
-                                    placeholder="admin@nenempneus.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="pl-10"
@@ -87,7 +86,6 @@ export default function LoginPage() {
                                 <Input
                                     id="senha"
                                     type="password"
-                                    placeholder="••••••••"
                                     value={senha}
                                     onChange={(e) => setSenha(e.target.value)}
                                     className="pl-10"
