@@ -53,8 +53,27 @@ export async function POST(request: NextRequest) {
         // Email de confirmação para o cliente
         await resend.emails.send({
             from: 'NenemPneus.com <contato@nenempneus.com>',
+            replyTo: 'contato@nenempneus.com',
             to: [email],
             subject: 'Recebemos sua mensagem - NenemPneus.com',
+            text: `Olá ${nome},
+
+Recebemos sua mensagem e ela é muito importante para nós.
+Responderemos em até 24 horas úteis.
+
+Enquanto isso, explore nosso catálogo com até 50% de desconto!
+https://nenempneus.com/catalogo
+
+Precisa de resposta rápida? Fale conosco pelo WhatsApp:
+https://wa.me/554831991212
+
+--
+NenemPneus.com
+HANDERSON FRANCISCO LTDA
+CNPJ: 36.985.207/0001-00
+Av. Nereu Ramos, 740, Sala 01
+Capivari de Baixo - SC
+`,
             html: `
                 <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#1a1a1a;padding:20px;">
                     <table width="100%" cellspacing="0" cellpadding="0" border="0">
