@@ -1,6 +1,6 @@
 'use client'
 
-import { Mail, MapPin, Send, MessageSquare } from 'lucide-react'
+import { Mail, MapPin, Send, MessageSquare, Loader2, CheckCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -35,10 +35,61 @@ const contatoInfo = [
 
 export default function ContatoPage() {
     const [isVisible, setIsVisible] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const [enviado, setEnviado] = useState(false)
+    const [erro, setErro] = useState('')
+
+    const [formData, setFormData] = useState({
+        nome: '',
+        telefone: '',
+        email: '',
+        assunto: '',
+        mensagem: ''
+    })
 
     useEffect(() => {
         setIsVisible(true)
     }, [])
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setFormData(prev => ({
+            ...prev,
+            [e.target.id]: e.target.value
+        }))
+    }
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setLoading(true)
+        setErro('')
+
+        try {
+            const response = await fetch('/api/contato', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+
+            const data = await response.json()
+
+            if (data.success) {
+                setEnviado(true)
+                setFormData({
+                    nome: '',
+                    telefone: '',
+                    email: '',
+                    assunto: '',
+                    mensagem: ''
+                })
+            } else {
+                setErro(data.error || 'Erro ao enviar mensagem')
+            }
+        } catch {
+            setErro('Erro de conexão. Tente novamente.')
+        } finally {
+            setLoading(false)
+        }
+    }
 
     return (
         <div className="min-h-screen">
@@ -119,71 +170,123 @@ export default function ContatoPage() {
                         }`}>
                         <Card className="border-primary/20 card-metallic">
                             <CardContent className="p-8">
-                                <h2 className="text-3xl font-bold mb-2 text-center title-logo-style">Envie uma Mensagem</h2>
-                                <p className="text-muted-foreground text-center mb-8">
-                                    Preencha o formulário abaixo e entraremos em contato em breve
-                                </p>
-
-                                <form className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="nome">Nome *</Label>
-                                            <Input
-                                                id="nome"
-                                                placeholder="Seu nome completo"
-                                                className="transition-all duration-300 focus:scale-[1.02]"
-                                            />
+                                {enviado ? (
+                                    <div className="text-center py-8">
+                                        <div className="mx-auto w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
+                                            <CheckCircle className="h-8 w-8 text-green-500" />
                                         </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="telefone">Telefone *</Label>
-                                            <Input
-                                                id="telefone"
-                                                type="tel"
-                                                placeholder="(48) 9XXXX-XXXX"
-                                                className="transition-all duration-300 focus:scale-[1.02]"
-                                            />
-                                        </div>
+                                        <h2 className="text-2xl font-bold mb-2">Mensagem Enviada!</h2>
+                                        <p className="text-muted-foreground mb-6">
+                                            Recebemos sua mensagem e responderemos em breve.<br />
+                                            Verifique também sua caixa de entrada.
+                                        </p>
+                                        <Button onClick={() => setEnviado(false)} variant="outline">
+                                            Enviar outra mensagem
+                                        </Button>
                                     </div>
+                                ) : (
+                                    <>
+                                        <h2 className="text-3xl font-bold mb-2 text-center title-logo-style">Envie uma Mensagem</h2>
+                                        <p className="text-muted-foreground text-center mb-8">
+                                            Preencha o formulário abaixo e entraremos em contato em breve
+                                        </p>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email">E-mail *</Label>
-                                        <Input
-                                            id="email"
-                                            type="email"
-                                            placeholder="seu@email.com"
-                                            className="transition-all duration-300 focus:scale-[1.02]"
-                                        />
-                                    </div>
+                                        {erro && (
+                                            <div className="mb-6 p-4 bg-destructive/10 text-destructive rounded-lg text-sm text-center">
+                                                {erro}
+                                            </div>
+                                        )}
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="assunto">Assunto</Label>
-                                        <Input
-                                            id="assunto"
-                                            placeholder="Sobre o que deseja falar?"
-                                            className="transition-all duration-300 focus:scale-[1.02]"
-                                        />
-                                    </div>
+                                        <form onSubmit={handleSubmit} className="space-y-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="nome">Nome *</Label>
+                                                    <Input
+                                                        id="nome"
+                                                        value={formData.nome}
+                                                        onChange={handleChange}
+                                                        placeholder="Seu nome completo"
+                                                        className="transition-all duration-300 focus:scale-[1.02]"
+                                                        required
+                                                        disabled={loading}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="telefone">Telefone</Label>
+                                                    <Input
+                                                        id="telefone"
+                                                        type="tel"
+                                                        value={formData.telefone}
+                                                        onChange={handleChange}
+                                                        placeholder="(48) 9XXXX-XXXX"
+                                                        className="transition-all duration-300 focus:scale-[1.02]"
+                                                        disabled={loading}
+                                                    />
+                                                </div>
+                                            </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="mensagem">Mensagem *</Label>
-                                        <Textarea
-                                            id="mensagem"
-                                            placeholder="Digite sua mensagem aqui..."
-                                            rows={5}
-                                            className="transition-all duration-300 focus:scale-[1.02] resize-none"
-                                        />
-                                    </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="email">E-mail *</Label>
+                                                <Input
+                                                    id="email"
+                                                    type="email"
+                                                    value={formData.email}
+                                                    onChange={handleChange}
+                                                    placeholder="seu@email.com"
+                                                    className="transition-all duration-300 focus:scale-[1.02]"
+                                                    required
+                                                    disabled={loading}
+                                                />
+                                            </div>
 
-                                    <Button
-                                        type="submit"
-                                        size="lg"
-                                        className="w-full group relative overflow-hidden hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-primary/50"
-                                    >
-                                        <Send className="h-5 w-5 mr-2 group-hover:translate-x-1 transition-transform" />
-                                        <span className="relative z-10">Enviar Mensagem</span>
-                                        <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </Button>
-                                </form>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="assunto">Assunto</Label>
+                                                <Input
+                                                    id="assunto"
+                                                    value={formData.assunto}
+                                                    onChange={handleChange}
+                                                    placeholder="Sobre o que deseja falar?"
+                                                    className="transition-all duration-300 focus:scale-[1.02]"
+                                                    disabled={loading}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="mensagem">Mensagem *</Label>
+                                                <Textarea
+                                                    id="mensagem"
+                                                    value={formData.mensagem}
+                                                    onChange={handleChange}
+                                                    placeholder="Digite sua mensagem aqui..."
+                                                    rows={5}
+                                                    className="transition-all duration-300 focus:scale-[1.02] resize-none"
+                                                    required
+                                                    disabled={loading}
+                                                />
+                                            </div>
+
+                                            <Button
+                                                type="submit"
+                                                size="lg"
+                                                className="w-full group relative overflow-hidden hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-primary/50"
+                                                disabled={loading}
+                                            >
+                                                {loading ? (
+                                                    <>
+                                                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                                        Enviando...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Send className="h-5 w-5 mr-2 group-hover:translate-x-1 transition-transform" />
+                                                        <span className="relative z-10">Enviar Mensagem</span>
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </form>
+                                    </>
+                                )}
                             </CardContent>
                         </Card>
                     </div>
