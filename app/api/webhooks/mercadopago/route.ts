@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { mercadoPagoPayment } from '@/lib/mercadopago'
 import { db } from '@/lib/db'
 import crypto from 'crypto'
+import { enviarEmailConfirmacaoPedido } from '@/lib/email'
 
 function validateWebhookSignature(req: NextRequest, body: any): boolean {
     const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET
@@ -83,11 +84,20 @@ export async function POST(req: NextRequest) {
         }
 
         // Atualizar pedido
-        await db.pedido.update({
+        const pedidoAtualizado = await db.pedido.update({
             where: { numero: pedidoNumero },
             data: {
                 status: payment.status === 'approved' ? 'pago' : 'pendente',
             },
+            include: {
+                cliente: true,
+                items: {
+                    include: {
+                        produto: true
+                    }
+                },
+                agendamento: true
+            }
         })
 
         // Criar registro de pagamento
@@ -106,6 +116,49 @@ export async function POST(req: NextRequest) {
         })
 
         console.log('Pedido atualizado:', pedidoNumero, payment.status)
+
+        // Enviar email de confirmação quando pagamento aprovado
+        if (payment.status === 'approved' && pedidoAtualizado.cliente.email) {
+            try {
+                const agendamentoFormatado = pedidoAtualizado.agendamento ? {
+                    data: new Date(pedidoAtualizado.agendamento.data).toLocaleDateString('pt-BR', {
+                        weekday: 'long',
+                        day: '2-digit',
+                        month: 'long'
+                    }),
+                    hora: new Date(pedidoAtualizado.agendamento.hora).toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })
+                } : undefined
+
+                await enviarEmailConfirmacaoPedido({
+                    numero: pedidoAtualizado.numero,
+                    cliente: {
+                        nome: pedidoAtualizado.cliente.nome,
+                        email: pedidoAtualizado.cliente.email,
+                        telefone: pedidoAtualizado.cliente.telefone || undefined
+                    },
+                    items: pedidoAtualizado.items.map(item => ({
+                        nome: item.produto.nome,
+                        quantidade: item.quantidade,
+                        precoUnit: Number(item.precoUnit),
+                        subtotal: Number(item.subtotal),
+                        imagemUrl: item.produto.imagemUrl || undefined
+                    })),
+                    subtotal: Number(pedidoAtualizado.subtotal),
+                    desconto: Number(pedidoAtualizado.desconto),
+                    total: Number(pedidoAtualizado.total),
+                    agendamento: agendamentoFormatado,
+                    createdAt: pedidoAtualizado.createdAt
+                })
+
+                console.log('Email de confirmação enviado para:', pedidoAtualizado.cliente.email)
+            } catch (emailError) {
+                console.error('Erro ao enviar email de confirmação:', emailError)
+                // Não falha o webhook se o email falhar
+            }
+        }
 
         return NextResponse.json({ success: true })
     } catch (error: any) {
