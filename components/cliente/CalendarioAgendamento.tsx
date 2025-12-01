@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SeletorHorario } from './SeletorHorario'
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
-import { format, addDays, startOfWeek, addWeeks, isSameDay } from 'date-fns'
+import { format, addDays, startOfWeek, addWeeks, isSameDay, isBefore, startOfDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 interface CalendarioAgendamentoProps {
@@ -13,7 +13,10 @@ interface CalendarioAgendamentoProps {
 }
 
 export function CalendarioAgendamento({ onSelecionarDataHora }: CalendarioAgendamentoProps) {
-    const [semanaAtual, setSemanaAtual] = useState(startOfWeek(new Date(), { weekStartsOn: 0 }))
+    // Iniciar na semana que contém o dia de hoje
+    const hoje = new Date()
+    const inicioSemanaHoje = startOfWeek(hoje, { weekStartsOn: 0 })
+    const [semanaAtual, setSemanaAtual] = useState(inicioSemanaHoje)
     const [dataSelecionada, setDataSelecionada] = useState<Date | null>(null)
     const [horarioSelecionado, setHorarioSelecionado] = useState<string | null>(null)
     const [slots, setSlots] = useState<any[]>([])
@@ -81,10 +84,11 @@ export function CalendarioAgendamento({ onSelecionarDataHora }: CalendarioAgenda
                         variant="outline"
                         size="sm"
                         onClick={() => setSemanaAtual(addWeeks(semanaAtual, -1))}
+                        disabled={isBefore(addWeeks(semanaAtual, -1), startOfWeek(new Date(), { weekStartsOn: 0 }))}
                     >
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <span className="font-medium">
+                    <span className="font-medium capitalize">
                         {format(semanaAtual, 'MMMM yyyy', { locale: ptBR })}
                     </span>
                     <Button
@@ -99,9 +103,11 @@ export function CalendarioAgendamento({ onSelecionarDataHora }: CalendarioAgenda
                 {/* Dias da Semana */}
                 <div className="grid grid-cols-7 gap-2">
                     {diasSemana.map((dia) => {
-                        const isHoje = isSameDay(dia, new Date())
+                        const agora = new Date()
+                        const isHoje = isSameDay(dia, agora)
                         const isSelecionado = dataSelecionada && isSameDay(dia, dataSelecionada)
-                        const isPassado = dia < new Date() && !isHoje
+                        // Dia passado = antes de hoje (comparando apenas datas, não horas)
+                        const isPassado = isBefore(startOfDay(dia), startOfDay(agora))
 
                         return (
                             <Button

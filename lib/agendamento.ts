@@ -1,5 +1,4 @@
-import { addDays, format, parse, setHours, setMinutes } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { format, isSameDay } from 'date-fns'
 import { db } from './db'
 import { LOJA_SLUG } from './constants'
 
@@ -105,6 +104,11 @@ export async function getSlotsDisponiveis(data: Date): Promise<SlotHorario[]> {
         },
     })
 
+    // Verificar se é hoje para filtrar horários passados
+    const agora = new Date()
+    const isHoje = isSameDay(data, agora)
+    const horaAtualMinutos = agora.getHours() * 60 + agora.getMinutes()
+
     // Mapear disponibilidade
     return horarios.map((hora) => {
         const agendamentosNaHora = agendamentos.filter(
@@ -113,9 +117,20 @@ export async function getSlotsDisponiveis(data: Date): Promise<SlotHorario[]> {
 
         const vagas = settings.clientesPorSlot - agendamentosNaHora
 
+        // Se for hoje, verificar se o horário já passou
+        let disponivel = vagas > 0
+        if (isHoje) {
+            const [horaSlot, minutoSlot] = hora.split(':').map(Number)
+            const slotMinutos = horaSlot * 60 + minutoSlot
+            // Bloquear horários que já passaram (com 30 min de antecedência)
+            if (slotMinutos <= horaAtualMinutos + 30) {
+                disponivel = false
+            }
+        }
+
         return {
             hora,
-            disponivel: vagas > 0,
+            disponivel,
             vagas,
         }
     })

@@ -66,14 +66,39 @@ export function CheckoutForm() {
     const [loading, setLoading] = useState(false)
     const [agendamento, setAgendamento] = useState<{ data: string; hora: string } | null>(null)
     const [deviceId, setDeviceId] = useState<string | null>(null)
+    const [buscandoCep, setBuscandoCep] = useState(false)
 
     const {
         register,
         handleSubmit,
+        setValue,
         formState: { errors },
     } = useForm<CheckoutFormData>({
         resolver: zodResolver(checkoutSchema),
     })
+
+    // Função para buscar CEP via ViaCEP
+    const buscarCep = async (cep: string) => {
+        const cepLimpo = cep.replace(/\D/g, '')
+        if (cepLimpo.length !== 8) return
+
+        setBuscandoCep(true)
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
+            const data = await response.json()
+
+            if (!data.erro) {
+                setValue('endereco', data.logradouro || '')
+                setValue('bairro', data.bairro || '')
+                setValue('cidade', data.localidade || '')
+                setValue('estado', data.uf || '')
+            }
+        } catch (error) {
+            console.error('Erro ao buscar CEP:', error)
+        } finally {
+            setBuscandoCep(false)
+        }
+    }
 
     // Inicializar MercadoPago SDK para capturar device_id
     useEffect(() => {
@@ -274,16 +299,28 @@ export function CheckoutForm() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <Label htmlFor="cep">CEP *</Label>
-                            <Input
-                                id="cep"
-                                {...register('cep')}
-                                placeholder="00000-000"
-                                onChange={(e) => {
-                                    e.target.value = formatarCEP(e.target.value)
-                                    register('cep').onChange(e)
-                                }}
-                                maxLength={9}
-                            />
+                            <div className="relative">
+                                <Input
+                                    id="cep"
+                                    {...register('cep')}
+                                    placeholder="00000-000"
+                                    onChange={(e) => {
+                                        const formatted = formatarCEP(e.target.value)
+                                        e.target.value = formatted
+                                        register('cep').onChange(e)
+                                        // Buscar CEP quando tiver 8 dígitos
+                                        if (formatted.replace(/\D/g, '').length === 8) {
+                                            buscarCep(formatted)
+                                        }
+                                    }}
+                                    maxLength={9}
+                                />
+                                {buscandoCep && (
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                    </div>
+                                )}
+                            </div>
                             {errors.cep && (
                                 <p className="text-sm text-destructive mt-1">{errors.cep.message}</p>
                             )}
