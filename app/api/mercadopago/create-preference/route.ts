@@ -20,14 +20,24 @@ export async function POST(req: NextRequest) {
         // Criar array de items incluindo pneus e serviços
         const mpItems = [
             // Pneus
-            ...items.map((item: any) => ({
-                id: item.id,
-                title: item.nome,
-                description: `Pneu ${item.specs?.marca || ''} ${item.specs?.modelo || ''} - ${item.specs?.largura}/${item.specs?.perfil}R${item.specs?.aro}`.trim(),
-                category_id: 'vehicles',
-                quantity: item.quantidade,
-                unit_price: item.preco,
-            })),
+            ...items.map((item: any) => {
+                // Montar descrição apenas se specs existir e tiver os campos necessários
+                let descricao = item.nome
+                if (item.specs?.largura && item.specs?.perfil && item.specs?.aro) {
+                    const marca = item.specs.marca || ''
+                    const modelo = item.specs.modelo || ''
+                    descricao = `Pneu ${marca} ${modelo} - ${item.specs.largura}/${item.specs.perfil}R${item.specs.aro}`.trim()
+                }
+
+                return {
+                    id: item.id,
+                    title: item.nome,
+                    description: descricao,
+                    category_id: 'vehicles',
+                    quantity: item.quantidade,
+                    unit_price: item.preco,
+                }
+            }),
             // Serviços adicionais
             ...servicos.map((servico: any) => {
                 const descricao = servico.id === 'geometria'
