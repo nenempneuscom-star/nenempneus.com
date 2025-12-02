@@ -38,6 +38,41 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 
+// Função para extrair hora de forma consistente (ignora problemas de timezone)
+function formatarHora(hora: any): string {
+    if (!hora) return '--:--'
+
+    // Se for string, extrair HH:mm diretamente
+    if (typeof hora === 'string') {
+        // Formato ISO: "1970-01-01T08:00:00.000Z" ou "08:00:00" ou "08:00"
+        const match = hora.match(/(\d{2}):(\d{2})/)
+        if (match) {
+            return `${match[1]}:${match[2]}`
+        }
+    }
+
+    // Se tiver toISOString (Date ou objeto com essa propriedade)
+    if (hora && typeof hora.toISOString === 'function') {
+        // Extrair do ISO string para evitar conversão de timezone
+        const iso = hora.toISOString()
+        const match = iso.match(/T(\d{2}):(\d{2})/)
+        if (match) {
+            return `${match[1]}:${match[2]}`
+        }
+    }
+
+    // Último recurso: tentar converter e formatar
+    try {
+        const d = new Date(hora)
+        // Usar getUTCHours/getUTCMinutes para ignorar timezone local
+        const h = String(d.getUTCHours()).padStart(2, '0')
+        const m = String(d.getUTCMinutes()).padStart(2, '0')
+        return `${h}:${m}`
+    } catch {
+        return '--:--'
+    }
+}
+
 interface AgendamentosClientProps {
     initialAgendamentos: any[]
 }
@@ -75,9 +110,17 @@ export function AgendamentosClient({ initialAgendamentos }: AgendamentosClientPr
         }
     }
 
-    // Agrupar por data
+    // Agrupar por data (extraindo data diretamente da string ISO para evitar problemas de timezone)
     const groupedAgendamentos: Record<string, any[]> = agendamentos.reduce((acc: Record<string, any[]>, ag) => {
-        const dateKey = format(new Date(ag.data), 'yyyy-MM-dd')
+        // Extrair apenas a parte da data (yyyy-MM-dd) da string ISO
+        let dateKey: string
+        if (typeof ag.data === 'string') {
+            // Pode ser "2024-11-30" ou "2024-11-30T00:00:00.000Z"
+            dateKey = ag.data.substring(0, 10)
+        } else {
+            // Se for Date object, usar toISOString para evitar problemas de timezone
+            dateKey = new Date(ag.data).toISOString().substring(0, 10)
+        }
         if (!acc[dateKey]) acc[dateKey] = []
         acc[dateKey].push(ag)
         return acc
@@ -138,11 +181,7 @@ export function AgendamentosClient({ initialAgendamentos }: AgendamentosClientPr
                                         {/* Time Column */}
                                         <div className="flex flex-col items-center pt-1">
                                             <span className="text-sm font-bold text-muted-foreground">
-                                                {ag.hora instanceof Date
-                                                    ? format(ag.hora, 'HH:mm')
-                                                    : typeof ag.hora === 'string'
-                                                        ? ag.hora.substring(0, 5)
-                                                        : format(new Date(ag.hora), 'HH:mm')}
+                                                {formatarHora(ag.hora)}
                                             </span>
                                             <div className="h-full w-px bg-border mt-2 group-last:hidden" />
                                         </div>
@@ -154,7 +193,7 @@ export function AgendamentosClient({ initialAgendamentos }: AgendamentosClientPr
                                                     <div className="space-y-3">
                                                         {/* Header: Name & Status */}
                                                         <div className="flex items-center gap-3 flex-wrap">
-                                                            <h4 className="font-bold text-lg text-gray-900 dark:text-gray-100">
+                                                            <h4 className="font-bold text-lg text-foreground">
                                                                 {ag.cliente.nome}
                                                             </h4>
                                                             <Badge variant="secondary" className={cn("font-medium", status.bg, status.text)}>
@@ -303,13 +342,7 @@ export function AgendamentosClient({ initialAgendamentos }: AgendamentosClientPr
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Clock className="h-4 w-4 text-primary/70" />
-                                        <span>
-                                            {agendamentoSelecionado.hora instanceof Date
-                                                ? format(agendamentoSelecionado.hora, 'HH:mm')
-                                                : typeof agendamentoSelecionado.hora === 'string'
-                                                    ? agendamentoSelecionado.hora.substring(0, 5)
-                                                    : format(new Date(agendamentoSelecionado.hora), 'HH:mm')}
-                                        </span>
+                                        <span>{formatarHora(agendamentoSelecionado.hora)}</span>
                                     </div>
                                 </div>
                             </div>
