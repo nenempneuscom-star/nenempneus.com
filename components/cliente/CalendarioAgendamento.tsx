@@ -89,7 +89,8 @@ export function CalendarioAgendamento({ onSelecionarDataHora }: CalendarioAgenda
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <span className="font-medium capitalize">
-                        {format(semanaAtual, 'MMMM yyyy', { locale: ptBR })}
+                        {/* Mostrar o mês baseado no meio da semana para evitar mostrar mês errado */}
+                        {format(addDays(semanaAtual, 3), 'MMMM yyyy', { locale: ptBR })}
                     </span>
                     <Button
                         variant="outline"
