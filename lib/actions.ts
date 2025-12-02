@@ -40,6 +40,7 @@ export async function getProdutos(filtros?: {
     perfil?: string
     precoMin?: number
     precoMax?: number
+    medidas?: string[] // Múltiplas medidas no formato "175/70/14"
 }) {
     try {
         const loja = await db.loja.findUnique({
@@ -83,6 +84,18 @@ export async function getProdutos(filtros?: {
         }
         if (filtros?.perfil) {
             produtos = produtos.filter((p: any) => String(p.specs?.perfil) === String(filtros.perfil))
+        }
+
+        // Filtrar por múltiplas medidas (busca por veículo)
+        if (filtros?.medidas && filtros.medidas.length > 0) {
+            produtos = produtos.filter((p: any) => {
+                const specs = p.specs
+                if (!specs?.largura || !specs?.perfil || !specs?.aro) return false
+
+                // Verificar se a medida do produto está na lista de medidas compatíveis
+                const medidaProduto = `${specs.largura}/${specs.perfil}/${specs.aro}`
+                return filtros.medidas!.some(medida => medida === medidaProduto)
+            })
         }
 
         return produtos

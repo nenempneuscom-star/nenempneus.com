@@ -8,7 +8,7 @@ import { BuscaVeiculo } from '@/components/cliente/BuscaVeiculo'
 import { getProdutos, getMarcas, getAros } from '@/lib/actions'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { X } from 'lucide-react'
+import { X, Car } from 'lucide-react'
 
 function CatalogoContent() {
     const searchParams = useSearchParams()
@@ -18,19 +18,41 @@ function CatalogoContent() {
     const [aros, setAros] = useState<string[]>([])
     const [loading, setLoading] = useState(true)
     const [medidaFiltrada, setMedidaFiltrada] = useState<string | null>(null)
+    const [veiculoFiltrado, setVeiculoFiltrado] = useState<string | null>(null)
+    const [medidasVeiculo, setMedidasVeiculo] = useState<string[]>([])
 
     useEffect(() => {
         // Ler filtros da URL
         const largura = searchParams.get('largura')
         const perfil = searchParams.get('perfil')
         const aro = searchParams.get('aro')
+        const medidas = searchParams.get('medidas')
+        const veiculo = searchParams.get('veiculo')
 
         const filtros: any = {}
+
+        // Filtro por medida única (formato antigo)
         if (largura) filtros.largura = largura
         if (perfil) filtros.perfil = perfil
         if (aro) filtros.aro = aro
 
-        // Mostrar medida selecionada
+        // Filtro por múltiplas medidas (vindo da busca por veículo)
+        if (medidas) {
+            const medidasArray = medidas.split(',')
+            setMedidasVeiculo(medidasArray)
+            filtros.medidas = medidasArray
+        } else {
+            setMedidasVeiculo([])
+        }
+
+        // Veículo selecionado
+        if (veiculo) {
+            setVeiculoFiltrado(veiculo)
+        } else {
+            setVeiculoFiltrado(null)
+        }
+
+        // Mostrar medida selecionada (formato antigo)
         if (largura && perfil && aro) {
             setMedidaFiltrada(`${largura}/${perfil}R${aro}`)
         } else {
@@ -69,8 +91,41 @@ function CatalogoContent() {
                     Encontre o pneu ideal para seu veículo. Temos mais de {produtos.length} opções disponíveis.
                 </p>
 
-                {/* Mostrar medida filtrada */}
-                {medidaFiltrada && (
+                {/* Mostrar veículo filtrado */}
+                {veiculoFiltrado && (
+                    <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-2">
+                                <Car className="h-5 w-5 text-primary" />
+                                <span className="font-medium">Pneus para: {veiculoFiltrado}</span>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => router.push('/catalogo')}
+                            >
+                                <X className="h-4 w-4 mr-1" />
+                                Limpar filtro
+                            </Button>
+                        </div>
+                        {medidasVeiculo.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                                <span className="text-sm text-muted-foreground">Medidas compatíveis:</span>
+                                {medidasVeiculo.map((medida) => {
+                                    const [largura, perfil, aro] = medida.split('/')
+                                    return (
+                                        <Badge key={medida} variant="secondary" className="text-xs">
+                                            {largura}/{perfil}R{aro}
+                                        </Badge>
+                                    )
+                                })}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Mostrar medida filtrada (formato antigo) */}
+                {medidaFiltrada && !veiculoFiltrado && (
                     <div className="mt-4 flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">Filtrando por:</span>
                         <Badge variant="secondary" className="text-sm flex items-center gap-1">
