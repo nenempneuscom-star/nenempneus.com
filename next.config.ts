@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Evitar redirects em rotas de API (necessário para webhooks externos)
+  skipTrailingSlashRedirect: true,
 };
 
 export default nextConfig;
