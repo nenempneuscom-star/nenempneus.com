@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
         hostname: 'kjsafjeeledmjikxkmrr.supabase.co',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'jvlpvmybrlvvifnkmvnb.supabase.co',
+        pathname: '/**',
+      },
     ],
   },
   // Evitar redirects em rotas de API (necessário para webhooks externos)
