@@ -51,6 +51,7 @@ export default async function HomePage() {
                                     preco={Number(produto.preco)}
                                     estoque={produto.estoque}
                                     specs={produto.specs as any}
+                                    imagemUrl={produto.imagemUrl}
                                     destaque={index < 3 ? 'mais-vendido' : null}
                                 />
                             </div>

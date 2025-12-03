@@ -102,15 +102,25 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Imagem/Visualização */}
             <div>
-                <div className="relative aspect-square bg-muted rounded-lg flex items-center justify-center p-8">
-                    <div className="text-center">
-                        <div className="text-9xl font-bold text-primary mb-4">
-                            {specs.aro}"
+                <div className="relative aspect-square bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+                    {produto.imagemUrl ? (
+                        <>
+                            <img
+                                src={produto.imagemUrl}
+                                alt={produto.nome}
+                                className="w-full h-full object-cover"
+                            />
+                        </>
+                    ) : (
+                        <div className="text-center p-8">
+                            <div className="text-9xl font-bold text-primary mb-4">
+                                {specs.aro}"
+                            </div>
+                            <div className="text-2xl text-muted-foreground">
+                                {specs.largura}/{specs.perfil}R{specs.aro}
+                            </div>
                         </div>
-                        <div className="text-2xl text-muted-foreground">
-                            {specs.largura}/{specs.perfil}R{specs.aro}
-                        </div>
-                    </div>
+                    )}
                     {/* Aviso discreto */}
                     <span className="absolute bottom-3 left-3 text-[11px] text-muted-foreground/50">
                         *Imagem ilustrativa
