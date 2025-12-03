@@ -183,11 +183,11 @@ export default function PedidoSucessoPage() {
                     <CardContent className="space-y-2">
                         <div className="flex items-center gap-2 text-sm">
                             <Phone className="h-4 w-4 text-primary" />
-                            <span>(48) 9997-3889</span>
+                            <span>(48) 99997-3889</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm">
                             <Mail className="h-4 w-4 text-primary" />
-                            <span>handersonfrancisco55@gmail.com</span>
+                            <span>contato@nenempneus.com</span>
                         </div>
                     </CardContent>
                 </Card>
