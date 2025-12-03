@@ -1,154 +1,24 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Search, ChevronDown, Car, Loader2 } from 'lucide-react'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
+import { Search, Car, Loader2 } from 'lucide-react'
 import {
     getMarcas,
     getModelosByMarca,
     getAnosByMarcaModelo,
     getMedidasPneu
 } from '@/lib/data/veiculos-brasil'
-
-interface ComboboxProps {
-    label: string
-    value: string
-    onChange: (value: string) => void
-    options: string[]
-    placeholder: string
-    disabled?: boolean
-    loading?: boolean
-}
-
-// Componente Combobox reutilizável (permite digitar OU selecionar)
-function Combobox({ label, value, onChange, options, placeholder, disabled, loading }: ComboboxProps) {
-    const [isOpen, setIsOpen] = useState(false)
-    const [inputValue, setInputValue] = useState(value)
-    const [filteredOptions, setFilteredOptions] = useState(options)
-    const containerRef = useRef<HTMLDivElement>(null)
-    const inputRef = useRef<HTMLInputElement>(null)
-
-    // Atualizar inputValue quando value muda externamente
-    useEffect(() => {
-        setInputValue(value)
-    }, [value])
-
-    // Filtrar opções quando digita
-    useEffect(() => {
-        if (inputValue) {
-            const filtered = options.filter(opt =>
-                opt.toLowerCase().includes(inputValue.toLowerCase())
-            )
-            setFilteredOptions(filtered)
-        } else {
-            setFilteredOptions(options)
-        }
-    }, [inputValue, options])
-
-    // Fechar ao clicar fora
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-                setIsOpen(false)
-                // Se o valor digitado não está nas opções, limpar
-                if (inputValue && !options.some(opt => opt.toLowerCase() === inputValue.toLowerCase())) {
-                    // Tenta encontrar uma opção que começa com o que foi digitado
-                    const match = options.find(opt => opt.toLowerCase().startsWith(inputValue.toLowerCase()))
-                    if (match) {
-                        setInputValue(match)
-                        onChange(match)
-                    }
-                }
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside)
-        return () => document.removeEventListener('mousedown', handleClickOutside)
-    }, [inputValue, options, onChange])
-
-    const handleSelect = (option: string) => {
-        setInputValue(option)
-        onChange(option)
-        setIsOpen(false)
-    }
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newValue = e.target.value
-        setInputValue(newValue)
-        setIsOpen(true)
-
-        // Se encontrar uma correspondência exata, selecionar
-        const exactMatch = options.find(opt => opt.toLowerCase() === newValue.toLowerCase())
-        if (exactMatch) {
-            onChange(exactMatch)
-        } else {
-            // Limpar seleção se não for correspondência exata
-            if (value) {
-                onChange('')
-            }
-        }
-    }
-
-    const handleInputFocus = () => {
-        setIsOpen(true)
-        setFilteredOptions(options)
-    }
-
-    return (
-        <div className="space-y-2 relative" ref={containerRef}>
-            <Label>{label}</Label>
-            <div className="relative">
-                <input
-                    ref={inputRef}
-                    type="text"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pr-10"
-                    placeholder={placeholder}
-                    value={inputValue}
-                    onChange={handleInputChange}
-                    onFocus={handleInputFocus}
-                    disabled={disabled || loading}
-                    autoComplete="off"
-                />
-                <button
-                    type="button"
-                    className="absolute right-0 top-0 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-50"
-                    onClick={() => !disabled && !loading && setIsOpen(!isOpen)}
-                    disabled={disabled || loading}
-                >
-                    {loading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                    )}
-                </button>
-            </div>
-
-            {isOpen && filteredOptions.length > 0 && !disabled && (
-                <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto">
-                    {filteredOptions.map((option) => (
-                        <button
-                            key={option}
-                            type="button"
-                            className={`w-full px-3 py-2 text-left hover:bg-muted transition-colors text-sm ${option === value ? 'bg-muted font-medium' : ''
-                                }`}
-                            onClick={() => handleSelect(option)}
-                        >
-                            {option}
-                        </button>
-                    ))}
-                </div>
-            )}
-
-            {isOpen && filteredOptions.length === 0 && inputValue && !disabled && (
-                <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg p-3 text-sm text-muted-foreground">
-                    Nenhuma opção encontrada
-                </div>
-            )}
-        </div>
-    )
-}
 
 interface BuscaVeiculoProps {
     onBuscar?: (medidas: string[]) => void
@@ -245,31 +115,64 @@ export function BuscaVeiculo({ onBuscar }: BuscaVeiculoProps) {
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Combobox
-                        label="Marca"
-                        value={marca}
-                        onChange={setMarca}
-                        options={marcas}
-                        placeholder="Selecione a marca"
-                    />
+                    {/* Marca */}
+                    <div className="space-y-2">
+                        <Label>Marca</Label>
+                        <Select value={marca} onValueChange={setMarca}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecione a marca" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {marcas.map((m) => (
+                                    <SelectItem key={m} value={m}>
+                                        {m}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                    <Combobox
-                        label="Modelo"
-                        value={modelo}
-                        onChange={setModelo}
-                        options={modelos}
-                        placeholder={marca ? "Selecione o modelo" : "Primeiro selecione a marca"}
-                        disabled={!marca}
-                    />
+                    {/* Modelo */}
+                    <div className="space-y-2">
+                        <Label>Modelo</Label>
+                        <Select
+                            value={modelo}
+                            onValueChange={setModelo}
+                            disabled={!marca}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder={marca ? "Selecione o modelo" : "Primeiro selecione a marca"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {modelos.map((m) => (
+                                    <SelectItem key={m} value={m}>
+                                        {m}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                    <Combobox
-                        label="Ano"
-                        value={ano}
-                        onChange={setAno}
-                        options={anos}
-                        placeholder={modelo ? "Selecione o ano" : "Primeiro selecione o modelo"}
-                        disabled={!modelo}
-                    />
+                    {/* Ano */}
+                    <div className="space-y-2">
+                        <Label>Ano</Label>
+                        <Select
+                            value={ano}
+                            onValueChange={setAno}
+                            disabled={!modelo}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder={modelo ? "Selecione o ano" : "Primeiro selecione o modelo"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {anos.map((a) => (
+                                    <SelectItem key={a} value={a}>
+                                        {a}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
 
                 {/* Medidas encontradas */}
