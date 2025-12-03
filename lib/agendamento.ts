@@ -24,12 +24,23 @@ export async function getSettings() {
 export function gerarHorarios(
     inicio: string,
     fim: string,
-    intervalo: number
+    intervalo: number,
+    intervaloAlmoco?: { ativo: boolean; inicio: string; fim: string }
 ): string[] {
     const horarios: string[] = []
 
     const [horaInicio, minutoInicio] = inicio.split(':').map(Number)
     const [horaFim, minutoFim] = fim.split(':').map(Number)
+
+    // Converter intervalo de almoço para minutos
+    let intervaloInicioMinutos = 0
+    let intervaloFimMinutos = 0
+    if (intervaloAlmoco?.ativo && intervaloAlmoco.inicio && intervaloAlmoco.fim) {
+        const [hi, mi] = intervaloAlmoco.inicio.split(':').map(Number)
+        const [hf, mf] = intervaloAlmoco.fim.split(':').map(Number)
+        intervaloInicioMinutos = hi * 60 + mi
+        intervaloFimMinutos = hf * 60 + mf
+    }
 
     let horaAtual = horaInicio
     let minutoAtual = minutoInicio
@@ -38,9 +49,18 @@ export function gerarHorarios(
         horaAtual < horaFim ||
         (horaAtual === horaFim && minutoAtual < minutoFim)
     ) {
-        horarios.push(
-            `${String(horaAtual).padStart(2, '0')}:${String(minutoAtual).padStart(2, '0')}`
-        )
+        const horarioAtualMinutos = horaAtual * 60 + minutoAtual
+
+        // Verificar se está dentro do intervalo de almoço
+        const dentroIntervalo = intervaloAlmoco?.ativo &&
+            horarioAtualMinutos >= intervaloInicioMinutos &&
+            horarioAtualMinutos < intervaloFimMinutos
+
+        if (!dentroIntervalo) {
+            horarios.push(
+                `${String(horaAtual).padStart(2, '0')}:${String(minutoAtual).padStart(2, '0')}`
+            )
+        }
 
         minutoAtual += intervalo
         if (minutoAtual >= 60) {
@@ -86,11 +106,26 @@ export async function getSlotsDisponiveis(data: Date): Promise<SlotHorario[]> {
 
     if (!loja) return []
 
-    // Gerar horários do dia
+    // Verificar se o dia da semana está nos dias de funcionamento
+    const diaSemana = data.getDay() // 0 = domingo, 1 = segunda, etc
+    const diasFuncionamento = settings.diasFuncionamento as number[] || [1, 2, 3, 4, 5, 6]
+    if (!diasFuncionamento.includes(diaSemana)) {
+        return [] // Loja fechada neste dia
+    }
+
+    // Configurar intervalo de almoço
+    const intervaloAlmoco = {
+        ativo: settings.intervaloAtivo,
+        inicio: format(settings.intervaloInicio, 'HH:mm'),
+        fim: format(settings.intervaloFim, 'HH:mm'),
+    }
+
+    // Gerar horários do dia (excluindo intervalo de almoço)
     const horarios = gerarHorarios(
         format(settings.horarioInicio, 'HH:mm'),
         format(settings.horarioFim, 'HH:mm'),
-        settings.intervaloSlots
+        settings.intervaloSlots,
+        intervaloAlmoco
     )
 
     // Buscar agendamentos do dia

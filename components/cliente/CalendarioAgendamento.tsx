@@ -21,7 +21,24 @@ export function CalendarioAgendamento({ onSelecionarDataHora }: CalendarioAgenda
     const [horarioSelecionado, setHorarioSelecionado] = useState<string | null>(null)
     const [slots, setSlots] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
+    const [diasFuncionamento, setDiasFuncionamento] = useState<number[]>([1, 2, 3, 4, 5, 6])
     const horariosSectionRef = useRef<HTMLDivElement>(null)
+
+    // Carregar configuração de dias de funcionamento
+    useEffect(() => {
+        async function carregarConfig() {
+            try {
+                const response = await fetch('/api/agendamento/config')
+                const result = await response.json()
+                if (result.success) {
+                    setDiasFuncionamento(result.config.diasFuncionamento)
+                }
+            } catch (error) {
+                console.error('Erro ao carregar configuração:', error)
+            }
+        }
+        carregarConfig()
+    }, [])
 
     // Gerar dias da semana
     const diasSemana = Array.from({ length: 7 }, (_, i) => addDays(semanaAtual, i))
@@ -109,14 +126,17 @@ export function CalendarioAgendamento({ onSelecionarDataHora }: CalendarioAgenda
                         const isSelecionado = dataSelecionada && isSameDay(dia, dataSelecionada)
                         // Dia passado = antes de hoje (comparando apenas datas, não horas)
                         const isPassado = isBefore(startOfDay(dia), startOfDay(agora))
+                        // Verificar se é dia de funcionamento
+                        const diaSemana = dia.getDay() // 0 = domingo, 1 = segunda, etc
+                        const isFechado = !diasFuncionamento.includes(diaSemana)
 
                         return (
                             <Button
                                 key={dia.toString()}
                                 variant={isSelecionado ? 'default' : 'outline'}
-                                disabled={isPassado}
+                                disabled={isPassado || isFechado}
                                 onClick={() => handleSelecionarData(dia)}
-                                className="flex flex-col h-auto py-3"
+                                className={`flex flex-col h-auto py-3 ${isFechado ? 'opacity-40' : ''}`}
                             >
                                 <span className="text-xs text-muted-foreground">
                                     {format(dia, 'EEE', { locale: ptBR })}
@@ -124,6 +144,9 @@ export function CalendarioAgendamento({ onSelecionarDataHora }: CalendarioAgenda
                                 <span className="text-lg font-bold">
                                     {format(dia, 'dd')}
                                 </span>
+                                {isFechado && (
+                                    <span className="text-[10px] text-destructive">Fechado</span>
+                                )}
                             </Button>
                         )
                     })}

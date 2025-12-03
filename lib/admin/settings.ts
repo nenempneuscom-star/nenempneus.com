@@ -15,6 +15,8 @@ export async function getSettings() {
     ...settings,
     horarioInicio: formatTime(settings.horarioInicio),
     horarioFim: formatTime(settings.horarioFim),
+    intervaloInicio: formatTime(settings.intervaloInicio),
+    intervaloFim: formatTime(settings.intervaloFim),
     formasPagamento: settings.formasPagamento as string[],
     diasFuncionamento: settings.diasFuncionamento as number[],
     palavrasHumano: settings.palavrasHumano as string[],
@@ -35,6 +37,10 @@ export async function updateSettings(data: {
   horarioFim?: string
   intervaloSlots?: number
   clientesPorSlot?: number
+  diasFuncionamento?: number[]
+  intervaloAtivo?: boolean
+  intervaloInicio?: string
+  intervaloFim?: string
   formasPagamento?: string[]
   descontoPix?: number
   parcelasMaximas?: number
@@ -70,6 +76,24 @@ export async function updateSettings(data: {
 
   if (data.clientesPorSlot !== undefined) {
     updateData.clientesPorSlot = data.clientesPorSlot
+  }
+
+  if (data.diasFuncionamento !== undefined) {
+    updateData.diasFuncionamento = data.diasFuncionamento
+  }
+
+  if (data.intervaloAtivo !== undefined) {
+    updateData.intervaloAtivo = data.intervaloAtivo
+  }
+
+  if (data.intervaloInicio) {
+    const [hours, minutes] = data.intervaloInicio.split(':')
+    updateData.intervaloInicio = new Date(`1970-01-01T${hours}:${minutes}:00Z`)
+  }
+
+  if (data.intervaloFim) {
+    const [hours, minutes] = data.intervaloFim.split(':')
+    updateData.intervaloFim = new Date(`1970-01-01T${hours}:${minutes}:00Z`)
   }
 
   if (data.formasPagamento !== undefined) {

@@ -28,6 +28,10 @@ interface Settings {
     horarioFim: string
     intervaloSlots: number
     clientesPorSlot: number
+    diasFuncionamento: number[]
+    intervaloAtivo: boolean
+    intervaloInicio: string
+    intervaloFim: string
     formasPagamento: string[]
     descontoPix: number
     parcelasMaximas: number
@@ -35,6 +39,16 @@ interface Settings {
     botAtivo: boolean
     modoBot: string
 }
+
+const DIAS_SEMANA = [
+    { valor: 0, nome: 'Domingo', abrev: 'Dom' },
+    { valor: 1, nome: 'Segunda-feira', abrev: 'Seg' },
+    { valor: 2, nome: 'Terça-feira', abrev: 'Ter' },
+    { valor: 3, nome: 'Quarta-feira', abrev: 'Qua' },
+    { valor: 4, nome: 'Quinta-feira', abrev: 'Qui' },
+    { valor: 5, nome: 'Sexta-feira', abrev: 'Sex' },
+    { valor: 6, nome: 'Sábado', abrev: 'Sáb' },
+]
 
 interface ConfiguracoesClientProps {
     initialSettings: Settings
@@ -56,6 +70,14 @@ export function ConfiguracoesClient({ initialSettings }: ConfiguracoesClientProp
             ? current.filter(f => f !== forma)
             : [...current, forma]
         handleChange('formasPagamento', updated)
+    }
+
+    const handleDiaFuncionamentoToggle = (dia: number) => {
+        const current = settings.diasFuncionamento || []
+        const updated = current.includes(dia)
+            ? current.filter(d => d !== dia)
+            : [...current, dia].sort((a, b) => a - b)
+        handleChange('diasFuncionamento', updated)
     }
 
     const handleSave = async () => {
@@ -168,6 +190,104 @@ export function ConfiguracoesClient({ initialSettings }: ConfiguracoesClientProp
                                     </Select>
                                 </div>
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Dias de Funcionamento */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Calendar className="h-5 w-5 text-primary" />
+                                Dias de Funcionamento
+                            </CardTitle>
+                            <CardDescription>
+                                Selecione os dias da semana que a loja está aberta para agendamentos.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+                                {DIAS_SEMANA.map((dia) => {
+                                    const isAtivo = settings.diasFuncionamento?.includes(dia.valor)
+                                    return (
+                                        <button
+                                            key={dia.valor}
+                                            type="button"
+                                            onClick={() => handleDiaFuncionamentoToggle(dia.valor)}
+                                            className={`p-3 rounded-lg border text-center transition-all ${
+                                                isAtivo
+                                                    ? 'bg-primary text-primary-foreground border-primary'
+                                                    : 'bg-muted/30 text-muted-foreground border-border hover:border-primary/50'
+                                            }`}
+                                        >
+                                            <span className="block text-sm font-medium">{dia.abrev}</span>
+                                            <span className="block text-xs mt-1">
+                                                {isAtivo ? 'Aberto' : 'Fechado'}
+                                            </span>
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-4">
+                                Dias marcados como "Fechado" não aparecerão no calendário de agendamento do cliente.
+                            </p>
+                        </CardContent>
+                    </Card>
+
+                    {/* Horário de Intervalo/Almoço */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Clock className="h-5 w-5 text-primary" />
+                                Horário de Intervalo
+                            </CardTitle>
+                            <CardDescription>
+                                Configure um período de intervalo (ex: almoço) onde não haverá agendamentos.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
+                                <div className="space-y-0.5">
+                                    <Label className="text-base">Ativar Intervalo</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Bloquear horários durante o período de intervalo.
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={settings.intervaloAtivo}
+                                    onCheckedChange={(v) => handleChange('intervaloAtivo', v)}
+                                />
+                            </div>
+
+                            {settings.intervaloAtivo && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <Label>Início do Intervalo</Label>
+                                        <Input
+                                            type="time"
+                                            value={settings.intervaloInicio}
+                                            onChange={(e) => handleChange('intervaloInicio', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Fim do Intervalo</Label>
+                                        <Input
+                                            type="time"
+                                            value={settings.intervaloFim}
+                                            onChange={(e) => handleChange('intervaloFim', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {settings.intervaloAtivo && (
+                                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                                    <p className="text-sm text-amber-900">
+                                        <strong>Intervalo configurado:</strong> {settings.intervaloInicio} às {settings.intervaloFim}
+                                        <br />
+                                        <span className="text-xs">Os horários neste período não estarão disponíveis para agendamento.</span>
+                                    </p>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>
