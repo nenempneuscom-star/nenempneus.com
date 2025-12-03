@@ -48,30 +48,75 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-background via-background to-muted/50">
+            {/* Animated Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-yellow-500/5 animate-gradient-shift" />
+
             {/* Background Pattern */}
             <div className="absolute inset-0 gear-pattern opacity-30" />
 
-            {/* Animated Background Circles */}
+            {/* Animated Orbs */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-                <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/15 rounded-full blur-3xl animate-orb-1" />
+                <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-orb-2" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-yellow-500/5 rounded-full blur-3xl animate-orb-3" />
+                <div className="absolute top-20 left-1/4 w-64 h-64 bg-primary/8 rounded-full blur-3xl animate-orb-4" />
+                <div className="absolute bottom-20 right-1/4 w-72 h-72 bg-yellow-500/8 rounded-full blur-3xl animate-orb-5" />
+            </div>
+
+            {/* Floating Particles */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                {[...Array(30)].map((_, i) => (
+                    <div
+                        key={`particle-${i}`}
+                        className="absolute w-1 h-1 bg-primary/30 rounded-full animate-particle"
+                        style={{
+                            left: `${Math.random() * 100}%`,
+                            top: `${Math.random() * 100}%`,
+                            animationDelay: `${i * 0.3}s`,
+                            animationDuration: `${8 + Math.random() * 8}s`,
+                        }}
+                    />
+                ))}
+            </div>
+
+            {/* Floating Stars */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                {[...Array(15)].map((_, i) => (
+                    <div
+                        key={`star-${i}`}
+                        className="absolute animate-twinkle"
+                        style={{
+                            left: `${5 + Math.random() * 90}%`,
+                            top: `${5 + Math.random() * 90}%`,
+                            animationDelay: `${i * 0.4}s`,
+                        }}
+                    >
+                        <div className="w-2 h-2 bg-primary/40 rotate-45 transform" />
+                    </div>
+                ))}
             </div>
 
             {/* Floating Sparkles */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                {[...Array(6)].map((_, i) => (
+                {[...Array(8)].map((_, i) => (
                     <Sparkles
                         key={i}
-                        className="absolute text-primary/20 animate-float"
+                        className="absolute text-primary/25 animate-float"
                         style={{
-                            left: `${15 + i * 15}%`,
-                            top: `${20 + (i % 3) * 25}%`,
+                            left: `${10 + i * 12}%`,
+                            top: `${15 + (i % 4) * 20}%`,
                             animationDelay: `${i * 0.5}s`,
-                            fontSize: `${12 + i * 4}px`,
+                            fontSize: `${14 + i * 3}px`,
                         }}
                     />
                 ))}
+            </div>
+
+            {/* Moving Lines */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary to-transparent animate-line-1" />
+                <div className="absolute top-1/3 left-0 w-full h-px bg-gradient-to-r from-transparent via-yellow-500 to-transparent animate-line-2" />
+                <div className="absolute top-2/3 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary to-transparent animate-line-3" />
             </div>
 
             {/* Hero Message */}
@@ -235,6 +280,17 @@ export default function LoginPage() {
                     }
                 }
 
+                @keyframes gradient-shift {
+                    0%, 100% {
+                        opacity: 0.5;
+                        transform: scale(1) rotate(0deg);
+                    }
+                    50% {
+                        opacity: 1;
+                        transform: scale(1.1) rotate(2deg);
+                    }
+                }
+
                 @keyframes shine {
                     0% {
                         transform: translateX(-100%);
@@ -250,6 +306,128 @@ export default function LoginPage() {
                     20%, 40%, 60%, 80% { transform: translateX(5px); }
                 }
 
+                @keyframes orb-1 {
+                    0%, 100% {
+                        transform: translate(0, 0) scale(1);
+                        opacity: 0.15;
+                    }
+                    25% {
+                        transform: translate(-30px, 40px) scale(1.1);
+                        opacity: 0.25;
+                    }
+                    50% {
+                        transform: translate(-60px, 20px) scale(0.9);
+                        opacity: 0.2;
+                    }
+                    75% {
+                        transform: translate(-20px, -30px) scale(1.05);
+                        opacity: 0.18;
+                    }
+                }
+
+                @keyframes orb-2 {
+                    0%, 100% {
+                        transform: translate(0, 0) scale(1);
+                        opacity: 0.1;
+                    }
+                    33% {
+                        transform: translate(50px, -40px) scale(1.15);
+                        opacity: 0.2;
+                    }
+                    66% {
+                        transform: translate(30px, 50px) scale(0.95);
+                        opacity: 0.15;
+                    }
+                }
+
+                @keyframes orb-3 {
+                    0%, 100% {
+                        transform: translate(-50%, -50%) scale(1);
+                        opacity: 0.05;
+                    }
+                    50% {
+                        transform: translate(-50%, -50%) scale(1.2);
+                        opacity: 0.12;
+                    }
+                }
+
+                @keyframes orb-4 {
+                    0%, 100% {
+                        transform: translate(0, 0);
+                        opacity: 0.08;
+                    }
+                    50% {
+                        transform: translate(40px, 60px);
+                        opacity: 0.15;
+                    }
+                }
+
+                @keyframes orb-5 {
+                    0%, 100% {
+                        transform: translate(0, 0);
+                        opacity: 0.08;
+                    }
+                    50% {
+                        transform: translate(-50px, -40px);
+                        opacity: 0.12;
+                    }
+                }
+
+                @keyframes particle {
+                    0% {
+                        transform: translateY(0) translateX(0);
+                        opacity: 0;
+                    }
+                    10% {
+                        opacity: 0.6;
+                    }
+                    90% {
+                        opacity: 0.6;
+                    }
+                    100% {
+                        transform: translateY(-100vh) translateX(50px);
+                        opacity: 0;
+                    }
+                }
+
+                @keyframes twinkle {
+                    0%, 100% {
+                        opacity: 0.2;
+                        transform: scale(0.8) rotate(45deg);
+                    }
+                    50% {
+                        opacity: 0.8;
+                        transform: scale(1.2) rotate(45deg);
+                    }
+                }
+
+                @keyframes line-1 {
+                    0% {
+                        transform: translateX(-100%);
+                    }
+                    100% {
+                        transform: translateX(100%);
+                    }
+                }
+
+                @keyframes line-2 {
+                    0% {
+                        transform: translateX(100%);
+                    }
+                    100% {
+                        transform: translateX(-100%);
+                    }
+                }
+
+                @keyframes line-3 {
+                    0% {
+                        transform: translateX(-100%);
+                    }
+                    100% {
+                        transform: translateX(100%);
+                    }
+                }
+
                 .animate-float {
                     animation: float 4s ease-in-out infinite;
                 }
@@ -259,12 +437,56 @@ export default function LoginPage() {
                     animation: gradient-x 3s ease infinite;
                 }
 
+                .animate-gradient-shift {
+                    animation: gradient-shift 8s ease-in-out infinite;
+                }
+
                 .animate-shine {
                     animation: shine 3s ease-in-out infinite;
                 }
 
                 .animate-shake {
                     animation: shake 0.5s ease-in-out;
+                }
+
+                .animate-orb-1 {
+                    animation: orb-1 12s ease-in-out infinite;
+                }
+
+                .animate-orb-2 {
+                    animation: orb-2 15s ease-in-out infinite;
+                }
+
+                .animate-orb-3 {
+                    animation: orb-3 10s ease-in-out infinite;
+                }
+
+                .animate-orb-4 {
+                    animation: orb-4 18s ease-in-out infinite;
+                }
+
+                .animate-orb-5 {
+                    animation: orb-5 14s ease-in-out infinite;
+                }
+
+                .animate-particle {
+                    animation: particle 12s linear infinite;
+                }
+
+                .animate-twinkle {
+                    animation: twinkle 3s ease-in-out infinite;
+                }
+
+                .animate-line-1 {
+                    animation: line-1 8s linear infinite;
+                }
+
+                .animate-line-2 {
+                    animation: line-2 10s linear infinite;
+                }
+
+                .animate-line-3 {
+                    animation: line-3 12s linear infinite;
                 }
             `}</style>
         </div>
