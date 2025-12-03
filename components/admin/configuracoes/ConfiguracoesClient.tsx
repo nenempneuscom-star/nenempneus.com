@@ -23,12 +23,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/components/ui/use-toast'
 import { FeatureFlagsSection } from './FeatureFlagsSection'
 
+interface HorarioDia {
+    inicio: string
+    fim: string
+}
+
 interface Settings {
     horarioInicio: string
     horarioFim: string
     intervaloSlots: number
     clientesPorSlot: number
     diasFuncionamento: number[]
+    horariosPorDia: Record<string, HorarioDia> | null
     intervaloAtivo: boolean
     intervaloInicio: string
     intervaloFim: string
@@ -78,6 +84,55 @@ export function ConfiguracoesClient({ initialSettings }: ConfiguracoesClientProp
             ? current.filter(d => d !== dia)
             : [...current, dia].sort((a, b) => a - b)
         handleChange('diasFuncionamento', updated)
+    }
+
+    // Verificar se o dia tem horário personalizado
+    const getDiaHorario = (dia: number): HorarioDia => {
+        if (settings.horariosPorDia && settings.horariosPorDia[String(dia)]) {
+            return settings.horariosPorDia[String(dia)]
+        }
+        // Retorna horário padrão
+        return { inicio: settings.horarioInicio, fim: settings.horarioFim }
+    }
+
+    // Atualizar horário de um dia específico
+    const handleHorarioDiaChange = (dia: number, campo: 'inicio' | 'fim', valor: string) => {
+        const horariosPorDia = settings.horariosPorDia ? { ...settings.horariosPorDia } : {}
+
+        if (!horariosPorDia[String(dia)]) {
+            // Inicializar com valores padrão
+            horariosPorDia[String(dia)] = {
+                inicio: settings.horarioInicio,
+                fim: settings.horarioFim
+            }
+        }
+
+        horariosPorDia[String(dia)][campo] = valor
+        handleChange('horariosPorDia', horariosPorDia)
+    }
+
+    // Verificar se um dia tem horário diferente do padrão
+    const temHorarioDiferente = (dia: number): boolean => {
+        if (!settings.horariosPorDia || !settings.horariosPorDia[String(dia)]) {
+            return false
+        }
+        const horarioDia = settings.horariosPorDia[String(dia)]
+        return horarioDia.inicio !== settings.horarioInicio || horarioDia.fim !== settings.horarioFim
+    }
+
+    // Resetar horário de um dia para o padrão
+    const resetarHorarioDia = (dia: number) => {
+        if (!settings.horariosPorDia) return
+
+        const horariosPorDia = { ...settings.horariosPorDia }
+        delete horariosPorDia[String(dia)]
+
+        // Se não sobrou nenhum horário customizado, setar como null
+        if (Object.keys(horariosPorDia).length === 0) {
+            handleChange('horariosPorDia', null)
+        } else {
+            handleChange('horariosPorDia', horariosPorDia)
+        }
     }
 
     const handleSave = async () => {
@@ -193,43 +248,92 @@ export function ConfiguracoesClient({ initialSettings }: ConfiguracoesClientProp
                         </CardContent>
                     </Card>
 
-                    {/* Dias de Funcionamento */}
+                    {/* Dias de Funcionamento e Horários por Dia */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Calendar className="h-5 w-5 text-primary" />
-                                Dias de Funcionamento
+                                Dias e Horários de Funcionamento
                             </CardTitle>
                             <CardDescription>
-                                Selecione os dias da semana que a loja está aberta para agendamentos.
+                                Configure os dias da semana e horários específicos para cada dia.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+                        <CardContent className="space-y-6">
+                            {/* Cards de cada dia */}
+                            <div className="space-y-3">
                                 {DIAS_SEMANA.map((dia) => {
                                     const isAtivo = settings.diasFuncionamento?.includes(dia.valor)
+                                    const horario = getDiaHorario(dia.valor)
+                                    const temDiferente = temHorarioDiferente(dia.valor)
+
                                     return (
-                                        <button
+                                        <div
                                             key={dia.valor}
-                                            type="button"
-                                            onClick={() => handleDiaFuncionamentoToggle(dia.valor)}
-                                            className={`p-3 rounded-lg border text-center transition-all ${
+                                            className={`p-4 rounded-lg border transition-all ${
                                                 isAtivo
-                                                    ? 'bg-primary text-primary-foreground border-primary'
-                                                    : 'bg-muted/30 text-muted-foreground border-border hover:border-primary/50'
+                                                    ? 'bg-background border-border'
+                                                    : 'bg-muted/30 border-border opacity-60'
                                             }`}
                                         >
-                                            <span className="block text-sm font-medium">{dia.abrev}</span>
-                                            <span className="block text-xs mt-1">
-                                                {isAtivo ? 'Aberto' : 'Fechado'}
-                                            </span>
-                                        </button>
+                                            <div className="flex items-center justify-between gap-4">
+                                                {/* Nome do dia + Switch */}
+                                                <div className="flex items-center gap-3 min-w-[140px]">
+                                                    <Switch
+                                                        checked={isAtivo}
+                                                        onCheckedChange={() => handleDiaFuncionamentoToggle(dia.valor)}
+                                                    />
+                                                    <div>
+                                                        <span className="font-medium">{dia.nome}</span>
+                                                        {!isAtivo && (
+                                                            <span className="block text-xs text-destructive">Fechado</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Horários */}
+                                                {isAtivo && (
+                                                    <div className="flex items-center gap-2 flex-1 justify-end">
+                                                        <div className="flex items-center gap-2">
+                                                            <Input
+                                                                type="time"
+                                                                value={horario.inicio}
+                                                                onChange={(e) => handleHorarioDiaChange(dia.valor, 'inicio', e.target.value)}
+                                                                className="w-[110px]"
+                                                            />
+                                                            <span className="text-muted-foreground">às</span>
+                                                            <Input
+                                                                type="time"
+                                                                value={horario.fim}
+                                                                onChange={(e) => handleHorarioDiaChange(dia.valor, 'fim', e.target.value)}
+                                                                className="w-[110px]"
+                                                            />
+                                                        </div>
+                                                        {temDiferente && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => resetarHorarioDia(dia.valor)}
+                                                                className="text-xs text-muted-foreground hover:text-foreground"
+                                                            >
+                                                                Usar padrão
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     )
                                 })}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-4">
-                                Dias marcados como "Fechado" não aparecerão no calendário de agendamento do cliente.
-                            </p>
+
+                            {/* Legenda */}
+                            <div className="p-4 bg-muted/50 rounded-lg">
+                                <p className="text-xs text-muted-foreground">
+                                    <strong>Dica:</strong> O horário padrão é {settings.horarioInicio} às {settings.horarioFim}.
+                                    Você pode ajustar o horário de cada dia individualmente (ex: sábado até 12:00).
+                                </p>
+                            </div>
                         </CardContent>
                     </Card>
 

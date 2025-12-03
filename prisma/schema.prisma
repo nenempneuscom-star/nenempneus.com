@@ -292,6 +292,8 @@ model Settings {
   intervaloSlots    Int      @default(60) @map("intervalo_slots")
   clientesPorSlot   Int      @default(2) @map("clientes_por_slot")
   diasFuncionamento Json     @default("[1, 2, 3, 4, 5, 6]") @map("dias_funcionamento")
+  // Horários específicos por dia da semana (JSON: { "0": { "inicio": "08:00", "fim": "12:00" }, "1": { "inicio": "08:00", "fim": "18:00" }, ... })
+  horariosPorDia    Json?    @map("horarios_por_dia")
   intervaloAtivo    Boolean  @default(false) @map("intervalo_ativo")
   intervaloInicio   DateTime @default(dbgenerated("'12:00:00'::time without time zone")) @map("intervalo_inicio") @db.Time(6)
   intervaloFim      DateTime @default(dbgenerated("'13:00:00'::time without time zone")) @map("intervalo_fim") @db.Time(6)

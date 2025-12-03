@@ -19,6 +19,7 @@ export async function getSettings() {
     intervaloFim: formatTime(settings.intervaloFim),
     formasPagamento: settings.formasPagamento as string[],
     diasFuncionamento: settings.diasFuncionamento as number[],
+    horariosPorDia: settings.horariosPorDia as Record<string, { inicio: string; fim: string }> | null,
     palavrasHumano: settings.palavrasHumano as string[],
     descontoPix: Number(settings.descontoPix),
     parcelasMaximas: settings.parcelasMaximas || 12,
@@ -38,6 +39,7 @@ export async function updateSettings(data: {
   intervaloSlots?: number
   clientesPorSlot?: number
   diasFuncionamento?: number[]
+  horariosPorDia?: Record<string, { inicio: string; fim: string }> | null
   intervaloAtivo?: boolean
   intervaloInicio?: string
   intervaloFim?: string
@@ -80,6 +82,10 @@ export async function updateSettings(data: {
 
   if (data.diasFuncionamento !== undefined) {
     updateData.diasFuncionamento = data.diasFuncionamento
+  }
+
+  if (data.horariosPorDia !== undefined) {
+    updateData.horariosPorDia = data.horariosPorDia
   }
 
   if (data.intervaloAtivo !== undefined) {

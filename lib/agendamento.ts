@@ -113,6 +113,21 @@ export async function getSlotsDisponiveis(data: Date): Promise<SlotHorario[]> {
         return [] // Loja fechada neste dia
     }
 
+    // Obter horário do dia (específico ou padrão)
+    const horariosPorDia = settings.horariosPorDia as Record<string, { inicio: string; fim: string }> | null
+    let horarioInicio: string
+    let horarioFim: string
+
+    if (horariosPorDia && horariosPorDia[String(diaSemana)]) {
+        // Usar horário específico do dia
+        horarioInicio = horariosPorDia[String(diaSemana)].inicio
+        horarioFim = horariosPorDia[String(diaSemana)].fim
+    } else {
+        // Usar horário padrão
+        horarioInicio = format(settings.horarioInicio, 'HH:mm')
+        horarioFim = format(settings.horarioFim, 'HH:mm')
+    }
+
     // Configurar intervalo de almoço
     const intervaloAlmoco = {
         ativo: settings.intervaloAtivo,
@@ -122,8 +137,8 @@ export async function getSlotsDisponiveis(data: Date): Promise<SlotHorario[]> {
 
     // Gerar horários do dia (excluindo intervalo de almoço)
     const horarios = gerarHorarios(
-        format(settings.horarioInicio, 'HH:mm'),
-        format(settings.horarioFim, 'HH:mm'),
+        horarioInicio,
+        horarioFim,
         settings.intervaloSlots,
         intervaloAlmoco
     )
