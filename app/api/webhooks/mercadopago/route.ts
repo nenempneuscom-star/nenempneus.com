@@ -1,8 +1,26 @@
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { mercadoPagoPayment } from '@/lib/mercadopago'
 import { db } from '@/lib/db'
 import crypto from 'crypto'
 import { enviarEmailConfirmacaoPedido } from '@/lib/email'
+
+// GET - Para teste de IPN do Mercado Pago
+export async function GET(req: NextRequest) {
+    const searchParams = req.nextUrl.searchParams
+    const topic = searchParams.get('topic')
+    const id = searchParams.get('id')
+
+    console.log('Webhook MP GET (teste IPN):', { topic, id })
+
+    // Mercado Pago envia GET para verificar se a URL está funcionando
+    return NextResponse.json({
+        success: true,
+        message: 'Webhook endpoint OK',
+        received: { topic, id }
+    })
+}
 
 function validateWebhookSignature(req: NextRequest, body: any): boolean {
     const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET
