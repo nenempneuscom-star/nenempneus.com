@@ -75,6 +75,17 @@ export async function POST(req: NextRequest) {
                 notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/mercadopago`,
                 external_reference: pedidoId,
                 statement_descriptor: 'NENEM PNEUS',
+                // Configurar métodos de pagamento
+                payment_methods: {
+                    // Excluir apenas métodos que não queremos
+                    excluded_payment_types: [],
+                    // Permitir parcelamento
+                    installments: 12,
+                    // Parcelamento sem juros (opcional - pode gerar custo adicional)
+                    // default_installments: 1,
+                },
+                // Habilitar pagamento binário (aprovado ou rejeitado imediatamente)
+                binary_mode: false,
                 metadata: deviceId ? {
                     device_id: deviceId
                 } : undefined,
