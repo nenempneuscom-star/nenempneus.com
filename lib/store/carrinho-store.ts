@@ -8,6 +8,7 @@ export interface ItemCarrinho {
     preco: number
     quantidade: number
     specs: any
+    imagemUrl?: string
 }
 
 // Configuração de Geometria

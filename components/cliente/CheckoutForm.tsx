@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
@@ -12,8 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { checkoutSchema, CheckoutFormData } from '@/lib/validations'
 import { criarPedido } from '@/lib/actions'
 import { useCarrinhoStore } from '@/lib/store/carrinho-store'
-import { Loader2 } from 'lucide-react'
+import { Loader2, ArrowRight } from 'lucide-react'
 import { CalendarioAgendamento } from './CalendarioAgendamento'
+import { RevisaoPedido } from './RevisaoPedido'
 
 declare global {
     interface Window {
@@ -46,25 +46,23 @@ const formatarCEP = (value: string) => {
 
 const formatarPlaca = (value: string) => {
     const upper = value.toUpperCase().replace(/[^A-Z0-9]/g, '')
-    // Placa Mercosul: ABC1D23 (7 caracteres)
-    // Placa antiga: ABC1234 (7 caracteres)
     if (upper.length <= 3) return upper
     if (upper.length <= 7) {
-        // Detecta se é Mercosul (letra na 5ª posição) ou antiga
         const parte1 = upper.slice(0, 3)
         const parte2 = upper.slice(3)
-        // Mercosul: ABC1D23 -> ABC-1D23
-        // Antiga: ABC1234 -> ABC-1234
         return `${parte1}-${parte2}`
     }
     return `${upper.slice(0, 3)}-${upper.slice(3, 7)}`
 }
 
+type EtapaCheckout = 'formulario' | 'revisao'
+
 export function CheckoutForm() {
-    const router = useRouter()
-    const { items, servicos, getSubtotal, getTotalServicos, getTotal, limparCarrinho } = useCarrinhoStore()
+    const { items, servicos, getSubtotal, getTotal, limparCarrinho } = useCarrinhoStore()
     const [loading, setLoading] = useState(false)
+    const [etapa, setEtapa] = useState<EtapaCheckout>('formulario')
     const [agendamento, setAgendamento] = useState<{ data: string; hora: string } | null>(null)
+    const [dadosCliente, setDadosCliente] = useState<CheckoutFormData | null>(null)
     const [deviceId, setDeviceId] = useState<string | null>(null)
     const [buscandoCep, setBuscandoCep] = useState(false)
 
@@ -109,7 +107,6 @@ export function CheckoutForm() {
                         locale: 'pt-BR'
                     })
 
-                    // Capturar device_id
                     await mp.getIdentificationTypes()
                     if (mp.deviceId) {
                         setDeviceId(mp.deviceId)
@@ -120,7 +117,6 @@ export function CheckoutForm() {
             }
         }
 
-        // Aguardar o script do MercadoPago carregar
         if (typeof window !== 'undefined') {
             if (window.MercadoPago) {
                 initMercadoPago()
@@ -131,28 +127,44 @@ export function CheckoutForm() {
         }
     }, [])
 
-    const onSubmit = async (data: CheckoutFormData) => {
+    // Avançar para revisão
+    const onAvancar = async (data: CheckoutFormData) => {
+        // Validar agendamento
+        if (!agendamento) {
+            alert('Por favor, selecione data e horário para instalação')
+            return
+        }
+
+        setDadosCliente(data)
+        setEtapa('revisao')
+
+        // Scroll para o topo
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+
+    // Voltar para formulário
+    const onVoltar = () => {
+        setEtapa('formulario')
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+
+    // Confirmar e processar pagamento
+    const onConfirmar = async () => {
+        if (!dadosCliente || !agendamento) return
+
         setLoading(true)
 
         try {
-            // Validar agendamento selecionado
-            if (!agendamento) {
-                alert('Por favor, selecione data e horário para instalação')
-                setLoading(false)
-                return
-            }
-
             const subtotal = getSubtotal()
-            const totalServicos = getTotalServicos()
             const total = getTotal()
 
             // 1. Criar pedido
             const resultado = await criarPedido({
-                cliente: data,
+                cliente: dadosCliente,
                 items,
                 subtotal,
                 total,
-                observacoes: data.observacoes,
+                observacoes: dadosCliente.observacoes,
             })
 
             if (!resultado.success || !resultado.pedido) {
@@ -189,21 +201,21 @@ export function CheckoutForm() {
                     total,
                     deviceId: deviceId,
                     payer: {
-                        name: data.nome.split(' ')[0],
-                        surname: data.nome.split(' ').slice(1).join(' ') || data.nome.split(' ')[0],
-                        email: data.email,
+                        name: dadosCliente.nome.split(' ')[0],
+                        surname: dadosCliente.nome.split(' ').slice(1).join(' ') || dadosCliente.nome.split(' ')[0],
+                        email: dadosCliente.email,
                         phone: {
-                            area_code: data.telefone.replace(/\D/g, '').slice(0, 2),
-                            number: data.telefone.replace(/\D/g, '').slice(2),
+                            area_code: dadosCliente.telefone.replace(/\D/g, '').slice(0, 2),
+                            number: dadosCliente.telefone.replace(/\D/g, '').slice(2),
                         },
-                        identification: data.cpf ? {
+                        identification: dadosCliente.cpf ? {
                             type: 'CPF',
-                            number: data.cpf.replace(/\D/g, ''),
+                            number: dadosCliente.cpf.replace(/\D/g, ''),
                         } : undefined,
                         address: {
-                            zip_code: data.cep.replace(/\D/g, ''),
-                            street_name: data.endereco,
-                            street_number: data.numero,
+                            zip_code: dadosCliente.cep.replace(/\D/g, ''),
+                            street_name: dadosCliente.endereco,
+                            street_number: dadosCliente.numero,
                         },
                     },
                 }),
@@ -212,7 +224,6 @@ export function CheckoutForm() {
             const mpData = await response.json()
 
             if (mpData.success) {
-                // 3. Limpar carrinho e redirecionar para Mercado Pago
                 limparCarrinho()
                 window.location.href = mpData.initPoint
             } else {
@@ -226,8 +237,48 @@ export function CheckoutForm() {
         }
     }
 
+    // Se estiver na etapa de revisão
+    if (etapa === 'revisao' && dadosCliente && agendamento) {
+        return (
+            <RevisaoPedido
+                dados={dadosCliente}
+                agendamento={agendamento}
+                onVoltar={onVoltar}
+                onEditarDados={onVoltar}
+                onEditarAgendamento={onVoltar}
+                onConfirmar={onConfirmar}
+                loading={loading}
+            />
+        )
+    }
+
+    // Formulário de checkout
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onAvancar)} className="space-y-6">
+            {/* Indicador de Etapa */}
+            <div className="flex items-center justify-center gap-2 sm:gap-4 mb-8 px-4">
+                <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs sm:text-sm font-medium">
+                        1
+                    </div>
+                    <span className="font-medium text-sm sm:text-base">Dados</span>
+                </div>
+                <div className="w-6 sm:w-12 h-0.5 bg-muted"></div>
+                <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs sm:text-sm font-medium">
+                        2
+                    </div>
+                    <span className="text-muted-foreground text-sm sm:text-base">Revisão</span>
+                </div>
+                <div className="w-6 sm:w-12 h-0.5 bg-muted"></div>
+                <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs sm:text-sm font-medium">
+                        3
+                    </div>
+                    <span className="text-muted-foreground text-sm sm:text-base">Pagamento</span>
+                </div>
+            </div>
+
             {/* Agendamento */}
             <CalendarioAgendamento
                 onSelecionarDataHora={(data, hora) => setAgendamento({ data, hora })}
@@ -308,7 +359,6 @@ export function CheckoutForm() {
                                         const formatted = formatarCEP(e.target.value)
                                         e.target.value = formatted
                                         register('cep').onChange(e)
-                                        // Buscar CEP quando tiver 8 dígitos
                                         if (formatted.replace(/\D/g, '').length === 8) {
                                             buscarCep(formatted)
                                         }
@@ -424,17 +474,24 @@ export function CheckoutForm() {
                 </CardContent>
             </Card>
 
-            {/* Botão Finalizar */}
-            <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            {/* Botão Avançar */}
+            <Button type="submit" size="lg" className="w-full h-14 text-base font-semibold" disabled={loading}>
                 {loading ? (
                     <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                         Processando...
                     </>
                 ) : (
-                    'Finalizar Pedido'
+                    <>
+                        Revisar Pedido
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                    </>
                 )}
             </Button>
+
+            <p className="text-center text-sm text-muted-foreground">
+                Na próxima etapa você poderá revisar todos os dados antes de pagar
+            </p>
         </form>
     )
 }

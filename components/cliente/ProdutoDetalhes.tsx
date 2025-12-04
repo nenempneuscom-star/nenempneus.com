@@ -51,6 +51,7 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
                 slug: produto.slug,
                 preco: Number(produto.preco),
                 specs: produto.specs,
+                imagemUrl: produto.imagemUrl || undefined,
             },
             quantidade
         )
@@ -92,6 +93,7 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
                 slug: produto.slug,
                 preco: Number(produto.preco),
                 specs: produto.specs,
+                imagemUrl: produto.imagemUrl || undefined,
             },
             quantidade
         )

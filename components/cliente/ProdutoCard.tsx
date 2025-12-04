@@ -31,7 +31,7 @@ export function ProdutoCard({ id, nome, slug, preco, estoque, specs, imagemUrl, 
 
     const handleAdicionarCarrinho = (e: React.MouseEvent) => {
         e.preventDefault()
-        adicionarItem({ id, nome, slug, preco, specs })
+        adicionarItem({ id, nome, slug, preco, specs, imagemUrl: imagemUrl || undefined })
         setAdicionado(true)
         toast.success('Produto adicionado ao carrinho!', {
             description: nome,
@@ -45,7 +45,7 @@ export function ProdutoCard({ id, nome, slug, preco, estoque, specs, imagemUrl, 
 
     const handleComprarAgora = (e: React.MouseEvent) => {
         e.preventDefault()
-        adicionarItem({ id, nome, slug, preco, specs })
+        adicionarItem({ id, nome, slug, preco, specs, imagemUrl: imagemUrl || undefined })
         router.push('/carrinho')
     }
 
