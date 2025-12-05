@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Clock } from 'lucide-react'
+import { Clock, AlertCircle, Calendar } from 'lucide-react'
 import { SlotHorario } from '@/lib/agendamento'
 
 interface SeletorHorarioProps {
@@ -46,9 +46,21 @@ export function SeletorHorario({
             </div>
 
             {slots.filter((s) => s.disponivel).length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                    Nenhum horário disponível para esta data
-                </p>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                        <AlertCircle className="h-5 w-5 text-amber-600" />
+                        <span className="font-medium text-amber-800">
+                            Nenhum horário disponível para esta data
+                        </span>
+                    </div>
+                    <p className="text-sm text-amber-700 mb-3">
+                        Todos os horários já estão ocupados ou a loja não funciona neste dia.
+                    </p>
+                    <div className="flex items-center justify-center gap-2 text-sm text-amber-800 font-medium">
+                        <Calendar className="h-4 w-4" />
+                        <span>Por favor, selecione outra data no calendário acima</span>
+                    </div>
+                </div>
             )}
         </div>
     )
