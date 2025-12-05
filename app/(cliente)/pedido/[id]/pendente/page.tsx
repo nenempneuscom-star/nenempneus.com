@@ -1,47 +1,125 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Clock, AlertCircle, Copy, Loader2 } from 'lucide-react'
+import { Clock, AlertCircle, Copy, Loader2, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
+
+const POLLING_INTERVAL = 5000 // 5 segundos
+const MAX_POLLING_TIME = 30 * 60 * 1000 // 30 minutos
 
 export default function PedidoPendentePage() {
     const params = useParams()
+    const router = useRouter()
     const [pedido, setPedido] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [pixCode, setPixCode] = useState<string | null>(null)
+    const [statusPagamento, setStatusPagamento] = useState<'pending' | 'approved' | 'rejected'>('pending')
+    const [tempoRestante, setTempoRestante] = useState<number | null>(null)
+    const pollingStartTime = useRef<number>(Date.now())
+    const pollingRef = useRef<NodeJS.Timeout | null>(null)
 
-    useEffect(() => {
-        async function fetchPedido() {
-            try {
-                const response = await fetch(`/api/pedidos/${params.id}`)
-                if (response.ok) {
-                    const data = await response.json()
-                    setPedido(data.pedido)
+    const fetchPedido = useCallback(async () => {
+        try {
+            const response = await fetch(`/api/pedidos/${params.id}`)
+            if (response.ok) {
+                const data = await response.json()
+                setPedido(data.pedido)
 
-                    // Buscar código PIX se houver pagamento pendente
-                    const pagamentoPendente = data.pedido.pagamentos?.find(
-                        (p: any) => p.status === 'pending' && p.metodo === 'pix'
-                    )
-
-                    if (pagamentoPendente?.pixCode) {
-                        setPixCode(pagamentoPendente.pixCode)
+                // Verificar status do pedido
+                if (data.pedido.status === 'pago') {
+                    setStatusPagamento('approved')
+                    toast.success('Pagamento confirmado!', {
+                        description: 'Redirecionando para página de sucesso...'
+                    })
+                    // Limpar polling e redirecionar
+                    if (pollingRef.current) {
+                        clearInterval(pollingRef.current)
                     }
+                    setTimeout(() => {
+                        router.push(`/pedido/${params.id}/sucesso`)
+                    }, 2000)
+                    return
                 }
-            } catch (error) {
-                console.error('Erro ao buscar pedido:', error)
-            } finally {
-                setLoading(false)
-            }
-        }
 
+                if (data.pedido.status === 'cancelado') {
+                    setStatusPagamento('rejected')
+                    if (pollingRef.current) {
+                        clearInterval(pollingRef.current)
+                    }
+                    return
+                }
+
+                // Buscar código PIX se houver pagamento pendente
+                const pagamentoPendente = data.pedido.pagamentos?.find(
+                    (p: any) => p.status === 'pending' && p.metodo === 'pix'
+                )
+
+                if (pagamentoPendente?.pixCode) {
+                    setPixCode(pagamentoPendente.pixCode)
+                }
+
+                // Verificar também o status do pagamento diretamente
+                const ultimoPagamento = data.pedido.pagamentos?.[data.pedido.pagamentos.length - 1]
+                if (ultimoPagamento?.status === 'approved') {
+                    setStatusPagamento('approved')
+                    toast.success('Pagamento confirmado!')
+                    if (pollingRef.current) {
+                        clearInterval(pollingRef.current)
+                    }
+                    setTimeout(() => {
+                        router.push(`/pedido/${params.id}/sucesso`)
+                    }, 2000)
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao buscar pedido:', error)
+        } finally {
+            setLoading(false)
+        }
+    }, [params.id, router])
+
+    // Polling para verificar status do pagamento
+    useEffect(() => {
         if (params.id) {
             fetchPedido()
+
+            // Iniciar polling
+            pollingRef.current = setInterval(() => {
+                const elapsed = Date.now() - pollingStartTime.current
+
+                // Parar polling após 30 minutos
+                if (elapsed > MAX_POLLING_TIME) {
+                    if (pollingRef.current) {
+                        clearInterval(pollingRef.current)
+                    }
+                    return
+                }
+
+                fetchPedido()
+            }, POLLING_INTERVAL)
+
+            return () => {
+                if (pollingRef.current) {
+                    clearInterval(pollingRef.current)
+                }
+            }
         }
-    }, [params.id])
+    }, [params.id, fetchPedido])
+
+    // Contador de tempo restante para o PIX (30 min)
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const elapsed = Date.now() - pollingStartTime.current
+            const restante = Math.max(0, MAX_POLLING_TIME - elapsed)
+            setTempoRestante(restante)
+        }, 1000)
+
+        return () => clearInterval(timer)
+    }, [])
 
     const copiarPix = () => {
         if (pixCode) {
@@ -52,11 +130,35 @@ export default function PedidoPendentePage() {
         }
     }
 
+    const formatarTempo = (ms: number) => {
+        const minutos = Math.floor(ms / 60000)
+        const segundos = Math.floor((ms % 60000) / 1000)
+        return `${minutos}:${segundos.toString().padStart(2, '0')}`
+    }
+
     if (loading) {
         return (
             <div className="container mx-auto px-4 py-12">
                 <div className="flex items-center justify-center">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            </div>
+        )
+    }
+
+    // Se pagamento foi aprovado, mostrar tela de sucesso temporária
+    if (statusPagamento === 'approved') {
+        return (
+            <div className="container mx-auto px-4 py-12">
+                <div className="max-w-2xl mx-auto text-center">
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4 animate-pulse">
+                        <CheckCircle2 className="h-10 w-10 text-green-600" />
+                    </div>
+                    <h1 className="text-4xl font-bold mb-2 text-green-700">Pagamento Confirmado!</h1>
+                    <p className="text-muted-foreground text-lg mb-4">
+                        Redirecionando para página de sucesso...
+                    </p>
+                    <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto" />
                 </div>
             </div>
         )
@@ -73,6 +175,16 @@ export default function PedidoPendentePage() {
                     <p className="text-muted-foreground text-lg">
                         Aguardando confirmação do pagamento
                     </p>
+                    {/* Indicador de verificação automática */}
+                    <div className="flex items-center justify-center gap-2 mt-4 text-sm text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Verificando pagamento automaticamente...</span>
+                    </div>
+                    {tempoRestante !== null && tempoRestante > 0 && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                            Tempo para expiração do PIX: {formatarTempo(tempoRestante)}
+                        </p>
+                    )}
                 </div>
 
                 <Card className="mb-6 border-yellow-500/50 bg-yellow-50">
