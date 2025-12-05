@@ -87,7 +87,7 @@ export function CalendarioAgendamento({ onSelecionarDataHora }: CalendarioAgenda
     }
 
     return (
-        <Card>
+        <Card id="calendario-agendamento">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Calendar className="h-5 w-5" />

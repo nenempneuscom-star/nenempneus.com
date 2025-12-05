@@ -121,6 +121,20 @@ export function CheckoutForm() {
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
+    // Voltar para formulário e focar no calendário de agendamento
+    const onEditarAgendamento = () => {
+        setEtapa('formulario')
+        // Aguardar a renderização e fazer scroll para o calendário
+        setTimeout(() => {
+            const calendarioElement = document.getElementById('calendario-agendamento')
+            if (calendarioElement) {
+                calendarioElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                // Adicionar um pequeno offset para não ficar colado no topo
+                window.scrollBy({ top: -20, behavior: 'smooth' })
+            }
+        }, 100)
+    }
+
     // Voltar da etapa de pagamento para revisão
     const onVoltarPagamento = () => {
         setEtapa('revisao')
@@ -260,7 +274,7 @@ export function CheckoutForm() {
                 agendamento={agendamento}
                 onVoltar={onVoltar}
                 onEditarDados={onVoltar}
-                onEditarAgendamento={onVoltar}
+                onEditarAgendamento={onEditarAgendamento}
                 onConfirmar={onConfirmar}
                 loading={loading}
             />
