@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CheckCircle2, Calendar, MapPin, Phone, Mail, Loader2, Clock } from 'lucide-react'
+import { CheckCircle2, Calendar, MapPin, Phone, Mail, Loader2, Clock, Printer, FileText } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -160,14 +160,43 @@ export default function PedidoSucessoPage() {
                     </Card>
                 )}
 
+                {/* Comprovante para Impressão */}
+                <Card className="mb-6 border-blue-500/50 bg-blue-50 print:border-none print:bg-white">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-blue-900">
+                            <FileText className="h-5 w-5" />
+                            Comprovante de Compra
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="bg-white p-4 rounded-lg border border-blue-200 mb-4 print:border-none print:p-0">
+                            <p className="text-sm text-blue-800 font-medium mb-2">
+                                Apresente este comprovante na loja no dia da instalação
+                            </p>
+                            <p className="text-xs text-blue-600">
+                                Você também pode mostrar o email de confirmação ou este comprovante pelo celular.
+                            </p>
+                        </div>
+                        <Button
+                            variant="outline"
+                            className="w-full border-blue-500 text-blue-700 hover:bg-blue-100 print:hidden"
+                            onClick={() => window.print()}
+                        >
+                            <Printer className="h-4 w-4 mr-2" />
+                            Imprimir Comprovante
+                        </Button>
+                    </CardContent>
+                </Card>
+
                 {/* Next Steps */}
-                <Card className="mb-6">
+                <Card className="mb-6 print:hidden">
                     <CardHeader>
                         <CardTitle>Próximos Passos</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <ol className="space-y-3 list-decimal list-inside">
-                            <li className="text-sm">Você receberá uma confirmação por WhatsApp</li>
+                            <li className="text-sm">Você receberá uma confirmação por e-mail e WhatsApp</li>
+                            <li className="text-sm"><strong>Imprima ou salve este comprovante</strong> para apresentar na loja</li>
                             <li className="text-sm">Compareça no horário agendado em nossa loja</li>
                             <li className="text-sm">Nossa equipe fará a instalação dos pneus</li>
                             <li className="text-sm">Em caso de dúvidas, entre em contato conosco</li>
