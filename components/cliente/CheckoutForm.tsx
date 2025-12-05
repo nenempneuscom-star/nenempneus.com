@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
@@ -11,9 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { checkoutSchema, CheckoutFormData } from '@/lib/validations'
 import { criarPedido } from '@/lib/actions'
 import { useCarrinhoStore } from '@/lib/store/carrinho-store'
-import { Loader2, ArrowRight } from 'lucide-react'
+import { Loader2, ArrowRight, ArrowLeft } from 'lucide-react'
 import { CalendarioAgendamento } from './CalendarioAgendamento'
 import { RevisaoPedido } from './RevisaoPedido'
+import { PagamentoTransparente } from './PagamentoTransparente'
+import { ResumoPedido } from './ResumoPedido'
 
 declare global {
     interface Window {
@@ -55,15 +57,15 @@ const formatarPlaca = (value: string) => {
     return `${upper.slice(0, 3)}-${upper.slice(3, 7)}`
 }
 
-type EtapaCheckout = 'formulario' | 'revisao'
+type EtapaCheckout = 'formulario' | 'revisao' | 'pagamento'
 
 export function CheckoutForm() {
-    const { items, servicos, getSubtotal, getTotal, limparCarrinho } = useCarrinhoStore()
+    const { items, getSubtotal, getTotal, limparCarrinho } = useCarrinhoStore()
     const [loading, setLoading] = useState(false)
     const [etapa, setEtapa] = useState<EtapaCheckout>('formulario')
     const [agendamento, setAgendamento] = useState<{ data: string; hora: string } | null>(null)
     const [dadosCliente, setDadosCliente] = useState<CheckoutFormData | null>(null)
-    const [deviceId, setDeviceId] = useState<string | null>(null)
+    const [pedidoNumero, setPedidoNumero] = useState<string | null>(null)
     const [buscandoCep, setBuscandoCep] = useState(false)
 
     const {
@@ -98,35 +100,6 @@ export function CheckoutForm() {
         }
     }
 
-    // Inicializar MercadoPago SDK para capturar device_id
-    useEffect(() => {
-        const initMercadoPago = async () => {
-            try {
-                if (typeof window !== 'undefined' && window.MercadoPago) {
-                    const mp = new window.MercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY, {
-                        locale: 'pt-BR'
-                    })
-
-                    await mp.getIdentificationTypes()
-                    if (mp.deviceId) {
-                        setDeviceId(mp.deviceId)
-                    }
-                }
-            } catch (error) {
-                console.error('Erro ao inicializar MercadoPago SDK:', error)
-            }
-        }
-
-        if (typeof window !== 'undefined') {
-            if (window.MercadoPago) {
-                initMercadoPago()
-            } else {
-                window.addEventListener('load', initMercadoPago)
-                return () => window.removeEventListener('load', initMercadoPago)
-            }
-        }
-    }, [])
-
     // Avançar para revisão
     const onAvancar = async (data: CheckoutFormData) => {
         // Validar agendamento
@@ -148,7 +121,13 @@ export function CheckoutForm() {
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
-    // Confirmar e processar pagamento
+    // Voltar da etapa de pagamento para revisão
+    const onVoltarPagamento = () => {
+        setEtapa('revisao')
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+
+    // Confirmar revisão e ir para pagamento
     const onConfirmar = async () => {
         if (!dadosCliente || !agendamento) return
 
@@ -190,51 +169,87 @@ export function CheckoutForm() {
                 return
             }
 
-            // 3. Criar preferência Mercado Pago
-            const response = await fetch('/api/mercadopago/create-preference', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    pedidoId: resultado.pedido.numero,
-                    items,
-                    servicos,
-                    total,
-                    deviceId: deviceId,
-                    payer: {
-                        name: dadosCliente.nome.split(' ')[0],
-                        surname: dadosCliente.nome.split(' ').slice(1).join(' ') || dadosCliente.nome.split(' ')[0],
-                        email: dadosCliente.email,
-                        phone: {
-                            area_code: dadosCliente.telefone.replace(/\D/g, '').slice(0, 2),
-                            number: dadosCliente.telefone.replace(/\D/g, '').slice(2),
-                        },
-                        identification: dadosCliente.cpf ? {
-                            type: 'CPF',
-                            number: dadosCliente.cpf.replace(/\D/g, ''),
-                        } : undefined,
-                        address: {
-                            zip_code: dadosCliente.cep.replace(/\D/g, ''),
-                            street_name: dadosCliente.endereco,
-                            street_number: dadosCliente.numero,
-                        },
-                    },
-                }),
-            })
+            // 3. Ir para etapa de pagamento
+            setPedidoNumero(resultado.pedido.numero)
+            setEtapa('pagamento')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
 
-            const mpData = await response.json()
-
-            if (mpData.success) {
-                limparCarrinho()
-                window.location.href = mpData.initPoint
-            } else {
-                alert('Erro ao criar pagamento. Tente novamente.')
-            }
         } catch (error) {
             console.error('Erro:', error)
             alert('Erro ao processar pedido. Tente novamente.')
         } finally {
             setLoading(false)
         }
+    }
+
+    // Callback de sucesso do pagamento
+    const onPaymentSuccess = () => {
+        limparCarrinho()
+    }
+
+    // Callback de erro do pagamento
+    const onPaymentError = (error: string) => {
+        console.error('Erro no pagamento:', error)
+    }
+
+    // Se estiver na etapa de pagamento
+    if (etapa === 'pagamento' && pedidoNumero && dadosCliente) {
+        const total = getTotal()
+        return (
+            <div className="space-y-6">
+                {/* Indicador de Etapa */}
+                <div className="flex items-center justify-center gap-2 sm:gap-4 mb-8 px-4">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs sm:text-sm font-medium">
+                            ✓
+                        </div>
+                        <span className="text-primary text-sm sm:text-base">Dados</span>
+                    </div>
+                    <div className="w-6 sm:w-12 h-0.5 bg-primary"></div>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs sm:text-sm font-medium">
+                            ✓
+                        </div>
+                        <span className="text-primary text-sm sm:text-base">Revisão</span>
+                    </div>
+                    <div className="w-6 sm:w-12 h-0.5 bg-primary"></div>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs sm:text-sm font-medium">
+                            3
+                        </div>
+                        <span className="font-medium text-sm sm:text-base">Pagamento</span>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2">
+                        <PagamentoTransparente
+                            pedidoNumero={pedidoNumero}
+                            total={total}
+                            payer={{
+                                email: dadosCliente.email,
+                                nome: dadosCliente.nome,
+                                cpf: dadosCliente.cpf,
+                            }}
+                            onSuccess={onPaymentSuccess}
+                            onError={onPaymentError}
+                        />
+
+                        <Button
+                            variant="ghost"
+                            className="mt-4"
+                            onClick={onVoltarPagamento}
+                        >
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Voltar para revisão
+                        </Button>
+                    </div>
+                    <div>
+                        <ResumoPedido />
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     // Se estiver na etapa de revisão
