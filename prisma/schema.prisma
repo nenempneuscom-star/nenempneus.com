@@ -225,7 +225,6 @@ model Agendamento {
   loja            Loja     @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   pedido          Pedido   @relation(fields: [pedidoId], references: [id])
 
-  @@unique([lojaId, data, hora, status], map: "agendamentos_unique_slot_key")
   @@index([lojaId])
   @@index([clienteId])
   @@index([data, hora])
