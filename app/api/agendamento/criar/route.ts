@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { LOJA_SLUG } from '@/lib/constants'
-import { verificarDisponibilidade } from '@/lib/agendamento'
+import { verificarDisponibilidade, getSettings } from '@/lib/agendamento'
 import { parseISO } from 'date-fns'
 
 export async function POST(req: NextRequest) {
@@ -77,19 +77,21 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: true, agendamento: agendamentoAtualizado })
         }
 
-        // Verificar se já existe agendamento no mesmo slot (lojaId + data + hora + status)
-        // que impediria a criação (constraint único)
-        const slotOcupado = await db.agendamento.findFirst({
+        // Verificar se já existe agendamento no mesmo slot considerando clientesPorSlot
+        const settings = await getSettings()
+        const agendamentosNoSlot = await db.agendamento.count({
             where: {
                 lojaId: pedido.lojaId,
                 data: dataObj,
                 hora: horaObj,
-                status: 'confirmado',
+                status: {
+                    in: ['confirmado', 'em_andamento'],
+                },
             },
         })
 
-        if (slotOcupado) {
-            console.log('[AGENDAMENTO] Slot já ocupado por outro agendamento:', slotOcupado.id)
+        if (agendamentosNoSlot >= settings.clientesPorSlot) {
+            console.log('[AGENDAMENTO] Slot lotado:', agendamentosNoSlot, '/', settings.clientesPorSlot)
             return NextResponse.json(
                 { success: false, error: 'Este horário já está ocupado. Por favor, escolha outro horário.' },
                 { status: 400 }

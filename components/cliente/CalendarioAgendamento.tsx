@@ -10,15 +10,18 @@ import { ptBR } from 'date-fns/locale'
 
 interface CalendarioAgendamentoProps {
     onSelecionarDataHora: (data: string, hora: string) => void
+    dataInicial?: string // formato yyyy-MM-dd
+    horaInicial?: string // formato HH:mm
 }
 
-export function CalendarioAgendamento({ onSelecionarDataHora }: CalendarioAgendamentoProps) {
-    // Iniciar na semana que contém o dia de hoje
+export function CalendarioAgendamento({ onSelecionarDataHora, dataInicial, horaInicial }: CalendarioAgendamentoProps) {
+    // Iniciar na semana que contém o dia de hoje ou a data inicial
     const hoje = new Date()
-    const inicioSemanaHoje = startOfWeek(hoje, { weekStartsOn: 0 })
+    const dataInicialObj = dataInicial ? new Date(dataInicial + 'T12:00:00') : null
+    const inicioSemanaHoje = startOfWeek(dataInicialObj || hoje, { weekStartsOn: 0 })
     const [semanaAtual, setSemanaAtual] = useState(inicioSemanaHoje)
-    const [dataSelecionada, setDataSelecionada] = useState<Date | null>(null)
-    const [horarioSelecionado, setHorarioSelecionado] = useState<string | null>(null)
+    const [dataSelecionada, setDataSelecionada] = useState<Date | null>(dataInicialObj)
+    const [horarioSelecionado, setHorarioSelecionado] = useState<string | null>(horaInicial || null)
     const [slots, setSlots] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
     const [diasFuncionamento, setDiasFuncionamento] = useState<number[]>([1, 2, 3, 4, 5, 6])

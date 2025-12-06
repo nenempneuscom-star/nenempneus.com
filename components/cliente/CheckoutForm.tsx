@@ -311,6 +311,8 @@ export function CheckoutForm() {
             {/* Agendamento */}
             <CalendarioAgendamento
                 onSelecionarDataHora={(data, hora) => setAgendamento({ data, hora })}
+                dataInicial={agendamento?.data}
+                horaInicial={agendamento?.hora}
             />
 
             {/* Dados Pessoais */}
