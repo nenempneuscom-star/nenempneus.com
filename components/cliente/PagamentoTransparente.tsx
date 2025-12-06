@@ -309,12 +309,22 @@ export function PagamentoTransparente({
 
     // Polling para verificar status do PIX
     const startPixPolling = () => {
+        console.log('[PIX Polling] Iniciando para pedido:', pedidoNumero)
+
         pollingRef.current = setInterval(async () => {
             try {
-                const response = await fetch(`/api/pedidos/${pedidoNumero}`)
+                console.log('[PIX Polling] Verificando status...')
+                const response = await fetch(`/api/pedidos/${pedidoNumero}`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    cache: 'no-store'
+                })
+
                 if (response.ok) {
                     const data = await response.json()
-                    if (data.pedido.status === 'pago') {
+                    console.log('[PIX Polling] Status atual:', data.pedido?.status)
+
+                    if (data.pedido?.status === 'pago') {
                         if (pollingRef.current) {
                             clearInterval(pollingRef.current)
                         }
@@ -325,9 +335,11 @@ export function PagamentoTransparente({
                             router.push(`/pedido/${pedidoNumero}/sucesso`)
                         }, 1500)
                     }
+                } else {
+                    console.error('[PIX Polling] Erro na resposta:', response.status)
                 }
             } catch (error) {
-                console.error('Erro ao verificar status:', error)
+                console.error('[PIX Polling] Erro ao verificar status:', error)
             }
         }, 5000)
     }
