@@ -81,7 +81,8 @@ export function PagamentoTransparente({
     useEffect(() => {
         const initMP = () => {
             if (typeof window !== 'undefined' && window.MercadoPago) {
-                mpRef.current = new window.MercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY, {
+                const publicKey = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY || process.env.NEXT_PUBLIC_MP_PUBLIC_KEY
+                mpRef.current = new window.MercadoPago(publicKey, {
                     locale: 'pt-BR'
                 })
             }
