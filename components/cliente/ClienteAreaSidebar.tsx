@@ -8,12 +8,7 @@ import {
   Package,
   Calendar,
   Car,
-  Heart,
-  Star,
-  Ticket,
-  Bell,
   User,
-  Gift,
 } from 'lucide-react'
 
 const menuItems = [
@@ -30,16 +25,6 @@ const menuItems = [
     items: [
       { name: 'Meus Veiculos', href: '/minha-conta/veiculos', icon: Car },
       { name: 'Dados Pessoais', href: '/minha-conta/dados', icon: User },
-      { name: 'Notificacoes', href: '/minha-conta/notificacoes', icon: Bell },
-    ],
-  },
-  {
-    title: 'Vantagens',
-    items: [
-      { name: 'Favoritos', href: '/minha-conta/favoritos', icon: Heart },
-      { name: 'Avaliacoes', href: '/minha-conta/avaliacoes', icon: Star },
-      { name: 'Cupons', href: '/minha-conta/cupons', icon: Ticket },
-      { name: 'Indicar Amigos', href: '/minha-conta/indicar', icon: Gift },
     ],
   },
 ]

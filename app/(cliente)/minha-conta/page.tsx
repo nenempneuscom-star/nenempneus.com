@@ -11,14 +11,8 @@ import {
   Package,
   Calendar,
   Car,
-  Heart,
-  Star,
-  Ticket,
-  Gift,
   ChevronRight,
   Clock,
-  CheckCircle,
-  AlertCircle,
 } from 'lucide-react'
 
 const statusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
@@ -38,7 +32,7 @@ export default async function MinhaContaPage() {
   }
 
   // Buscar dados do dashboard
-  const [ultimosPedidos, proximoAgendamento, totalFavoritos] = await Promise.all([
+  const [ultimosPedidos, proximoAgendamento] = await Promise.all([
     prisma.pedido.findMany({
       where: { clienteId: cliente.id },
       orderBy: { createdAt: 'desc' },
@@ -60,16 +54,12 @@ export default async function MinhaContaPage() {
         pedido: true,
       },
     }),
-    prisma.favorito.count({
-      where: { clienteId: cliente.id },
-    }),
   ])
 
   const quickActions = [
     { name: 'Meus Pedidos', href: '/minha-conta/pedidos', icon: Package, count: cliente._count.pedidos },
     { name: 'Agendamentos', href: '/minha-conta/agendamentos', icon: Calendar, count: cliente._count.agendamentos },
     { name: 'Meus Veiculos', href: '/minha-conta/veiculos', icon: Car, count: cliente.veiculos.length },
-    { name: 'Favoritos', href: '/minha-conta/favoritos', icon: Heart, count: totalFavoritos },
   ]
 
   return (
@@ -103,31 +93,6 @@ export default async function MinhaContaPage() {
           </Link>
         ))}
       </div>
-
-      {/* Pontos de Fidelidade */}
-      <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
-        <CardContent className="flex items-center justify-between p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-primary rounded-full">
-              <Star className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-primary">{cliente.pontos}</p>
-              <p className="text-sm text-muted-foreground">Pontos de fidelidade</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground">
-              A cada R$ 100 em compras, voce ganha 10 pontos!
-            </p>
-            <Link href="/minha-conta/cupons">
-              <Button variant="link" className="p-0 h-auto text-primary">
-                Ver como usar seus pontos
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Ultimo Pedido ou Proximo Agendamento */}
@@ -276,22 +241,22 @@ export default async function MinhaContaPage() {
                 Ver Catalogo
               </Button>
             </Link>
-            <Link href="/minha-conta/indicar">
+            <Link href="/minha-conta/pedidos">
               <Button variant="outline" className="w-full justify-start gap-2">
-                <Gift className="h-4 w-4" />
-                Indicar Amigo
+                <Package className="h-4 w-4" />
+                Meus Pedidos
               </Button>
             </Link>
-            <Link href="/minha-conta/cupons">
+            <Link href="/minha-conta/agendamentos">
               <Button variant="outline" className="w-full justify-start gap-2">
-                <Ticket className="h-4 w-4" />
-                Meus Cupons
+                <Calendar className="h-4 w-4" />
+                Agendamentos
               </Button>
             </Link>
-            <Link href="/minha-conta/avaliacoes">
+            <Link href="/minha-conta/veiculos">
               <Button variant="outline" className="w-full justify-start gap-2">
-                <Star className="h-4 w-4" />
-                Avaliar Compra
+                <Car className="h-4 w-4" />
+                Meus Veiculos
               </Button>
             </Link>
           </div>
