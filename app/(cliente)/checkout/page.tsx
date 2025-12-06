@@ -11,13 +11,27 @@ export default function CheckoutPage() {
     const { items } = useCarrinhoStore()
 
     useEffect(() => {
+        // Verificar se há flag de redirecionamento de pagamento aprovado
+        const paymentRedirect = sessionStorage.getItem('payment_success_redirect')
+        if (paymentRedirect) {
+            // Limpar flag e não redirecionar para carrinho
+            sessionStorage.removeItem('payment_success_redirect')
+            return
+        }
+
         if (items.length === 0) {
             router.push('/carrinho')
         }
     }, [items, router])
 
+    // Verificar flag também no render para evitar flash
     if (items.length === 0) {
-        return null
+        const paymentRedirect = typeof window !== 'undefined'
+            ? sessionStorage.getItem('payment_success_redirect')
+            : null
+        if (!paymentRedirect) {
+            return null
+        }
     }
 
     return (

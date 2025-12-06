@@ -332,10 +332,11 @@ export function PagamentoTransparente({
                         }
                         setStatus('success')
                         toast.success('Pagamento PIX confirmado!')
-                        // Redirecionar ANTES de limpar o carrinho
+                        // Marcar flag para evitar redirecionamento indevido para /carrinho
+                        sessionStorage.setItem('payment_success_redirect', 'true')
                         setTimeout(() => {
+                            onSuccess()
                             router.push(`/pedido/${pedidoNumero}/sucesso`)
-                            setTimeout(() => onSuccess(), 100)
                         }, 1500)
                         return
                     }
@@ -358,12 +359,11 @@ export function PagamentoTransparente({
                             }
                             setStatus('success')
                             toast.success('Pagamento PIX confirmado!')
-                            // Redirecionar ANTES de limpar o carrinho para evitar
-                            // que o useEffect da página de checkout redirecione para /carrinho
+                            // Marcar flag para evitar redirecionamento indevido para /carrinho
+                            sessionStorage.setItem('payment_success_redirect', 'true')
                             setTimeout(() => {
+                                onSuccess()
                                 router.push(`/pedido/${pedidoNumero}/sucesso`)
-                                // Limpar carrinho depois de iniciar o redirecionamento
-                                setTimeout(() => onSuccess(), 100)
                             }, 1500)
                         }
                     }
