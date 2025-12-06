@@ -218,24 +218,15 @@ export default function MeusDadosPage() {
         </CardContent>
       </Card>
 
-      {/* Zona de Perigo */}
-      <Card className="border-destructive/50">
-        <CardHeader>
-          <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
-          <CardDescription>
-            Acoes irreversiveis para sua conta
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            Se desejar excluir sua conta, entre em contato conosco pelo WhatsApp.
-            Todos os seus dados serao removidos permanentemente.
-          </p>
-          <Button variant="outline" className="text-destructive border-destructive/50">
-            Solicitar Exclusao de Conta
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Informações sobre a conta */}
+      <div className="text-center pt-4 border-t">
+        <p className="text-xs text-muted-foreground">
+          Para solicitar a exclusao da sua conta, envie um email para{' '}
+          <a href="mailto:contato@nenempneus.com" className="text-primary hover:underline">
+            contato@nenempneus.com
+          </a>
+        </p>
+      </div>
     </div>
   )
 }
