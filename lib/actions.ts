@@ -238,6 +238,9 @@ export async function criarPedido(dados: {
             },
         })
 
+        // Limpar CPF (remover formatação)
+        const cpfLimpo = dados.cliente.cpf?.replace(/\D/g, '') || null
+
         if (!cliente) {
             cliente = await db.cliente.create({
                 data: {
@@ -245,13 +248,21 @@ export async function criarPedido(dados: {
                     nome: dados.cliente.nome,
                     email: dados.cliente.email,
                     telefone: dados.cliente.telefone,
-                    cpf: dados.cliente.cpf,
+                    cpf: cpfLimpo,
                     veiculoMarca: dados.cliente.veiculoMarca,
                     veiculoModelo: dados.cliente.veiculoModelo,
                     veiculoAno: dados.cliente.veiculoAno ? parseInt(dados.cliente.veiculoAno) : null,
                     veiculoPlaca: dados.cliente.veiculoPlaca,
                 },
             })
+        } else {
+            // Atualizar CPF se ainda não tiver ou se for diferente
+            if (cpfLimpo && (!cliente.cpf || cliente.cpf !== cpfLimpo)) {
+                cliente = await db.cliente.update({
+                    where: { id: cliente.id },
+                    data: { cpf: cpfLimpo },
+                })
+            }
         }
 
         // 2. Gerar número do pedido
