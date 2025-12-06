@@ -32,9 +32,9 @@ export default function PedidoSucessoPage() {
                             value: data.pedido.total,
                             currency: 'BRL',
                             items: data.pedido.items?.map((item: any) => ({
-                                item_id: item.produto.id,
-                                item_name: item.produto.nome,
-                                price: item.precoUnitario,
+                                item_id: item.id,
+                                item_name: item.nome,
+                                price: item.precoUnit,
                                 quantity: item.quantidade
                             })) || []
                         }
@@ -109,7 +109,7 @@ export default function PedidoSucessoPage() {
                                 <div className="space-y-2">
                                     {pedido.items?.map((item: any) => (
                                         <div key={item.id} className="flex justify-between text-sm">
-                                            <span>{item.produto.nome} <span className="text-muted-foreground">x{item.quantidade}</span></span>
+                                            <span>{item.nome} <span className="text-muted-foreground">x{item.quantidade}</span></span>
                                             <span className="font-medium">{formatPrice(item.subtotal)}</span>
                                         </div>
                                     ))}
@@ -146,7 +146,7 @@ export default function PedidoSucessoPage() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Clock className="h-4 w-4 text-muted-foreground" />
-                                    <span>{pedido.agendamento.hora}</span>
+                                    <span>{pedido.agendamento.hora && format(new Date(pedido.agendamento.hora), 'HH:mm')}</span>
                                 </div>
                                 <div className="flex items-start gap-2 mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                                     <MapPin className="h-4 w-4 text-yellow-600 mt-0.5" />
