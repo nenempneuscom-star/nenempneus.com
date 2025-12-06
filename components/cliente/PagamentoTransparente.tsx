@@ -349,9 +349,9 @@ export function PagamentoTransparente({
 
                     if (checkResponse.ok) {
                         const checkData = await checkResponse.json()
-                        console.log('[PIX Polling] Status MP:', checkData.mpStatus)
+                        console.log('[PIX Polling] Resposta check-payment:', checkData)
 
-                        if (checkData.status === 'pago') {
+                        if (checkData.status === 'pago' || checkData.mpStatus === 'approved') {
                             if (pollingRef.current) {
                                 clearInterval(pollingRef.current)
                             }
