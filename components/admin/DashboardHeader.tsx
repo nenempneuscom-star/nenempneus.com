@@ -10,7 +10,9 @@ function getSaudacao(): string {
     const agoraBrasil = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
     const hora = agoraBrasil.getHours()
 
-    if (hora >= 6 && hora < 12) {
+    if (hora >= 0 && hora < 6) {
+        return 'Boa madrugada'
+    } else if (hora >= 6 && hora < 12) {
         return 'Bom dia'
     } else if (hora >= 12 && hora < 18) {
         return 'Boa tarde'
