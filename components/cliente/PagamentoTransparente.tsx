@@ -314,6 +314,8 @@ export function PagamentoTransparente({
         pollingRef.current = setInterval(async () => {
             try {
                 console.log('[PIX Polling] Verificando status...')
+
+                // Primeiro verifica no banco local
                 const response = await fetch(`/api/pedidos/${pedidoNumero}`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
@@ -322,7 +324,7 @@ export function PagamentoTransparente({
 
                 if (response.ok) {
                     const data = await response.json()
-                    console.log('[PIX Polling] Status atual:', data.pedido?.status)
+                    console.log('[PIX Polling] Status local:', data.pedido?.status)
 
                     if (data.pedido?.status === 'pago') {
                         if (pollingRef.current) {
@@ -334,6 +336,32 @@ export function PagamentoTransparente({
                             onSuccess()
                             router.push(`/pedido/${pedidoNumero}/sucesso`)
                         }, 1500)
+                        return
+                    }
+
+                    // Se ainda pendente, verifica diretamente no Mercado Pago
+                    console.log('[PIX Polling] Verificando no Mercado Pago...')
+                    const checkResponse = await fetch('/api/mercadopago/check-payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ pedidoNumero })
+                    })
+
+                    if (checkResponse.ok) {
+                        const checkData = await checkResponse.json()
+                        console.log('[PIX Polling] Status MP:', checkData.mpStatus)
+
+                        if (checkData.status === 'pago') {
+                            if (pollingRef.current) {
+                                clearInterval(pollingRef.current)
+                            }
+                            setStatus('success')
+                            toast.success('Pagamento PIX confirmado!')
+                            setTimeout(() => {
+                                onSuccess()
+                                router.push(`/pedido/${pedidoNumero}/sucesso`)
+                            }, 1500)
+                        }
                     }
                 } else {
                     console.error('[PIX Polling] Erro na resposta:', response.status)
