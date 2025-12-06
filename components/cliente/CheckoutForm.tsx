@@ -353,7 +353,7 @@ export function CheckoutForm() {
                             )}
                         </div>
                         <div>
-                            <Label htmlFor="cpf">CPF</Label>
+                            <Label htmlFor="cpf">CPF *</Label>
                             <Input
                                 id="cpf"
                                 {...register('cpf')}
@@ -364,6 +364,9 @@ export function CheckoutForm() {
                                 }}
                                 maxLength={14}
                             />
+                            {errors.cpf && (
+                                <p className="text-sm text-destructive mt-1">{errors.cpf.message}</p>
+                            )}
                         </div>
                     </div>
                 </CardContent>

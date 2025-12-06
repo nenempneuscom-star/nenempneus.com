@@ -5,7 +5,7 @@ export const checkoutSchema = z.object({
     nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
     email: z.string().email('E-mail inválido'),
     telefone: z.string().min(10, 'Telefone inválido'),
-    cpf: z.string().optional(),
+    cpf: z.string().min(11, 'CPF obrigatório').max(14, 'CPF inválido'),
 
     // Endereço
     cep: z.string().min(8, 'CEP inválido'),
