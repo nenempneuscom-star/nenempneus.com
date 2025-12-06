@@ -155,9 +155,11 @@ export async function getSlotsDisponiveis(data: Date): Promise<SlotHorario[]> {
     })
 
     // Verificar se é hoje para filtrar horários passados
+    // Usar fuso horário de São Paulo (Brasil) para garantir consistência
     const agora = new Date()
-    const isHoje = isSameDay(data, agora)
-    const horaAtualMinutos = agora.getHours() * 60 + agora.getMinutes()
+    const agoraBrasil = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+    const isHoje = isSameDay(data, agoraBrasil)
+    const horaAtualMinutos = agoraBrasil.getHours() * 60 + agoraBrasil.getMinutes()
 
     // Mapear disponibilidade
     return horarios.map((hora) => {
