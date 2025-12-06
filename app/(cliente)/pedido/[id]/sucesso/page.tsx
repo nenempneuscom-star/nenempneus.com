@@ -195,7 +195,7 @@ export default function PedidoSucessoPage() {
                     </CardHeader>
                     <CardContent>
                         <ol className="space-y-3 list-decimal list-inside">
-                            <li className="text-sm">Você receberá uma confirmação por e-mail e WhatsApp</li>
+                            <li className="text-sm">Você receberá uma confirmação por e-mail</li>
                             <li className="text-sm"><strong>Imprima ou salve este comprovante</strong> para apresentar na loja</li>
                             <li className="text-sm">Compareça no horário agendado em nossa loja</li>
                             <li className="text-sm">Nossa equipe fará a instalação dos pneus</li>
