@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         })
 
         if (agendamentoExistente) {
-            console.log('[AGENDAMENTO] Agendamento já existe, atualizando...')
+            console.log('[AGENDAMENTO] Agendamento já existe para este pedido, atualizando...')
             // Atualizar agendamento existente
             const agendamentoAtualizado = await db.agendamento.update({
                 where: { pedidoId: pedido.id },
@@ -75,6 +75,25 @@ export async function POST(req: NextRequest) {
                 },
             })
             return NextResponse.json({ success: true, agendamento: agendamentoAtualizado })
+        }
+
+        // Verificar se já existe agendamento no mesmo slot (lojaId + data + hora + status)
+        // que impediria a criação (constraint único)
+        const slotOcupado = await db.agendamento.findFirst({
+            where: {
+                lojaId: pedido.lojaId,
+                data: dataObj,
+                hora: horaObj,
+                status: 'confirmado',
+            },
+        })
+
+        if (slotOcupado) {
+            console.log('[AGENDAMENTO] Slot já ocupado por outro agendamento:', slotOcupado.id)
+            return NextResponse.json(
+                { success: false, error: 'Este horário já está ocupado. Por favor, escolha outro horário.' },
+                { status: 400 }
+            )
         }
 
         // Criar agendamento
