@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Lock, Mail, Loader2, AlertCircle, Sparkles } from 'lucide-react'
+import { Lock, Mail, Loader2, AlertCircle, Sparkles, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 
 export default function LoginPage() {
     const router = useRouter()
@@ -244,6 +245,17 @@ export default function LoginPage() {
                                     <span className="relative">Entrar</span>
                                 )}
                             </Button>
+
+                            <Link href="/" className="block mt-4">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="w-full h-10 text-sm text-muted-foreground hover:text-foreground"
+                                >
+                                    <ArrowLeft className="mr-2 h-4 w-4" />
+                                    Voltar para a loja
+                                </Button>
+                            </Link>
                         </form>
                     </div>
                 </div>
