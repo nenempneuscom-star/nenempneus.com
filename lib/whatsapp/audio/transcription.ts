@@ -25,7 +25,7 @@ export async function baixarMidiaWhatsApp(mediaId: string): Promise<Buffer | nul
     try {
         // Primeiro, obtém a URL do arquivo
         const mediaResponse = await fetch(
-            `https://graph.facebook.com/v22.0/${mediaId}`,
+            `https://graph.facebook.com/v23.0/${mediaId}`,
             {
                 headers: {
                     Authorization: `Bearer ${getWhatsAppToken()}`,
