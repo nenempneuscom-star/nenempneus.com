@@ -240,14 +240,27 @@ model ConversaWhatsApp {
   modo             String             @default("bot")
   totalMensagens   Int                @default(0) @map("total_mensagens")
   ultimaMensagemEm DateTime?          @map("ultima_mensagem_em")
+  // Campos de Lead/Funil de Vendas
+  etapaFunil       String             @default("novo") @map("etapa_funil") // novo, qualificando, orcamento, negociando, fechando, convertido, perdido
+  pontuacaoLead    Int                @default(0) @map("pontuacao_lead") // 0-100
+  valorPotencial   Decimal?           @map("valor_potencial") @db.Decimal(10, 2)
+  motivoPerda      String?            @map("motivo_perda")
+  veiculoInfo      Json?              @map("veiculo_info") // { marca, modelo, ano, medida }
+  tags             Json               @default("[]")
+  anotacoes        String?
+  proximoFollowUp  DateTime?          @map("proximo_follow_up")
+  // Timestamps
   createdAt        DateTime           @default(now()) @map("created_at")
   updatedAt        DateTime           @updatedAt @map("updated_at")
+  // Relations
   loja             Loja               @relation(fields: [lojaId], references: [id], onDelete: Cascade)
   mensagens        MensagemWhatsApp[]
+  metricas         MetricaConversa[]
 
   @@unique([lojaId, telefone])
   @@index([lojaId])
   @@index([telefone])
+  @@index([etapaFunil])
   @@map("conversas_whatsapp")
 }
 
@@ -473,4 +486,94 @@ model solucoes_efetivas {
 
   @@index([projeto_id], map: "idx_solucoes_projeto")
   @@index([tipo_problema], map: "idx_solucoes_tipo")
+}
+
+// ==========================================
+// METRICAS WHATSAPP SALES
+// ==========================================
+
+model MetricaConversa {
+  id              String           @id @default(uuid())
+  conversaId      String           @map("conversa_id")
+  // Eventos
+  evento          String           // mensagem_recebida, mensagem_enviada, lead_qualificado, orcamento_enviado, link_checkout, conversao, perda
+  dados           Json?            // dados extras do evento
+  // Timestamps
+  createdAt       DateTime         @default(now()) @map("created_at")
+  // Relations
+  conversa        ConversaWhatsApp @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+
+  @@index([conversaId])
+  @@index([evento])
+  @@index([createdAt])
+  @@map("metricas_conversa")
+}
+
+model MetricaWhatsAppDiaria {
+  id                    String   @id @default(uuid())
+  lojaId                String   @map("loja_id")
+  data                  DateTime @db.Date
+  // Conversas
+  totalConversas        Int      @default(0) @map("total_conversas")
+  conversasNovas        Int      @default(0) @map("conversas_novas")
+  conversasAtivas       Int      @default(0) @map("conversas_ativas")
+  // Mensagens
+  totalMensagens        Int      @default(0) @map("total_mensagens")
+  mensagensEntrada      Int      @default(0) @map("mensagens_entrada")
+  mensagensSaida        Int      @default(0) @map("mensagens_saida")
+  mensagensBot          Int      @default(0) @map("mensagens_bot")
+  mensagensHumano       Int      @default(0) @map("mensagens_humano")
+  // Funil
+  leadsNovos            Int      @default(0) @map("leads_novos")
+  leadsQualificados     Int      @default(0) @map("leads_qualificados")
+  orcamentosEnviados    Int      @default(0) @map("orcamentos_enviados")
+  linksCheckoutEnviados Int      @default(0) @map("links_checkout_enviados")
+  conversoes            Int      @default(0)
+  perdas                Int      @default(0)
+  // Valores
+  valorPotencialTotal   Decimal  @default(0) @map("valor_potencial_total") @db.Decimal(10, 2)
+  valorConvertido       Decimal  @default(0) @map("valor_convertido") @db.Decimal(10, 2)
+  // Performance
+  tempoMedioResposta    Int?     @map("tempo_medio_resposta") // em segundos
+  taxaConversao         Decimal? @map("taxa_conversao") @db.Decimal(5, 2)
+  // Timestamps
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@unique([lojaId, data])
+  @@index([lojaId])
+  @@index([data])
+  @@map("metricas_whatsapp_diaria")
+}
+
+model FollowUpAgendado {
+  id          String           @id @default(uuid())
+  conversaId  String           @map("conversa_id")
+  tipo        String           // orcamento, carrinho_abandonado, pos_venda, reengajamento
+  mensagem    String?
+  agendadoPara DateTime        @map("agendado_para")
+  enviado     Boolean          @default(false)
+  enviadoEm   DateTime?        @map("enviado_em")
+  cancelado   Boolean          @default(false)
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  @@index([conversaId])
+  @@index([agendadoPara])
+  @@index([enviado])
+  @@map("follow_ups_agendados")
+}
+
+model FeedbackIA {
+  id          String   @id @default(uuid())
+  conversaId  String   @map("conversa_id")
+  mensagemId  String   @map("mensagem_id")
+  tipo        String   // positivo, negativo, correcao
+  feedback    String?
+  correcao    String?  // resposta correta sugerida
+  usuarioId   String?  @map("usuario_id") // admin que deu feedback
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([conversaId])
+  @@index([tipo])
+  @@map("feedbacks_ia")
 }
