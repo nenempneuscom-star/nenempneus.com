@@ -2,11 +2,33 @@ export interface WhatsAppMessage {
     from: string
     id: string
     timestamp: string
-    type: 'text' | 'image' | 'audio' | 'video' | 'document' | 'interactive'
+    type: 'text' | 'image' | 'audio' | 'video' | 'document' | 'interactive' | 'sticker' | 'location' | 'contacts'
     text?: {
         body: string
     }
     image?: {
+        id: string
+        mime_type: string
+        sha256?: string
+    }
+    audio?: {
+        id: string
+        mime_type: string
+        sha256?: string
+        voice?: boolean // true se for gravação de voz
+    }
+    video?: {
+        id: string
+        mime_type: string
+        sha256?: string
+    }
+    document?: {
+        id: string
+        mime_type: string
+        sha256?: string
+        filename?: string
+    }
+    sticker?: {
         id: string
         mime_type: string
     }
