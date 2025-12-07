@@ -235,13 +235,15 @@ export function WhatsAppTraining() {
                                     key={index}
                                     className={cn(
                                         "flex items-start gap-3 p-3 rounded-lg",
-                                        sugestao.includes('✅') ? "bg-green-50 dark:bg-green-950/20" : "bg-yellow-50 dark:bg-yellow-950/20"
+                                        sugestao.includes('✅')
+                                            ? "bg-green-50 dark:bg-green-950/30 text-green-900 dark:text-green-100"
+                                            : "bg-yellow-50 dark:bg-yellow-950/30 text-yellow-900 dark:text-yellow-100"
                                     )}
                                 >
                                     {sugestao.includes('✅') ? (
-                                        <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                                        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
                                     ) : (
-                                        <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
+                                        <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 shrink-0" />
                                     )}
                                     <p className="text-sm">{sugestao}</p>
                                 </div>
