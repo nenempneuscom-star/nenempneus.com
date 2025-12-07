@@ -1,6 +1,6 @@
 import { db } from '../../db'
 import { LOJA_SLUG } from '../../constants'
-import { addHours, addDays, isBefore } from 'date-fns'
+import { addHours } from 'date-fns'
 import { gerarFollowUp } from '../bot'
 import { WhatsAppClient } from '../client'
 import { salvarMensagemEnviada } from '../messages'

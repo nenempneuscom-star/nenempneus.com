@@ -1,5 +1,5 @@
 import { db } from '../../db'
-import { agendarFollowUp, cancelarFollowUps, agendarFollowUpAutomatico } from './scheduler'
+import { agendarFollowUp, cancelarFollowUps } from './scheduler'
 import { registrarEvento } from '../analytics/metrics'
 import { calcularPontuacaoLead, atualizarEtapaFunil } from '../analytics/lead-scoring'
 

@@ -2,16 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import {
-    TrendingUp,
-    TrendingDown,
     MessageSquare,
     Users,
     ShoppingCart,
     Target,
     Flame,
-    Clock,
     RefreshCcw,
-    ChevronRight
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -222,7 +218,7 @@ export function WhatsAppMetrics() {
                         <div className="space-y-3">
                             {data?.funil?.funil
                                 .filter(f => f.etapa !== 'perdido')
-                                .map((etapa, index) => {
+                                .map((etapa) => {
                                     const config = ETAPAS_LABELS[etapa.etapa] || { label: etapa.etapa, color: 'bg-gray-500', emoji: '📌' }
                                     const maxQtd = Math.max(...(data?.funil?.funil.map(f => f.quantidade) || [1]))
                                     const width = maxQtd > 0 ? (etapa.quantidade / maxQtd) * 100 : 0

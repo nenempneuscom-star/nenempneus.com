@@ -1,6 +1,6 @@
 import { db } from '../../db'
 import { LOJA_SLUG } from '../../constants'
-import { format, addDays, parse, isAfter, isBefore, setHours, setMinutes } from 'date-fns'
+import { format, addDays, isBefore, setHours, setMinutes } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 export interface SlotDisponivel {

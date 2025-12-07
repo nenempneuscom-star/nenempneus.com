@@ -1,6 +1,6 @@
 import { db } from '../../db'
 import { LOJA_SLUG } from '../../constants'
-import { startOfDay, endOfDay, subDays, format } from 'date-fns'
+import { startOfDay, endOfDay, subDays } from 'date-fns'
 
 // Tipos de eventos do funil
 export type EventoFunil =

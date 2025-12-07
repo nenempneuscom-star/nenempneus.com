@@ -1,6 +1,5 @@
 import { db } from '../../db'
-import { LOJA_SLUG } from '../../constants'
-import { Orcamento, ProdutoRecomendado } from '../types'
+import { Orcamento } from '../types'
 import { verificarDisponibilidade } from './stock-check'
 // Gerar ID simples para orçamentos
 function gerarIdOrcamento(): string {
