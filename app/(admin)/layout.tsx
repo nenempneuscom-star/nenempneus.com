@@ -4,6 +4,7 @@ import { Header } from '@/components/admin/Header'
 import { getSession } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { PermissionsProvider } from '@/contexts/PermissionsContext'
+import { MobileMenuProvider } from '@/contexts/MobileMenuContext'
 
 export default async function AdminLayout({
   children,
@@ -45,15 +46,17 @@ export default async function AdminLayout({
 
   return (
     <PermissionsProvider permissoes={user.permissoes}>
-      <div className="flex h-screen bg-background">
-        <Sidebar permissoes={user.permissoes} />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header user={user} />
-          <main className="flex-1 overflow-y-auto p-8">
-            {children}
-          </main>
+      <MobileMenuProvider>
+        <div className="flex h-screen bg-background">
+          <Sidebar permissoes={user.permissoes} />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Header user={user} />
+            <main className="flex-1 overflow-y-auto p-4 lg:p-8">
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
+      </MobileMenuProvider>
     </PermissionsProvider>
   )
 }

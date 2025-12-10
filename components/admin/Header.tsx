@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { User, LogOut, Settings, UserCircle, ExternalLink } from 'lucide-react'
+import { User, LogOut, Settings, UserCircle, ExternalLink, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,
@@ -13,6 +13,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
+import { useMobileMenu } from '@/contexts/MobileMenuContext'
 
 interface HeaderProps {
     user: {
@@ -25,6 +26,7 @@ interface HeaderProps {
 
 export function Header({ user }: HeaderProps) {
     const router = useRouter()
+    const { toggle } = useMobileMenu()
 
     const handleLogout = async () => {
         await fetch('/api/auth/logout', { method: 'POST' })
@@ -46,16 +48,28 @@ export function Header({ user }: HeaderProps) {
     const roleInfo = getRoleLabel(user.role)
 
     return (
-        <header className="bg-background border-b h-16 flex items-center justify-between px-6">
-            <div className="flex items-center gap-4">
-                <h2 className="text-lg font-semibold text-foreground">Painel Administrativo</h2>
+        <header className="bg-background border-b h-16 flex items-center justify-between px-4 lg:px-6">
+            <div className="flex items-center gap-3">
+                {/* Botão hamburguer - visível apenas em mobile */}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="lg:hidden"
+                    onClick={toggle}
+                    aria-label="Abrir menu"
+                >
+                    <Menu className="h-5 w-5" />
+                </Button>
+                <h2 className="text-base lg:text-lg font-semibold text-foreground">
+                    Painel Administrativo
+                </h2>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 lg:gap-4">
                 <Link href="/" target="_blank">
                     <Button variant="outline" size="sm" className="gap-2">
                         <ExternalLink className="h-4 w-4" />
-                        Ver Site
+                        <span className="hidden sm:inline">Ver Site</span>
                     </Button>
                 </Link>
                 <DropdownMenu>
