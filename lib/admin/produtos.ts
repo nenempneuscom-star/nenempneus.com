@@ -231,9 +231,16 @@ export async function atualizarProduto(
 ) {
   const updateData: any = {}
 
+  // Só atualiza o slug se o nome realmente mudou
   if (data.nome !== undefined) {
-    updateData.nome = data.nome
-    updateData.slug = gerarSlug(data.nome)
+    const produtoAtual = await db.produto.findUnique({ where: { id } })
+    if (produtoAtual && data.nome !== produtoAtual.nome) {
+      updateData.nome = data.nome
+      updateData.slug = gerarSlug(data.nome)
+    } else if (produtoAtual) {
+      // Nome igual, não atualiza slug
+      updateData.nome = data.nome
+    }
   }
   if (data.categoriaId !== undefined) updateData.categoriaId = data.categoriaId
   if (data.preco !== undefined) updateData.preco = data.preco
