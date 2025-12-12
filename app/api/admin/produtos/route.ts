@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
       estoque: data.estoque ? Number(data.estoque) : 0,
       descricao: data.descricao,
       imagemUrl: data.imagemUrl,
+      imagens: data.imagens,
       specs: data.specs,
       veiculos: data.veiculos,
       ativo: data.ativo,

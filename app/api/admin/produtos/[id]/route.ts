@@ -41,6 +41,7 @@ export async function PATCH(
       estoque: data.estoque !== undefined ? Number(data.estoque) : undefined,
       descricao: data.descricao,
       imagemUrl: data.imagemUrl,
+      imagens: data.imagens,
       specs: data.specs,
       veiculos: data.veiculos,
       ativo: data.ativo,
