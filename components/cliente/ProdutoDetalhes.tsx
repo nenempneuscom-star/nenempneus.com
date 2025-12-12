@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatPrice } from '@/lib/utils'
-import { ShoppingCart, Check, MapPin, Shield, Minus, Plus, Zap } from 'lucide-react'
+import { ShoppingCart, Check, MapPin, Shield, Minus, Plus, Zap, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCarrinhoStore } from '@/lib/store/carrinho-store'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 interface ProdutoDetalhesProps {
     produto: any
@@ -19,7 +20,13 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
     const [quantidade, setQuantidade] = useState(1)
     const [parcelasMaximas, setParcelasMaximas] = useState(12)
     const [taxaJuros, setTaxaJuros] = useState(0)
+    const [imagemAtual, setImagemAtual] = useState(0)
     const { adicionarItem } = useCarrinhoStore()
+
+    // Combina imagens array com imagemUrl para compatibilidade
+    const imagens: string[] = produto.imagens?.length > 0
+        ? produto.imagens
+        : (produto.imagemUrl ? [produto.imagemUrl] : [])
 
     const specs = produto.specs as any
     const veiculos = produto.veiculos as any[]
@@ -103,15 +110,40 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Imagem/Visualização */}
-            <div>
+            <div className="space-y-3">
                 <div className="relative aspect-square bg-muted rounded-lg flex items-center justify-center overflow-hidden">
-                    {produto.imagemUrl ? (
+                    {imagens.length > 0 ? (
                         <>
                             <img
-                                src={produto.imagemUrl}
-                                alt={produto.nome}
+                                src={imagens[imagemAtual]}
+                                alt={`${produto.nome} - Foto ${imagemAtual + 1}`}
                                 className="w-full h-full object-cover"
                             />
+                            {/* Setas de navegação */}
+                            {imagens.length > 1 && (
+                                <>
+                                    <Button
+                                        variant="secondary"
+                                        size="icon"
+                                        className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full opacity-80 hover:opacity-100"
+                                        onClick={() => setImagemAtual(prev => prev === 0 ? imagens.length - 1 : prev - 1)}
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="icon"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full opacity-80 hover:opacity-100"
+                                        onClick={() => setImagemAtual(prev => prev === imagens.length - 1 ? 0 : prev + 1)}
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                    {/* Indicadores */}
+                                    <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                                        {imagemAtual + 1} / {imagens.length}
+                                    </div>
+                                </>
+                            )}
                         </>
                     ) : (
                         <div className="text-center p-8">
@@ -128,6 +160,30 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
                         *Imagem ilustrativa
                     </span>
                 </div>
+
+                {/* Miniaturas */}
+                {imagens.length > 1 && (
+                    <div className="flex gap-2 justify-center">
+                        {imagens.map((img, index) => (
+                            <button
+                                key={index}
+                                onClick={() => setImagemAtual(index)}
+                                className={cn(
+                                    "w-16 h-16 rounded-md overflow-hidden border-2 transition-all",
+                                    imagemAtual === index
+                                        ? "border-primary ring-2 ring-primary/30"
+                                        : "border-muted hover:border-muted-foreground/50"
+                                )}
+                            >
+                                <img
+                                    src={img}
+                                    alt={`${produto.nome} - Miniatura ${index + 1}`}
+                                    className="w-full h-full object-cover"
+                                />
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Informações */}

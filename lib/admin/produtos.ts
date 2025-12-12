@@ -71,6 +71,7 @@ export async function getProdutos(filtros: ProdutoFiltros = {}) {
     preco: Number(p.preco),
     estoque: p.estoque,
     imagemUrl: p.imagemUrl,
+    imagens: (p.imagens as string[]) || [],
     specs: p.specs as Record<string, string>,
     veiculos: p.veiculos as string[],
     ativo: p.ativo,
@@ -105,6 +106,7 @@ export async function getProdutoById(id: string) {
     preco: Number(produto.preco),
     estoque: produto.estoque,
     imagemUrl: produto.imagemUrl,
+    imagens: (produto.imagens as string[]) || [],
     specs: produto.specs as Record<string, string>,
     veiculos: produto.veiculos as string[],
     ativo: produto.ativo,
@@ -152,6 +154,7 @@ export async function criarProduto(data: {
   estoque?: number
   descricao?: string
   imagemUrl?: string
+  imagens?: string[]
   specs?: Record<string, string>
   veiculos?: string[]
   ativo?: boolean
@@ -188,7 +191,8 @@ export async function criarProduto(data: {
       descricao: data.descricao || null,
       preco: data.preco,
       estoque: data.estoque || 0,
-      imagemUrl: data.imagemUrl || null,
+      imagemUrl: data.imagens?.[0] || data.imagemUrl || null,
+      imagens: data.imagens || [],
       specs: data.specs || {},
       veiculos: data.veiculos || [],
       ativo: data.ativo ?? true,
@@ -218,6 +222,7 @@ export async function atualizarProduto(
     estoque?: number
     descricao?: string
     imagemUrl?: string
+    imagens?: string[]
     specs?: Record<string, string>
     veiculos?: string[]
     ativo?: boolean
@@ -235,6 +240,11 @@ export async function atualizarProduto(
   if (data.estoque !== undefined) updateData.estoque = data.estoque
   if (data.descricao !== undefined) updateData.descricao = data.descricao
   if (data.imagemUrl !== undefined) updateData.imagemUrl = data.imagemUrl
+  if (data.imagens !== undefined) {
+    updateData.imagens = data.imagens
+    // Também atualiza imagemUrl com a primeira imagem para compatibilidade
+    updateData.imagemUrl = data.imagens[0] || null
+  }
   if (data.specs !== undefined) updateData.specs = data.specs
   if (data.veiculos !== undefined) updateData.veiculos = data.veiculos
   if (data.ativo !== undefined) updateData.ativo = data.ativo

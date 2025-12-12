@@ -132,6 +132,7 @@ model Produto {
   preco       Decimal      @db.Decimal(10, 2)
   estoque     Int          @default(0)
   imagemUrl   String?      @map("imagem_url")
+  imagens     Json         @default("[]") // Array de URLs das imagens (até 3)
   specs       Json         @default("{}")
   veiculos    Json         @default("[]")
   ativo       Boolean      @default(true)

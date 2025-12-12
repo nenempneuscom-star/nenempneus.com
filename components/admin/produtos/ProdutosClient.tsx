@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { ImageUpload } from '@/components/admin/ImageUpload'
+import { MultiImageUpload } from '@/components/admin/MultiImageUpload'
 import { ImportDialog } from '@/components/admin/produtos/ImportDialog'
 import { useFeatureFlag } from '@/hooks/use-feature-flag'
 
@@ -56,6 +56,7 @@ interface Produto {
   preco: number
   estoque: number
   imagemUrl: string | null
+  imagens: string[]
   specs: Record<string, string>
   veiculos: string[]
   ativo: boolean
@@ -115,7 +116,7 @@ export function ProdutosClient({
   const [formPreco, setFormPreco] = useState('')
   const [formEstoque, setFormEstoque] = useState('')
   const [formDescricao, setFormDescricao] = useState('')
-  const [formImagemUrl, setFormImagemUrl] = useState('')
+  const [formImagens, setFormImagens] = useState<string[]>([])
   const [formAtivo, setFormAtivo] = useState(true)
   const [formDestaque, setFormDestaque] = useState(false)
   // Specs para pneus
@@ -146,7 +147,7 @@ export function ProdutosClient({
     setFormPreco('')
     setFormEstoque('0')
     setFormDescricao('')
-    setFormImagemUrl('')
+    setFormImagens([])
     setFormAtivo(true)
     setFormDestaque(false)
     setFormMarca('')
@@ -165,7 +166,7 @@ export function ProdutosClient({
     setFormPreco(produto.preco.toString())
     setFormEstoque(produto.estoque.toString())
     setFormDescricao(produto.descricao || '')
-    setFormImagemUrl(produto.imagemUrl || '')
+    setFormImagens(produto.imagens || [])
     setFormAtivo(produto.ativo)
     setFormDestaque(produto.destaque)
     setFormMarca(produto.specs?.marca || '')
@@ -200,7 +201,7 @@ export function ProdutosClient({
         preco: parseFloat(formPreco),
         estoque: parseInt(formEstoque) || 0,
         descricao: formDescricao || null,
-        imagemUrl: formImagemUrl || null,
+        imagens: formImagens,
         ativo: formAtivo,
         destaque: formDestaque,
         specs,
@@ -592,10 +593,11 @@ export function ProdutosClient({
             </div>
 
             <div className="space-y-2">
-              <Label>Imagem do Produto</Label>
-              <ImageUpload
-                value={formImagemUrl}
-                onChange={(url) => setFormImagemUrl(url || '')}
+              <Label>Fotos do Produto (até 3)</Label>
+              <MultiImageUpload
+                value={formImagens}
+                onChange={setFormImagens}
+                maxImages={3}
                 bucket="produtos"
                 folder="pneus"
                 maxSizeMB={0.5}
