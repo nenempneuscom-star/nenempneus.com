@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Plus,
   Search,
@@ -81,10 +81,22 @@ export function ProdutosClient({
   currentPage,
 }: ProdutosClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [produtos, setProdutos] = useState(initialProdutos)
   const [loading, setLoading] = useState(false)
-  const [search, setSearch] = useState('')
-  const [categoriaFiltro, setCategoriaFiltro] = useState('')
+  const [search, setSearch] = useState(searchParams.get('search') || '')
+  const [categoriaFiltro, setCategoriaFiltro] = useState(searchParams.get('categoriaId') || '')
+
+  // Sincronizar produtos quando initialProdutos mudar (após navegação)
+  useEffect(() => {
+    setProdutos(initialProdutos)
+  }, [initialProdutos])
+
+  // Sincronizar filtros com URL
+  useEffect(() => {
+    setSearch(searchParams.get('search') || '')
+    setCategoriaFiltro(searchParams.get('categoriaId') || '')
+  }, [searchParams])
 
   // Feature flag para importação em massa
   const importacaoHabilitada = useFeatureFlag('importacaoEmMassa')
