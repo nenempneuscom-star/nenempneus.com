@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatPrice } from '@/lib/utils'
-import { ShoppingCart, Check, MapPin, Shield, Minus, Plus, Zap, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ShoppingCart, Check, MapPin, Shield, Minus, Plus, Zap, ChevronLeft, ChevronRight, X, ZoomIn } from 'lucide-react'
 import { useCarrinhoStore } from '@/lib/store/carrinho-store'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -21,6 +21,7 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
     const [parcelasMaximas, setParcelasMaximas] = useState(12)
     const [taxaJuros, setTaxaJuros] = useState(0)
     const [imagemAtual, setImagemAtual] = useState(0)
+    const [lightboxAberto, setLightboxAberto] = useState(false)
     const { adicionarItem } = useCarrinhoStore()
 
     // Combina imagens array com imagemUrl para compatibilidade
@@ -30,6 +31,30 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
 
     const specs = produto.specs as any
     const veiculos = produto.veiculos as any[]
+
+    // Fechar lightbox com ESC e navegar com setas
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (!lightboxAberto) return
+            if (e.key === 'Escape') setLightboxAberto(false)
+            if (e.key === 'ArrowLeft') setImagemAtual(prev => prev === 0 ? imagens.length - 1 : prev - 1)
+            if (e.key === 'ArrowRight') setImagemAtual(prev => prev === imagens.length - 1 ? 0 : prev + 1)
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [lightboxAberto, imagens.length])
+
+    // Bloquear scroll do body quando lightbox está aberto
+    useEffect(() => {
+        if (lightboxAberto) {
+            document.body.style.overflow = 'hidden'
+        } else {
+            document.body.style.overflow = ''
+        }
+        return () => {
+            document.body.style.overflow = ''
+        }
+    }, [lightboxAberto])
 
     // Buscar configurações de parcelamento
     useEffect(() => {
@@ -114,32 +139,48 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
                 <div className="relative aspect-square bg-muted rounded-lg flex items-center justify-center overflow-hidden">
                     {imagens.length > 0 ? (
                         <>
-                            <img
-                                src={imagens[imagemAtual]}
-                                alt={`${produto.nome} - Foto ${imagemAtual + 1}`}
-                                className="w-full h-full object-cover"
-                            />
+                            {/* Imagem clicável para ampliar */}
+                            <button
+                                onClick={() => setLightboxAberto(true)}
+                                className="w-full h-full cursor-zoom-in group"
+                            >
+                                <img
+                                    src={imagens[imagemAtual]}
+                                    alt={`${produto.nome} - Foto ${imagemAtual + 1}`}
+                                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                                />
+                                {/* Ícone de zoom */}
+                                <div className="absolute top-3 right-3 bg-black/60 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <ZoomIn className="h-4 w-4" />
+                                </div>
+                            </button>
                             {/* Setas de navegação */}
                             {imagens.length > 1 && (
                                 <>
                                     <Button
                                         variant="secondary"
                                         size="icon"
-                                        className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full opacity-80 hover:opacity-100"
-                                        onClick={() => setImagemAtual(prev => prev === 0 ? imagens.length - 1 : prev - 1)}
+                                        className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full opacity-80 hover:opacity-100 z-10"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            setImagemAtual(prev => prev === 0 ? imagens.length - 1 : prev - 1)
+                                        }}
                                     >
                                         <ChevronLeft className="h-4 w-4" />
                                     </Button>
                                     <Button
                                         variant="secondary"
                                         size="icon"
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full opacity-80 hover:opacity-100"
-                                        onClick={() => setImagemAtual(prev => prev === imagens.length - 1 ? 0 : prev + 1)}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full opacity-80 hover:opacity-100 z-10"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            setImagemAtual(prev => prev === imagens.length - 1 ? 0 : prev + 1)
+                                        }}
                                     >
                                         <ChevronRight className="h-4 w-4" />
                                     </Button>
                                     {/* Indicadores */}
-                                    <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                                    <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded z-10">
                                         {imagemAtual + 1} / {imagens.length}
                                     </div>
                                 </>
@@ -156,9 +197,15 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
                         </div>
                     )}
                     {/* Aviso discreto */}
-                    <span className="absolute bottom-3 left-3 text-[11px] text-muted-foreground/50">
+                    <span className="absolute bottom-3 left-3 text-[11px] text-muted-foreground/50 z-10">
                         *Imagem ilustrativa
                     </span>
+                    {/* Dica de clique */}
+                    {imagens.length > 0 && (
+                        <span className="absolute top-3 left-3 text-[10px] text-white/70 bg-black/40 px-2 py-1 rounded">
+                            Clique para ampliar
+                        </span>
+                    )}
                 </div>
 
                 {/* Miniaturas */}
@@ -328,6 +375,103 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
                     </div>
                 </div>
             </div>
+
+            {/* Lightbox Modal */}
+            {lightboxAberto && imagens.length > 0 && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+                    onClick={() => setLightboxAberto(false)}
+                >
+                    {/* Botão fechar */}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-4 right-4 text-white hover:bg-white/20 z-50"
+                        onClick={() => setLightboxAberto(false)}
+                    >
+                        <X className="h-6 w-6" />
+                    </Button>
+
+                    {/* Indicador */}
+                    {imagens.length > 1 && (
+                        <div className="absolute top-4 left-4 text-white text-sm bg-black/50 px-3 py-1 rounded-full">
+                            {imagemAtual + 1} / {imagens.length}
+                        </div>
+                    )}
+
+                    {/* Imagem principal */}
+                    <div
+                        className="relative max-w-[90vw] max-h-[85vh] flex items-center justify-center"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <img
+                            src={imagens[imagemAtual]}
+                            alt={`${produto.nome} - Foto ${imagemAtual + 1}`}
+                            className="max-w-full max-h-[85vh] object-contain rounded-lg"
+                        />
+                    </div>
+
+                    {/* Setas de navegação */}
+                    {imagens.length > 1 && (
+                        <>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 h-12 w-12"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    setImagemAtual(prev => prev === 0 ? imagens.length - 1 : prev - 1)
+                                }}
+                            >
+                                <ChevronLeft className="h-8 w-8" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 h-12 w-12"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    setImagemAtual(prev => prev === imagens.length - 1 ? 0 : prev + 1)
+                                }}
+                            >
+                                <ChevronRight className="h-8 w-8" />
+                            </Button>
+                        </>
+                    )}
+
+                    {/* Miniaturas no lightbox */}
+                    {imagens.length > 1 && (
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                            {imagens.map((img, index) => (
+                                <button
+                                    key={index}
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        setImagemAtual(index)
+                                    }}
+                                    className={cn(
+                                        "w-14 h-14 rounded-md overflow-hidden border-2 transition-all",
+                                        imagemAtual === index
+                                            ? "border-white ring-2 ring-white/50"
+                                            : "border-white/30 hover:border-white/60 opacity-60 hover:opacity-100"
+                                    )}
+                                >
+                                    <img
+                                        src={img}
+                                        alt={`Miniatura ${index + 1}`}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Dica de teclado */}
+                    <div className="absolute bottom-4 right-4 text-white/50 text-xs hidden md:block">
+                        ESC para fechar • ← → para navegar
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
