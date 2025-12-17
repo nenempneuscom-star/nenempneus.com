@@ -157,6 +157,21 @@ export async function POST(req: NextRequest) {
 
         console.log('Pedido atualizado:', pedidoNumero, payment.status)
 
+        // Decrementar estoque quando pagamento aprovado
+        if (payment.status === 'approved') {
+            for (const item of pedidoAtualizado.items) {
+                await db.produto.update({
+                    where: { id: item.produtoId },
+                    data: {
+                        estoque: {
+                            decrement: item.quantidade
+                        }
+                    }
+                })
+            }
+            console.log('Estoque decrementado para pedido:', pedidoNumero)
+        }
+
         // Enviar email de confirmação quando pagamento aprovado
         if (payment.status === 'approved' && pedidoAtualizado.cliente.email) {
             try {
