@@ -254,11 +254,21 @@ export function ProdutosClient({
         method: 'DELETE',
       })
 
+      const data = await response.json()
+
       if (response.ok) {
-        setProdutos((prev) => prev.filter((p) => p.id !== produto.id))
+        if (data.action === 'deactivated') {
+          // Produto foi desativado (tem pedidos vinculados)
+          setProdutos((prev) => prev.map((p) =>
+            p.id === produto.id ? { ...p, ativo: false } : p
+          ))
+          alert('Produto desativado pois possui pedidos vinculados. Ele não aparecerá mais no catálogo.')
+        } else {
+          // Produto foi deletado
+          setProdutos((prev) => prev.filter((p) => p.id !== produto.id))
+        }
         setConfirmDelete(null)
       } else {
-        const data = await response.json()
         alert(data.error || 'Erro ao deletar produto')
       }
     } catch (err) {

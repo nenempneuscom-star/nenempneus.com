@@ -277,9 +277,21 @@ export async function atualizarProduto(
 }
 
 export async function deletarProduto(id: string) {
-  await db.produto.delete({
-    where: { id },
-  })
-
-  return { success: true }
+  try {
+    // Tenta deletar o produto
+    await db.produto.delete({
+      where: { id },
+    })
+    return { success: true, action: 'deleted' }
+  } catch (error: any) {
+    // Se falhar por foreign key (produto já foi vendido), desativa ao invés de deletar
+    if (error.code === 'P2003' || error.message?.includes('Foreign key constraint')) {
+      await db.produto.update({
+        where: { id },
+        data: { ativo: false },
+      })
+      return { success: true, action: 'deactivated' }
+    }
+    throw error
+  }
 }

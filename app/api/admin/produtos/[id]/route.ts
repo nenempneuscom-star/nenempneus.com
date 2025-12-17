@@ -64,9 +64,18 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    await deletarProduto(id)
+    const result = await deletarProduto(id)
 
-    return NextResponse.json({ success: true })
+    // Retorna mensagem diferente se foi desativado ao invés de deletado
+    if (result.action === 'deactivated') {
+      return NextResponse.json({
+        success: true,
+        message: 'Produto desativado (possui pedidos vinculados)',
+        action: 'deactivated'
+      })
+    }
+
+    return NextResponse.json({ success: true, action: 'deleted' })
   } catch (error: any) {
     console.error('Erro ao deletar produto:', error)
     return NextResponse.json(
