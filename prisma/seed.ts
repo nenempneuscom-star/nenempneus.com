@@ -23,7 +23,7 @@ async function main() {
             endereco: 'Av. Nereu Ramos, 740',
             cidade: 'Capivari de Baixo',
             estado: 'SC',
-            cep: '88715-000',
+            cep: '88745-000',
             corPrimaria: '#FF6B00',
             corSecundaria: '#1A1A1A',
             ativo: true,
