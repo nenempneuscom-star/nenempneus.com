@@ -20,7 +20,7 @@ async function main() {
             email: 'contato@nenempneus.com',
             whatsapp: '5548999973889',
             telefone: '(48) 99997-3889',
-            endereco: 'Rua Principal, 123',
+            endereco: 'Av. Nereu Ramos, 740',
             cidade: 'Capivari de Baixo',
             estado: 'SC',
             cep: '88715-000',

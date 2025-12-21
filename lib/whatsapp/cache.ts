@@ -45,7 +45,7 @@ const FAQ: Record<string, string> = {
   'ola': 'Olá! Como posso ajudar você hoje?',
   'oi': 'Oi! Em que posso ser útil?',
   'horario': 'Atendemos de segunda a sábado, das 8h às 18h.',
-  'endereco': 'Estamos em Capivari de Baixo, SC. Rua Principal, 123 - Centro.',
+  'endereco': 'Estamos em Capivari de Baixo, SC. Av. Nereu Ramos, 740 - Centro.',
   'telefone': 'Nosso telefone é (48) 99997-3889.',
   'preco': 'Nossos pneus seminovos começam a partir de R$380. Os preços variam conforme marca, aro e modelo.',
   'garantia': 'Todos nossos pneus têm garantia de qualidade!',

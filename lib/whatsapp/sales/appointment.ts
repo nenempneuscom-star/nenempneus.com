@@ -348,7 +348,7 @@ export function gerarMensagemConfirmacao(
     texto += `${saudacao}sua instalação está marcada para:\n\n`
     texto += `📅 *${dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1)}*\n`
     texto += `⏰ *${hora}*\n\n`
-    texto += `📍 Endereço: Rua Principal, 123 - Centro\n`
+    texto += `📍 Endereço: Av. Nereu Ramos, 740 - Centro\n`
     texto += `   Capivari de Baixo, SC\n\n`
     texto += `Chegue com 10 minutinhos de antecedência, tá? 😊\n\n`
     texto += `Se precisar remarcar, é só me avisar aqui!`
