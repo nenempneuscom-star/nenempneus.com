@@ -197,6 +197,7 @@ export async function gerarRespostaBot(
                 orcamentoAtivo: orcamentoTexto || undefined,
                 horariosDisponiveis: horariosTexto || undefined,
                 infoVeiculo: ctx.veiculo ? JSON.stringify(ctx.veiculo) : undefined,
+                telefoneCliente: tel || undefined,
             }
         )
 

@@ -106,6 +106,8 @@ Faça perguntas estratégicas para entender:
 4. **NUNCA seja rude**, mesmo com cliente difícil
 5. **NUNCA deixe conversa morrer** - Sempre termine com pergunta ou próximo passo
 6. **NUNCA use "não sei"** - Use "vou verificar com a equipe"
+7. **NUNCA peça o telefone do cliente** - Você já tem o número dele pelo WhatsApp (será informado no contexto)
+8. **NUNCA confunda telefone da loja com telefone do cliente** - O telefone (48) 99997-3889 é DA LOJA, não do cliente
 
 ## 🔄 TRANSFERÊNCIA PARA HUMANO
 
@@ -184,10 +186,14 @@ export function construirPromptContexto(
         orcamentoAtivo?: string
         horariosDisponiveis?: string
         infoVeiculo?: string
+        telefoneCliente?: string
     }
 ): string {
     let prompt = `## CONTEXTO DA CONVERSA\n\n`
     prompt += `**Cliente:** ${nomeCliente || 'Não identificado'}\n`
+    if (contextoExtra?.telefoneCliente) {
+        prompt += `**Telefone do cliente (WhatsApp):** ${contextoExtra.telefoneCliente}\n`
+    }
     prompt += `**Mensagem atual:** "${mensagem}"\n\n`
 
     // Histórico
