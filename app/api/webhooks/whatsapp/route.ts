@@ -156,16 +156,23 @@ export async function POST(req: NextRequest) {
                             continue
                         }
 
-                        // Gerar resposta com IA
+                        // Gerar resposta com IA (incluindo imagens de produtos)
                         console.log('🤖 Gerando resposta com Claude...')
-                        const { gerarRespostaBot } = await import('@/lib/whatsapp/bot')
-                        const respostaBot = await gerarRespostaBot(
+                        const { gerarRespostaBotComImagens } = await import('@/lib/whatsapp/bot')
+                        const { texto: respostaBot, produtosComImagem } = await gerarRespostaBotComImagens(
                             conversa.id,
                             nomeContato,
-                            conteudo
+                            conteudo,
+                            telefone
                         )
 
-                        // Enviar resposta
+                        // Enviar imagens dos produtos primeiro (se houver)
+                        if (produtosComImagem.length > 0) {
+                            console.log(`📸 Enviando ${produtosComImagem.length} imagens de produtos...`)
+                            await whatsapp.sendProductImages(telefone, produtosComImagem)
+                        }
+
+                        // Enviar resposta de texto
                         const responseData = await whatsapp.sendMessage(telefone, respostaBot)
 
                         // Salvar resposta no banco

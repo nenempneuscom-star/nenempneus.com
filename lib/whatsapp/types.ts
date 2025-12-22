@@ -107,6 +107,17 @@ export interface SendTemplatePayload {
     }
 }
 
+export interface SendImagePayload {
+    messaging_product: 'whatsapp'
+    recipient_type: 'individual'
+    to: string
+    type: 'image'
+    image: {
+        link: string
+        caption?: string
+    }
+}
+
 export interface SendInteractivePayload {
     messaging_product: 'whatsapp'
     recipient_type: 'individual'

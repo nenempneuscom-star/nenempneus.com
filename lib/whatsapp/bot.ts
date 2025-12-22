@@ -19,6 +19,18 @@ import {
     buscarProximosHorarios,
     formatarSlotsWhatsApp,
 } from './sales/appointment'
+import { ProdutoRecomendado } from './types'
+
+// Tipo de retorno para resposta com imagens
+export interface RespostaBotComImagens {
+    texto: string
+    produtosComImagem: Array<{
+        nome: string
+        preco: number
+        imageUrl: string
+        estoque: number
+    }>
+}
 
 // Usar placeholder temporário se não configurado (para build)
 const apiKey = process.env.ANTHROPIC_API_KEY || 'sk-ant-placeholder-temp'
@@ -276,6 +288,80 @@ export async function gerarRespostaBot(
     } catch (error) {
         console.error('Erro ao gerar resposta do bot:', error)
         return 'Opa, tive um probleminha técnico aqui. 😅 Mas calma que um atendente já vai te ajudar!'
+    }
+}
+
+// Gera resposta do bot com imagens dos produtos
+export async function gerarRespostaBotComImagens(
+    conversaId: string,
+    nomeCliente: string,
+    mensagem: string,
+    telefone?: string
+): Promise<RespostaBotComImagens> {
+    try {
+        const tel = telefone || ''
+        const ctx = getContexto(tel)
+
+        // Verificar respostas rápidas primeiro (sem imagens)
+        const objecao = detectarObjecao(mensagem)
+        if (objecao && RESPOSTAS_OBJECOES[objecao]) {
+            return { texto: RESPOSTAS_OBJECOES[objecao], produtosComImagem: [] }
+        }
+
+        const respostaRapida = getQuickResponse(mensagem)
+        if (respostaRapida && mensagem.length < 20) {
+            if (['oi', 'ola', 'olá', 'bom dia', 'boa tarde', 'boa noite'].includes(mensagem.toLowerCase().trim())) {
+                const isNovaConversa = ctx.etapaFunil === 'novo'
+                const texto = isNovaConversa
+                    ? PROMPTS_SITUACIONAIS.boasVindas(nomeCliente)
+                    : PROMPTS_SITUACIONAIS.clienteRetornando(nomeCliente)
+                return { texto, produtosComImagem: [] }
+            }
+            return { texto: respostaRapida, produtosComImagem: [] }
+        }
+
+        // Buscar produtos com imagens
+        let produtos: ProdutoRecomendado[] = []
+        const infoVeiculo = extrairInfoVeiculo(mensagem)
+
+        if (infoVeiculo.modelo || infoVeiculo.medida) {
+            atualizarContexto(tel, {
+                veiculo: { ...ctx.veiculo, ...infoVeiculo },
+                etapaFunil: 'qualificando',
+            })
+        }
+
+        if (ctx.veiculo?.modelo || ctx.veiculo?.medida || infoVeiculo.modelo || infoVeiculo.medida) {
+            const modelo = ctx.veiculo?.modelo || infoVeiculo.modelo
+            const medida = ctx.veiculo?.medida || infoVeiculo.medida
+
+            if (medida) {
+                produtos = await buscarProdutos({ medida, limite: 3 })
+            } else if (modelo) {
+                produtos = await buscarProdutosParaVeiculo(modelo, { limite: 3 })
+            }
+        }
+
+        // Filtrar produtos que têm imagem
+        const produtosComImagem = produtos
+            .filter(p => p.imagemUrl && p.imagemUrl.startsWith('http'))
+            .map(p => ({
+                nome: p.nome,
+                preco: p.preco,
+                imageUrl: p.imagemUrl!,
+                estoque: p.estoque,
+            }))
+
+        // Gerar resposta de texto usando a função original
+        const texto = await gerarRespostaBot(conversaId, nomeCliente, mensagem, telefone)
+
+        return { texto, produtosComImagem }
+    } catch (error) {
+        console.error('Erro ao gerar resposta com imagens:', error)
+        return {
+            texto: 'Opa, tive um probleminha técnico aqui. 😅 Mas calma que um atendente já vai te ajudar!',
+            produtosComImagem: [],
+        }
     }
 }
 

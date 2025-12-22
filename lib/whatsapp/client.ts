@@ -1,4 +1,4 @@
-import { SendMessagePayload, SendTemplatePayload, SendInteractivePayload } from './types'
+import { SendMessagePayload, SendTemplatePayload, SendInteractivePayload, SendImagePayload } from './types'
 
 const WHATSAPP_API_VERSION = process.env.WHATSAPP_API_VERSION || 'v22.0'
 const WHATSAPP_API_URL = `https://graph.facebook.com/${WHATSAPP_API_VERSION}`
@@ -142,6 +142,41 @@ export class WhatsAppClient {
         }
 
         return this.sendRequest(payload)
+    }
+
+    // Enviar imagem com legenda opcional
+    async sendImage(to: string, imageUrl: string, caption?: string): Promise<any> {
+        const payload: SendImagePayload = {
+            messaging_product: 'whatsapp',
+            recipient_type: 'individual',
+            to: to.replace(/\D/g, ''),
+            type: 'image',
+            image: {
+                link: imageUrl,
+                caption: caption,
+            },
+        }
+
+        return this.sendRequest(payload)
+    }
+
+    // Enviar múltiplas imagens de produtos
+    async sendProductImages(
+        to: string,
+        produtos: Array<{ nome: string; preco: number; imageUrl: string; estoque: number }>
+    ): Promise<void> {
+        for (const produto of produtos) {
+            if (produto.imageUrl) {
+                const caption = `🛞 *${produto.nome}*\n💰 R$ ${produto.preco.toFixed(2)}\n📦 ${produto.estoque} em estoque`
+                try {
+                    await this.sendImage(to, produto.imageUrl, caption)
+                    // Pequeno delay entre imagens para não sobrecarregar
+                    await new Promise(resolve => setTimeout(resolve, 500))
+                } catch (error) {
+                    console.error(`Erro ao enviar imagem do produto ${produto.nome}:`, error)
+                }
+            }
+        }
     }
 
     // Método privado para enviar requisições
