@@ -1,19 +1,19 @@
-import OpenAI from 'openai'
+import Groq from 'groq-sdk'
 
-// Inicialização lazy do cliente OpenAI
-let openaiClient: OpenAI | null = null
+// Inicialização lazy do cliente Groq
+let groqClient: Groq | null = null
 
-function getOpenAI(): OpenAI {
-    if (!openaiClient) {
-        openaiClient = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
+function getGroq(): Groq {
+    if (!groqClient) {
+        groqClient = new Groq({
+            apiKey: process.env.GROQ_API_KEY,
         })
     }
-    return openaiClient
+    return groqClient
 }
 
 function getWhatsAppToken(): string {
-    return process.env.WHATSAPP_TOKEN || ''
+    return process.env.WHATSAPP_ACCESS_TOKEN || ''
 }
 
 /**
@@ -80,13 +80,13 @@ export async function transcreverAudio(
         // Determina a extensão baseado no mime type
         const extensao = getExtensaoFromMime(mimeType)
 
-        // Cria um File a partir do Buffer para a API da OpenAI
+        // Cria um File a partir do Buffer para a API do Groq
         const uint8Array = new Uint8Array(audioBuffer)
         const file = new File([uint8Array], `audio.${extensao}`, { type: mimeType })
 
-        const transcription = await getOpenAI().audio.transcriptions.create({
+        const transcription = await getGroq().audio.transcriptions.create({
             file: file,
-            model: 'whisper-1',
+            model: 'whisper-large-v3',
             language: 'pt', // Português
             response_format: 'text',
         })
