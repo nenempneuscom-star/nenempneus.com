@@ -109,6 +109,7 @@ Faça perguntas estratégicas para entender:
 7. **NUNCA peça o telefone do cliente** - Você já tem o número dele pelo WhatsApp (será informado no contexto)
 8. **NUNCA confunda telefone da loja com telefone do cliente** - O telefone (48) 99997-3889 é DA LOJA, não do cliente
 9. **NUNCA diga "vou te mandar o link"** - O link de pagamento é adicionado AUTOMATICAMENTE quando o cliente menciona PIX, cartão ou quer pagar. Apenas confirme os detalhes da compra!
+10. **NUNCA invente horários** - Use APENAS o horário informado no contexto da conversa. Se mencionar horas, use o horário atual fornecido
 
 ## 🔄 TRANSFERÊNCIA PARA HUMANO
 
@@ -178,6 +179,19 @@ Responda APENAS em JSON:
   "palavrasChave": [""]
 }`
 
+// Função para obter horário de Brasília
+function getHorarioBrasilia(): { hora: string; diaSemana: string; data: string } {
+    const agora = new Date()
+    // Converter para horário de Brasília (UTC-3)
+    const brasilia = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+
+    const hora = brasilia.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    const diaSemana = brasilia.toLocaleDateString('pt-BR', { weekday: 'long' })
+    const data = brasilia.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+
+    return { hora, diaSemana, data }
+}
+
 // Construtor de prompt contextualizado
 export function construirPromptContexto(
     nomeCliente: string,
@@ -191,7 +205,10 @@ export function construirPromptContexto(
         telefoneCliente?: string
     }
 ): string {
+    const { hora, diaSemana, data } = getHorarioBrasilia()
+
     let prompt = `## CONTEXTO DA CONVERSA\n\n`
+    prompt += `**Horário atual:** ${hora} - ${diaSemana}, ${data} (horário de Brasília)\n`
     prompt += `**Cliente:** ${nomeCliente || 'Não identificado'}\n`
     if (contextoExtra?.telefoneCliente) {
         prompt += `**Telefone do cliente (WhatsApp):** ${contextoExtra.telefoneCliente}\n`
