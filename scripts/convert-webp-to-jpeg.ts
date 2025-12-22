@@ -12,8 +12,10 @@
  * Executar com: npx tsx scripts/convert-webp-to-jpeg.ts
  */
 
+import { config } from 'dotenv'
+config() // Carrega variáveis do .env
+
 import { PrismaClient } from '@prisma/client'
-import { createClient } from '@supabase/supabase-js'
 import sharp from 'sharp'
 
 const db = new PrismaClient()
@@ -22,7 +24,8 @@ const db = new PrismaClient()
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+console.log('🔑 Usando chave:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'service_role' : 'anon')
+console.log('🔑 Key length:', supabaseServiceKey?.length)
 
 const BUCKET = 'produtos'
 const JPEG_QUALITY = 85
@@ -48,18 +51,13 @@ async function convertWebpToJpeg(webpUrl: string): Promise<ConversionResult> {
         const bucket = pathParts[0] // produtos
         const filePath = pathParts.slice(1).join('/') // images/xxx.webp
 
-        // Baixar a imagem WebP
+        // Baixar a imagem WebP diretamente da URL pública
         console.log(`   📥 Baixando: ${filePath}`)
-        const { data: downloadData, error: downloadError } = await supabase.storage
-            .from(bucket)
-            .download(filePath)
-
-        if (downloadError || !downloadData) {
-            throw new Error(`Erro ao baixar: ${downloadError?.message}`)
+        const response = await fetch(webpUrl)
+        if (!response.ok) {
+            throw new Error(`Erro ao baixar: ${response.status}`)
         }
-
-        // Converter para buffer
-        const webpBuffer = Buffer.from(await downloadData.arrayBuffer())
+        const webpBuffer = Buffer.from(await response.arrayBuffer())
 
         // Converter WebP para JPEG usando Sharp
         console.log(`   🔄 Convertendo para JPEG...`)
@@ -70,30 +68,36 @@ async function convertWebpToJpeg(webpUrl: string): Promise<ConversionResult> {
         // Gerar novo nome de arquivo
         const newFileName = filePath.replace('.webp', '.jpg')
 
-        // Upload do JPEG
+        // Upload do JPEG via REST API
         console.log(`   📤 Enviando: ${newFileName}`)
-        const { data: uploadData, error: uploadError } = await supabase.storage
-            .from(bucket)
-            .upload(newFileName, jpegBuffer, {
-                contentType: 'image/jpeg',
-                cacheControl: '3600',
-                upsert: true, // Sobrescreve se existir
-            })
+        const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucket}/${newFileName}`
+        const uploadResponse = await fetch(uploadUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${supabaseServiceKey}`,
+                'Content-Type': 'image/jpeg',
+                'x-upsert': 'true',
+            },
+            body: new Uint8Array(jpegBuffer),
+        })
 
-        if (uploadError) {
-            throw new Error(`Erro ao fazer upload: ${uploadError.message}`)
+        if (!uploadResponse.ok) {
+            const errorText = await uploadResponse.text()
+            throw new Error(`Erro ao fazer upload: ${uploadResponse.status} - ${errorText}`)
         }
 
         // Obter URL pública do novo arquivo
-        const { data: { publicUrl } } = supabase.storage
-            .from(bucket)
-            .getPublicUrl(newFileName)
+        const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${newFileName}`
 
-        // Deletar arquivo WebP antigo
+        // Deletar arquivo WebP antigo via REST API
         console.log(`   🗑️ Removendo WebP antigo...`)
-        await supabase.storage
-            .from(bucket)
-            .remove([filePath])
+        const deleteUrl = `${supabaseUrl}/storage/v1/object/${bucket}/${filePath}`
+        await fetch(deleteUrl, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${supabaseServiceKey}`,
+            },
+        })
 
         return {
             oldUrl: webpUrl,
