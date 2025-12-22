@@ -367,9 +367,20 @@ export async function gerarRespostaBotComImagens(
         const medida = ctx.veiculo?.medida || infoVeiculo.medida || contextoHistorico.medida
         const temContextoVeiculo = modelo || medida
 
+        // Log para debug - sempre mostrar o que foi extraído
+        console.log(`🔍 Contexto extraído:`)
+        console.log(`   infoVeiculo: ${JSON.stringify(infoVeiculo)}`)
+        console.log(`   ctx.veiculo: ${JSON.stringify(ctx.veiculo)}`)
+        console.log(`   Modelo final: ${modelo || 'nenhum'}`)
+        console.log(`   Medida final: ${medida || 'nenhuma'}`)
+        console.log(`   querFoto: ${querFoto}`)
+        console.log(`   temContextoVeiculo: ${temContextoVeiculo}`)
+
         if (temContextoVeiculo || querFoto) {
             if (medida) {
+                console.log(`🔍 Buscando produtos com medida: ${medida}`)
                 produtos = await buscarProdutos({ medida, limite: 3 })
+                console.log(`🔍 Produtos encontrados: ${produtos.length}`)
             } else if (modelo) {
                 produtos = await buscarProdutosParaVeiculo(modelo, { limite: 3 })
             } else if (querFoto) {
@@ -389,11 +400,9 @@ export async function gerarRespostaBotComImagens(
             }))
 
         // Log para debug
-        if (querFoto) {
-            console.log(`📸 Cliente pediu foto. Produtos encontrados: ${produtosComImagem.length}`)
-            console.log(`   Contexto memória: ${JSON.stringify(ctx.veiculo)}`)
-            console.log(`   Contexto histórico: ${JSON.stringify(contextoHistorico)}`)
-            console.log(`   Modelo/Medida usado: ${modelo || 'nenhum'} / ${medida || 'nenhuma'}`)
+        console.log(`📸 Produtos com imagem para enviar: ${produtosComImagem.length}`)
+        if (produtosComImagem.length > 0) {
+            produtosComImagem.forEach(p => console.log(`   - ${p.nome}: ${p.imageUrl}`))
         }
 
         // Gerar resposta de texto usando a função original
