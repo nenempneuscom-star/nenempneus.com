@@ -337,7 +337,7 @@ export async function gerarRespostaBotComImagens(
                          /\b(cade|cadê|quero ver|deixa eu ver|pode mandar)\b/i.test(mensagem)
 
         // Se pediu foto e não tem contexto em memória, buscar do histórico de mensagens
-        let contextoHistorico: { modelo?: string; medida?: string } = {}
+        const contextoHistorico: { modelo?: string; medida?: string } = {}
         if (querFoto && !ctx.veiculo?.modelo && !ctx.veiculo?.medida && !infoVeiculo.modelo && !infoVeiculo.medida) {
             // Buscar últimas mensagens para extrair contexto
             const mensagensRecentes = await db.mensagemWhatsApp.findMany({
