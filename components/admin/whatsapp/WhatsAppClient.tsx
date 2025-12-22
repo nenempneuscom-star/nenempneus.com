@@ -65,6 +65,8 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
     const [enviando, setEnviando] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const previousMensagensCountRef = useRef<number>(0)
+    const isFirstLoadRef = useRef<boolean>(true)
     const [isMobileView, setIsMobileView] = useState(false)
     const [showChat, setShowChat] = useState(false)
 
@@ -76,9 +78,20 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
         return () => window.removeEventListener('resize', checkMobile)
     }, [])
 
-    // Scroll to bottom
+    // Scroll to bottom - apenas quando há mensagens novas ou é o primeiro carregamento
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+        const currentCount = mensagens.length
+        const previousCount = previousMensagensCountRef.current
+
+        // Fazer scroll apenas se:
+        // 1. É o primeiro carregamento da conversa (isFirstLoadRef é true)
+        // 2. Há mensagens novas (currentCount > previousCount)
+        if (isFirstLoadRef.current || currentCount > previousCount) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+            isFirstLoadRef.current = false
+        }
+
+        previousMensagensCountRef.current = currentCount
     }, [mensagens])
 
     // Carregar conversas periodicamente
@@ -128,6 +141,9 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
     const handleSelectConversa = (conversa: Conversa) => {
         setConversaSelecionada(conversa)
         setShowChat(true)
+        // Resetar refs para o primeiro carregamento da nova conversa
+        isFirstLoadRef.current = true
+        previousMensagensCountRef.current = 0
     }
 
     const handleBackToConversas = () => {
