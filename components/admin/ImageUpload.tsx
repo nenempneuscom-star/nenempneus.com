@@ -49,12 +49,13 @@ export function ImageUpload({
 
         const originalSize = file.size / 1024 / 1024 // MB
 
-        // Comprimir imagem
+        // Comprimir imagem para JPEG (compatível com WhatsApp)
         const options = {
           maxSizeMB,
           maxWidthOrHeight,
           useWebWorker: true,
-          fileType: 'image/webp' as const,
+          fileType: 'image/jpeg' as const,
+          initialQuality: 0.85,
         }
 
         const compressedFile = await imageCompression(file, options)
@@ -68,7 +69,7 @@ export function ImageUpload({
         // Gerar nome unico para o arquivo
         const timestamp = Date.now()
         const randomId = Math.random().toString(36).substring(2, 8)
-        const fileName = `${folder}/${timestamp}-${randomId}.webp`
+        const fileName = `${folder}/${timestamp}-${randomId}.jpg`
 
         // Upload para Supabase Storage
         const { data, error: uploadError } = await supabase.storage
