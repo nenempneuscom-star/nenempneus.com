@@ -135,6 +135,46 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
         setConversaSelecionada(null)
     }
 
+    const handleDevolverParaIA = async () => {
+        if (!conversaSelecionada) return
+        try {
+            const response = await fetch('/api/admin/whatsapp/modo', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    conversaId: conversaSelecionada.id,
+                    modo: 'bot'
+                })
+            })
+            if (response.ok) {
+                setConversaSelecionada({ ...conversaSelecionada, modo: 'bot' })
+                carregarConversas()
+            }
+        } catch (error) {
+            console.error('Erro ao devolver para IA:', error)
+        }
+    }
+
+    const handleAssumirConversa = async () => {
+        if (!conversaSelecionada) return
+        try {
+            const response = await fetch('/api/admin/whatsapp/modo', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    conversaId: conversaSelecionada.id,
+                    modo: 'humano'
+                })
+            })
+            if (response.ok) {
+                setConversaSelecionada({ ...conversaSelecionada, modo: 'humano' })
+                carregarConversas()
+            }
+        } catch (error) {
+            console.error('Erro ao assumir conversa:', error)
+        }
+    }
+
     const handleSendMessage = async () => {
         if (!mensagemTexto.trim() || !conversaSelecionada || enviando) return
 
@@ -305,6 +345,23 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
                                         <DropdownMenuItem>Dados do contato</DropdownMenuItem>
                                         <DropdownMenuItem>Selecionar mensagens</DropdownMenuItem>
                                         <DropdownMenuItem>Silenciar notificações</DropdownMenuItem>
+                                        {conversaSelecionada.modo === 'humano' ? (
+                                            <DropdownMenuItem
+                                                onClick={handleDevolverParaIA}
+                                                className="text-blue-600"
+                                            >
+                                                <Bot className="h-4 w-4 mr-2" />
+                                                Devolver para IA
+                                            </DropdownMenuItem>
+                                        ) : (
+                                            <DropdownMenuItem
+                                                onClick={handleAssumirConversa}
+                                                className="text-green-600"
+                                            >
+                                                <User className="h-4 w-4 mr-2" />
+                                                Assumir conversa
+                                            </DropdownMenuItem>
+                                        )}
                                         <DropdownMenuItem className="text-red-600">Apagar conversa</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
