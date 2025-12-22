@@ -375,6 +375,7 @@ export async function buscarProdutos(filtros: {
             marca: extrairMarcaProduto(p.nome),
             medida: extrairMedidaProduto(p.nome),
             imagemUrl: p.imagemUrl || undefined,
+            imagens: (p.imagens as string[]) || [],
             destaque: p.destaque,
         }))
     } catch (error) {

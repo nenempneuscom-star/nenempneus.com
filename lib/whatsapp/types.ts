@@ -184,6 +184,7 @@ export interface ProdutoRecomendado {
     marca: string
     medida: string
     imagemUrl?: string
+    imagens?: string[] // Array com fotos adicionais do produto
     destaque?: boolean
 }
 

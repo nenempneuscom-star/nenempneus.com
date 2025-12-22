@@ -389,15 +389,38 @@ export async function gerarRespostaBotComImagens(
             }
         }
 
+        // Detectar se cliente está pedindo MAIS fotos
+        const querMaisFotos = /\b(mais|outras?|outra|tem mais|mais fotos?|mais imagens?|tem outra)\b/i.test(mensagem)
+
         // Filtrar produtos que têm imagem
-        const produtosComImagem = produtos
-            .filter(p => p.imagemUrl && p.imagemUrl.startsWith('http'))
-            .map(p => ({
-                nome: p.nome,
-                preco: p.preco,
-                imageUrl: p.imagemUrl!,
-                estoque: p.estoque,
-            }))
+        // Se cliente pediu MAIS fotos, incluir também as imagens adicionais
+        const produtosComImagem: Array<{ nome: string; preco: number; imageUrl: string; estoque: number }> = []
+
+        for (const p of produtos) {
+            // Adicionar imagem principal se existir
+            if (p.imagemUrl && p.imagemUrl.startsWith('http')) {
+                produtosComImagem.push({
+                    nome: p.nome,
+                    preco: p.preco,
+                    imageUrl: p.imagemUrl,
+                    estoque: p.estoque,
+                })
+            }
+
+            // Se cliente pediu mais fotos, adicionar as imagens adicionais
+            if (querMaisFotos && p.imagens && p.imagens.length > 0) {
+                for (const imgUrl of p.imagens) {
+                    if (imgUrl && imgUrl.startsWith('http')) {
+                        produtosComImagem.push({
+                            nome: `${p.nome} (foto adicional)`,
+                            preco: p.preco,
+                            imageUrl: imgUrl,
+                            estoque: p.estoque,
+                        })
+                    }
+                }
+            }
+        }
 
         // Log para debug
         console.log(`📸 Produtos com imagem para enviar: ${produtosComImagem.length}`)
