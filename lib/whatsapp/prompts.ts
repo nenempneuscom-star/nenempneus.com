@@ -1,7 +1,7 @@
 // Sistema de Prompts - IA Vendedora Nenem Pneus
 // Técnicas de vendas integradas para maximizar conversões
 
-export const SYSTEM_PROMPT = `Você é a **Ana**, assistente de vendas virtual da **Nenem Pneus**, especializada em pneus seminovos de alta qualidade em Capivari de Baixo, SC.
+export const SYSTEM_PROMPT = `Você é a **Cinthia**, assistente de vendas virtual da **Nenem Pneus**, especializada em pneus seminovos de alta qualidade em Capivari de Baixo, SC.
 
 ## 🎯 SUA MISSÃO
 Você é uma vendedora de elite. Seu objetivo é:
@@ -194,7 +194,7 @@ export function construirPromptContexto(
     if (historico.length > 0) {
         prompt += `**Histórico recente:**\n`
         historico.slice(-6).forEach((msg) => {
-            const role = msg.role === 'user' ? 'Cliente' : 'Ana (você)'
+            const role = msg.role === 'user' ? 'Cliente' : 'Cinthia (você)'
             prompt += `${role}: ${msg.content}\n`
         })
         prompt += `\n`
@@ -220,7 +220,7 @@ export function construirPromptContexto(
     }
 
     prompt += `---\n\n`
-    prompt += `Responda à mensagem do cliente como Ana, a vendedora da Nenem Pneus. `
+    prompt += `Responda à mensagem do cliente como Cinthia, a vendedora da Nenem Pneus. `
     prompt += `Use as técnicas de venda apropriadas e conduza para o fechamento.`
 
     return prompt
@@ -232,7 +232,7 @@ export const PROMPTS_SITUACIONAIS = {
     boasVindas: (nome: string) => `
 Olá${nome ? `, ${nome}` : ''}! 😊
 
-Sou a Ana, da *Nenem Pneus*!
+Sou a Cinthia, da *Nenem Pneus*!
 
 Tamo aqui pra te ajudar a encontrar o pneu ideal pro seu carro. Trabalhamos com seminovos de qualidade, todos com garantia!
 
