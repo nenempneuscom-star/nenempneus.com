@@ -174,6 +174,29 @@ export async function gerarRespostaBot(
             atualizarContexto(tel, { etapaFunil: 'fechando' })
         }
 
+        // 7.1. Verificar se quer pagar (PIX, cartão, link de pagamento)
+        const querPagar = /\b(pix|cartao|cartão|pagar|pagamento|comprar|fechar|link|finalizar)\b/i.test(mensagem)
+        let linkPagamento = ''
+
+        if (querPagar && ctx.orcamentoId) {
+            // Cliente quer pagar e já tem orçamento
+            const orcamentoSalvo = await criarOrcamentoRapido(produtos[0]?.id || '', tel)
+            if (orcamentoSalvo) {
+                linkPagamento = gerarLinkOrcamento(orcamentoSalvo)
+                atualizarContexto(tel, { etapaFunil: 'fechando' })
+            }
+        } else if (querPagar && produtos.length > 0) {
+            // Cliente quer pagar mas não tem orçamento ainda - criar um
+            const novoOrcamento = await criarOrcamentoRapido(produtos[0].id, tel)
+            if (novoOrcamento) {
+                linkPagamento = gerarLinkOrcamento(novoOrcamento)
+                atualizarContexto(tel, {
+                    orcamentoId: novoOrcamento.id,
+                    etapaFunil: 'fechando',
+                })
+            }
+        }
+
         // 8. Buscar histórico recente da conversa
         const mensagensAnteriores = await db.mensagemWhatsApp.findMany({
             where: { conversaId },
@@ -221,8 +244,12 @@ export async function gerarRespostaBot(
             ? response.content[0].text
             : 'Desculpe, não consegui processar sua mensagem. Um atendente vai te ajudar!'
 
-        // 11. Se tiver orçamento pronto e cliente demonstrou interesse, adicionar link
-        if (ctx.orcamentoId && ctx.etapaFunil === 'fechando') {
+        // 11. Adicionar link de pagamento se cliente quer pagar
+        if (linkPagamento) {
+            // Remove qualquer menção de "vou mandar o link" já que estamos mandando agora
+            respostaBot += `\n\n💳 *Link de pagamento:*\n${linkPagamento}\n\n✅ PIX: 5% de desconto automático!\n💳 Cartão: até 12x sem juros`
+        } else if (ctx.orcamentoId && ctx.etapaFunil === 'fechando' && !linkPagamento) {
+            // Fallback: se tiver orçamento e estiver fechando mas não detectou pagamento
             const orcamentoSalvo = await criarOrcamentoRapido(produtos[0]?.id || '', tel)
             if (orcamentoSalvo) {
                 const linkCheckout = gerarLinkOrcamento(orcamentoSalvo)
