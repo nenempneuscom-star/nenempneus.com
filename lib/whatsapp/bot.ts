@@ -331,14 +331,50 @@ export async function gerarRespostaBotComImagens(
             })
         }
 
-        if (ctx.veiculo?.modelo || ctx.veiculo?.medida || infoVeiculo.modelo || infoVeiculo.medida) {
-            const modelo = ctx.veiculo?.modelo || infoVeiculo.modelo
-            const medida = ctx.veiculo?.medida || infoVeiculo.medida
+        // Detectar se cliente está pedindo foto/imagem
+        const querFoto = /\b(foto|fotos|imagem|imagens|ver|mostrar|manda|envia|enviar)\b.*\b(pneu|pneus|produto|produtos)?\b/i.test(mensagem) ||
+                         /\b(pneu|pneus|produto|produtos)\b.*\b(foto|fotos|imagem|imagens)\b/i.test(mensagem) ||
+                         /\b(cade|cadê|quero ver|deixa eu ver|pode mandar)\b/i.test(mensagem)
 
+        // Se pediu foto e não tem contexto em memória, buscar do histórico de mensagens
+        let contextoHistorico: { modelo?: string; medida?: string } = {}
+        if (querFoto && !ctx.veiculo?.modelo && !ctx.veiculo?.medida && !infoVeiculo.modelo && !infoVeiculo.medida) {
+            // Buscar últimas mensagens para extrair contexto
+            const mensagensRecentes = await db.mensagemWhatsApp.findMany({
+                where: { conversaId },
+                orderBy: { createdAt: 'desc' },
+                take: 10,
+                select: { conteudo: true }
+            })
+
+            // Procurar veículo/medida nas mensagens anteriores
+            for (const msg of mensagensRecentes) {
+                const infoMsg = extrairInfoVeiculo(msg.conteudo)
+                if (infoMsg.modelo && !contextoHistorico.modelo) {
+                    contextoHistorico.modelo = infoMsg.modelo
+                }
+                if (infoMsg.medida && !contextoHistorico.medida) {
+                    contextoHistorico.medida = infoMsg.medida
+                }
+                if (contextoHistorico.modelo || contextoHistorico.medida) break
+            }
+
+            console.log(`📸 Recuperando contexto do histórico: ${JSON.stringify(contextoHistorico)}`)
+        }
+
+        // Buscar produtos se tiver info do veículo OU se cliente pediu foto (usa contexto salvo ou histórico)
+        const modelo = ctx.veiculo?.modelo || infoVeiculo.modelo || contextoHistorico.modelo
+        const medida = ctx.veiculo?.medida || infoVeiculo.medida || contextoHistorico.medida
+        const temContextoVeiculo = modelo || medida
+
+        if (temContextoVeiculo || querFoto) {
             if (medida) {
                 produtos = await buscarProdutos({ medida, limite: 3 })
             } else if (modelo) {
                 produtos = await buscarProdutosParaVeiculo(modelo, { limite: 3 })
+            } else if (querFoto) {
+                // Se pediu foto mas não tem contexto, busca os produtos em destaque
+                produtos = await buscarProdutos({ limite: 3 })
             }
         }
 
@@ -351,6 +387,14 @@ export async function gerarRespostaBotComImagens(
                 imageUrl: p.imagemUrl!,
                 estoque: p.estoque,
             }))
+
+        // Log para debug
+        if (querFoto) {
+            console.log(`📸 Cliente pediu foto. Produtos encontrados: ${produtosComImagem.length}`)
+            console.log(`   Contexto memória: ${JSON.stringify(ctx.veiculo)}`)
+            console.log(`   Contexto histórico: ${JSON.stringify(contextoHistorico)}`)
+            console.log(`   Modelo/Medida usado: ${modelo || 'nenhum'} / ${medida || 'nenhuma'}`)
+        }
 
         // Gerar resposta de texto usando a função original
         const texto = await gerarRespostaBot(conversaId, nomeCliente, mensagem, telefone)
