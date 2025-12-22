@@ -74,6 +74,33 @@ export class WhatsAppClient {
         }
     }
 
+    // Mostrar indicador "digitando..." (dura até 25 segundos ou até enviar resposta)
+    async sendTypingIndicator(messageId: string): Promise<void> {
+        try {
+            // WhatsApp Cloud API typing indicator (requer message_id da mensagem recebida)
+            // Documentação: https://developers.facebook.com/docs/whatsapp/cloud-api/messages/typing-indicators
+            await fetch(
+                `${WHATSAPP_API_URL}/${this.phoneNumberId}/messages`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${this.accessToken}`,
+                    },
+                    body: JSON.stringify({
+                        messaging_product: 'whatsapp',
+                        status: 'typing',
+                        message_id: messageId,
+                    }),
+                }
+            )
+            console.log('⌨️ Typing indicator enviado')
+        } catch (error) {
+            // Ignora erro silenciosamente - typing indicator não é crítico
+            console.log('Typing indicator falhou (pode não estar disponível):', error)
+        }
+    }
+
     // Enviar mensagem com botões interativos
     async sendInteractiveButtons(
         to: string,

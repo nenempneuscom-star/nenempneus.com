@@ -151,8 +151,9 @@ export async function POST(req: NextRequest) {
                             messageId
                         )
 
-                        // Marcar como lida
+                        // Marcar como lida e mostrar "digitando..."
                         await whatsapp.markAsRead(messageId)
+                        await whatsapp.sendTypingIndicator(messageId)
 
                         // Verificar se precisa transferir para humano
                         const { verificarTransferenciaHumano } = await import('@/lib/whatsapp/bot')
