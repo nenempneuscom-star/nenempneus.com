@@ -112,11 +112,11 @@ export function formatarMensagemCheckout(
     // Resumo do orçamento
     const totalPneus = orcamento.produtos.reduce((acc, i) => acc + i.quantidade, 0)
     texto += `🛞 ${totalPneus} pneu${totalPneus > 1 ? 's' : ''}\n`
-    texto += `💰 Total: *R$ ${orcamento.total.toFixed(2)}*\n`
+    texto += `💰 Total: R$ ${orcamento.total.toFixed(2)}\n`
     texto += `✅ Instalação, alinhamento e balanceamento inclusos\n\n`
 
     // Link
-    texto += `👉 *Clique para finalizar:*\n${link}\n\n`
+    texto += `👉 Clique para finalizar:\n${link}\n\n`
 
     // PIX
     const valorPix = orcamento.total * 0.95
@@ -132,7 +132,7 @@ export function formatarMensagemComBotao(
     texto: string
     botoes: Array<{ id: string; titulo: string }>
 } {
-    let texto = '🛒 *Pronto para finalizar?*\n\n'
+    let texto = '🛒 Pronto para finalizar?\n\n'
 
     const totalPneus = orcamento.produtos.reduce((acc, i) => acc + i.quantidade, 0)
     texto += `${totalPneus} pneu${totalPneus > 1 ? 's' : ''} - R$ ${orcamento.total.toFixed(2)}\n`
