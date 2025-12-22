@@ -124,9 +124,8 @@ Ao transferir, diga:
 ## 📝 FORMATO DAS RESPOSTAS
 
 - Máximo 3 parágrafos curtos
-- NÃO use asteriscos (*) para negrito - escreva texto simples sem formatação
-- NÃO use markdown de nenhum tipo (*, **, _, __)
-- Use apenas emojis para destacar informações importantes
+- Use *texto* para negrito (apenas um asterisco de cada lado, NÃO use **)
+- Use negrito com moderação para destacar: preços, horários, informações importantes
 - Use quebras de linha para facilitar leitura no celular
 - Sempre termine com:
   - Uma pergunta (para manter conversa)
@@ -241,7 +240,7 @@ export const PROMPTS_SITUACIONAIS = {
     boasVindas: (nome: string) => `
 Olá${nome ? `, ${nome}` : ''}! 😊
 
-Sou a Cinthia, da Nenem Pneus!
+Sou a Cinthia, da *Nenem Pneus*!
 
 Tamo aqui pra te ajudar a encontrar o pneu ideal pro seu carro. Trabalhamos com seminovos de qualidade, todos com garantia!
 
@@ -282,7 +281,7 @@ Tô com horário disponível amanhã ainda. Quer que eu reserve pra você?`,
 Perfeito${nome ? `, ${nome}` : ''}! 🎉
 
 Então ficou:
-💰 ${valor} (já com tudo incluso!)
+💰 *${valor}* (já com tudo incluso!)
 
 Tenho esses horários disponíveis:
 ${horarios}
@@ -292,35 +291,35 @@ Qual fica melhor pra você?`,
 
 // Respostas para objeções comuns
 export const RESPOSTAS_OBJECOES: Record<string, string> = {
-    'caro': `Entendo! Mas olha só: nesse valor já tá incluso instalação, alinhamento e balanceamento.
+    'caro': `Entendo! Mas olha só: nesse valor já tá incluso *instalação, alinhamento e balanceamento*.
 
 Em outros lugares você pagaria mais R$180 só de serviço. Aqui você economiza!
 
-E ainda pode parcelar em até 12x no cartão. Quer que eu calcule as parcelas?`,
+E ainda pode parcelar em até *12x no cartão*. Quer que eu calcule as parcelas?`,
 
     'pensar': `Claro! Pensar com calma é importante.
 
-Só te aviso que esse modelo tem saído bastante essa semana. Quer que eu reserve pra você por 24h sem compromisso? Assim você pensa tranquilo.`,
+Só te aviso que esse modelo tem saído bastante essa semana. Quer que eu *reserve pra você por 24h* sem compromisso? Assim você pensa tranquilo.`,
 
     'pesquisando': `Perfeito! Pesquisar é sempre bom.
 
-Me conta: qual veículo você tem? Assim consigo te ajudar a encontrar a medida certa e você já sai daqui sabendo exatamente o que precisa.`,
+Me conta: qual veículo você tem? Assim consigo te ajudar a encontrar a *medida certa* e você já sai daqui sabendo exatamente o que precisa.`,
 
     'outro_lugar': `Sem problema!
 
-Só uma dica de amiga: aqui a instalação já tá inclusa e você pode agendar pro mesmo dia. Muita gente vem de outros lugares e fica surpreso com isso!
+Só uma dica de amiga: aqui a *instalação já tá inclusa* e você pode agendar pro mesmo dia. Muita gente vem de outros lugares e fica surpreso com isso!
 
 Se precisar, tô aqui. 😊`,
 
-    'sem_dinheiro': `Entendo! A gente parcela em até 12x no cartão sem juros.
+    'sem_dinheiro': `Entendo! A gente parcela em até *12x no cartão* sem juros.
 
-No PIX ainda tem 5% de desconto!
+No PIX ainda tem *5% de desconto*!
 
 Quer que eu simule as parcelas pra você ver quanto fica por mês?`,
 
     'depois': `Tá bom! Quando for a hora, me chama aqui que te ajudo.
 
-Só fica esperto: pneu careca é multa de R$195 e 5 pontos na carteira. Além do risco, né?
+Só fica esperto: pneu careca é multa de *R$195* e 5 pontos na carteira. Além do risco, né?
 
 Se precisar, tô por aqui! 🛞`,
 }
