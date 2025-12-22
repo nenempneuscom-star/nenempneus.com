@@ -7,6 +7,32 @@ import { processarAudioWhatsApp, isAudioSuportado } from '@/lib/whatsapp/audio'
 
 const whatsapp = new WhatsAppClient()
 
+// Valida se o nome do contato é um nome real (não emoji, símbolo, etc)
+function validarNomeContato(nome: string): string {
+    if (!nome || nome.trim().length === 0) {
+        return '' // Retorna vazio para ser tratado nos prompts
+    }
+
+    // Remove emojis e caracteres especiais para verificar se sobra texto
+    const semEmojis = nome.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F000}-\u{1F02F}]|[\u{1F0A0}-\u{1F0FF}]|[\u{1F100}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, '').trim()
+
+    // Se após remover emojis ficou vazio ou muito curto, não é um nome válido
+    if (semEmojis.length < 2) {
+        return ''
+    }
+
+    // Verifica se tem pelo menos uma letra (não apenas números/símbolos)
+    if (!/[a-zA-ZÀ-ÿ]/.test(semEmojis)) {
+        return ''
+    }
+
+    // Retorna apenas a primeira palavra (primeiro nome) para ser mais pessoal
+    const primeiroNome = semEmojis.split(/\s+/)[0]
+
+    // Capitaliza a primeira letra
+    return primeiroNome.charAt(0).toUpperCase() + primeiroNome.slice(1).toLowerCase()
+}
+
 // GET - Verificação do webhook (Meta exige)
 export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams
@@ -54,7 +80,9 @@ export async function POST(req: NextRequest) {
                     for (const message of value.messages) {
                         const telefone = message.from
                         const messageId = message.id
-                        const nomeContato = value.contacts?.[0]?.profile?.name || 'Cliente'
+                        const nomeRaw = value.contacts?.[0]?.profile?.name || ''
+                        // Validar se é um nome válido (não apenas emojis, símbolos ou muito curto)
+                        const nomeContato = validarNomeContato(nomeRaw)
 
                         let conteudo = ''
 
