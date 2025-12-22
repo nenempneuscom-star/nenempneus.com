@@ -316,10 +316,37 @@ export async function buscarProdutos(filtros: {
             where.OR = []
 
             if (filtros.medida) {
-                where.OR.push(
-                    { nome: { contains: filtros.medida, mode: 'insensitive' } },
-                    { descricao: { contains: filtros.medida, mode: 'insensitive' } }
-                )
+                // Normalizar medida para busca flexível
+                // Ex: "215/55 R18" -> buscar por "215/55" E "18" para encontrar "215/55r18" ou "215/55 R18"
+                const medidaLimpa = filtros.medida.replace(/\s+/g, '').toLowerCase() // "215/55r18"
+                const partes = filtros.medida.match(/(\d{3}\/\d{2})\s*r?\s*(\d{2})/i)
+
+                if (partes) {
+                    // Busca por "215/55" que é mais flexível
+                    const larguraPerfil = partes[1] // "215/55"
+                    const aro = partes[2] // "18"
+
+                    where.OR.push(
+                        // Busca exata sem espaço (215/55r18)
+                        { nome: { contains: medidaLimpa, mode: 'insensitive' } },
+                        // Busca com espaço (215/55 R18)
+                        { nome: { contains: filtros.medida, mode: 'insensitive' } },
+                        // Busca só pela largura/perfil + aro separados
+                        {
+                            AND: [
+                                { nome: { contains: larguraPerfil, mode: 'insensitive' } },
+                                { nome: { contains: aro, mode: 'insensitive' } }
+                            ]
+                        },
+                        { descricao: { contains: filtros.medida, mode: 'insensitive' } }
+                    )
+                } else {
+                    // Fallback para busca simples
+                    where.OR.push(
+                        { nome: { contains: filtros.medida, mode: 'insensitive' } },
+                        { descricao: { contains: filtros.medida, mode: 'insensitive' } }
+                    )
+                }
             }
 
             if (filtros.marca) {
