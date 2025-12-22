@@ -343,7 +343,7 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
                                                         : "bg-[#d9fdd3] dark:bg-[#005c4b] rounded-tr-none"
                                                 )}
                                             >
-                                                <p className="text-foreground whitespace-pre-wrap break-words leading-relaxed">
+                                                <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words leading-relaxed">
                                                     {msg.conteudo}
                                                 </p>
                                                 <div className="flex items-center justify-end gap-1 mt-1 select-none">
