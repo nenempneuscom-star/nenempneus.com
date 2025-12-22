@@ -16,12 +16,21 @@ export async function GET(req: NextRequest) {
 
     const verifyToken = process.env.WEBHOOK_VERIFY_TOKEN || 'placeholder-verify-token'
 
+    console.log('🔍 Verificação webhook recebida:', { mode, token, challenge: challenge?.substring(0, 20) })
+
     if (mode === 'subscribe' && token === verifyToken) {
         console.log('✅ Webhook verificado com sucesso!')
-        return new NextResponse(challenge, { status: 200 })
+        // Meta exige resposta em text/plain com apenas o challenge
+        return new Response(challenge || '', {
+            status: 200,
+            headers: {
+                'Content-Type': 'text/plain',
+            },
+        })
     }
 
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    console.log('❌ Verificação falhou - token inválido ou mode incorreto')
+    return new Response('Forbidden', { status: 403 })
 }
 
 // POST - Receber mensagens
