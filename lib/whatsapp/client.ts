@@ -1,6 +1,7 @@
 import { SendMessagePayload, SendTemplatePayload, SendInteractivePayload } from './types'
 
-const WHATSAPP_API_URL = 'https://graph.facebook.com/v23.0'
+const WHATSAPP_API_VERSION = process.env.WHATSAPP_API_VERSION || 'v22.0'
+const WHATSAPP_API_URL = `https://graph.facebook.com/${WHATSAPP_API_VERSION}`
 
 export class WhatsAppClient {
     private phoneNumberId: string
