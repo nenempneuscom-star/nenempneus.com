@@ -65,7 +65,7 @@ Enquanto isso, explore nosso catálogo com até 50% de desconto!
 https://nenempneus.com/catalogo
 
 Precisa de resposta rápida? Fale conosco pelo WhatsApp:
-https://wa.me/554831991212
+https://wa.me/5548999496450
 
 --
 NenemPneus.com
@@ -108,7 +108,7 @@ Capivari de Baixo - SC
                                     <p style="margin:0 0 10px;font-size:13px;color:#a0a0a0;">
                                         Precisa de resposta rápida?
                                     </p>
-                                    <a href="https://wa.me/5548931991212" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;padding:10px 25px;border-radius:20px;font-size:13px;font-weight:bold;">
+                                    <a href="https://wa.me/5548999496450" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;padding:10px 25px;border-radius:20px;font-size:13px;font-weight:bold;">
                                         WhatsApp
                                     </a>
                                 </div>
