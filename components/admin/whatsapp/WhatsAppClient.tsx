@@ -222,7 +222,7 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
     }
 
     return (
-        <div className="flex h-[calc(100vh-140px)] bg-background border rounded-xl overflow-hidden shadow-sm">
+        <div className="flex h-full bg-background border rounded-xl overflow-hidden shadow-sm">
             {/* Sidebar - Lista de Conversas */}
             <div className={cn(
                 "w-full md:w-[350px] flex flex-col border-r bg-background",
@@ -230,15 +230,15 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
             )}>
                 {/* Header Sidebar */}
                 <div className="p-4 bg-muted/30 border-b flex justify-between items-center h-[60px]">
-                    <Avatar className="h-10 w-10 cursor-pointer hover:opacity-80 transition-opacity">
-                        <AvatarFallback className="bg-primary/10 text-primary font-bold">AD</AvatarFallback>
-                    </Avatar>
-                    <div className="flex gap-2 text-muted-foreground">
-                        <Button variant="ghost" size="icon" className="rounded-full">
+                    <div className="flex items-center gap-2">
+                        <Avatar className="h-10 w-10 cursor-pointer hover:opacity-80 transition-opacity">
+                            <AvatarFallback className="bg-[#25d366] text-white font-bold">NP</AvatarFallback>
+                        </Avatar>
+                        <span className="font-semibold text-sm hidden sm:block">Nenem Pneus</span>
+                    </div>
+                    <div className="flex gap-1 text-muted-foreground">
+                        <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
                             <MessageSquare className="h-5 w-5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="rounded-full">
-                            <MoreVertical className="h-5 w-5" />
                         </Button>
                     </div>
                 </div>
@@ -326,18 +326,51 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
                                     <span className="font-medium text-sm">
                                         {conversaSelecionada.nomeContato || conversaSelecionada.telefone}
                                     </span>
-                                    <span className="text-xs text-muted-foreground">
-                                        {conversaSelecionada.modo === 'bot' ? 'Atendimento Automático' : 'Atendimento Humano'}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <Badge
+                                            variant={conversaSelecionada.modo === 'bot' ? 'secondary' : 'default'}
+                                            className={cn(
+                                                "text-[10px] h-5 px-2",
+                                                conversaSelecionada.modo === 'bot'
+                                                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                                    : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                            )}
+                                        >
+                                            {conversaSelecionada.modo === 'bot' ? (
+                                                <><Bot className="h-3 w-3 mr-1" /> Cinthia IA</>
+                                            ) : (
+                                                <><User className="h-3 w-3 mr-1" /> Atendente</>
+                                            )}
+                                        </Badge>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-1 text-muted-foreground">
-                                <Button variant="ghost" size="icon">
-                                    <Search className="h-5 w-5" />
-                                </Button>
+                            <div className="flex items-center gap-2">
+                                {/* Botão de Toggle IA/Humano visível */}
+                                {conversaSelecionada.modo === 'bot' ? (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleAssumirConversa}
+                                        className="h-8 text-xs border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                                    >
+                                        <User className="h-3.5 w-3.5 mr-1.5" />
+                                        Assumir
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleDevolverParaIA}
+                                        className="h-8 text-xs border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                    >
+                                        <Bot className="h-3.5 w-3.5 mr-1.5" />
+                                        Devolver IA
+                                    </Button>
+                                )}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8">
                                             <MoreVertical className="h-5 w-5" />
                                         </Button>
                                     </DropdownMenuTrigger>
@@ -345,23 +378,6 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
                                         <DropdownMenuItem>Dados do contato</DropdownMenuItem>
                                         <DropdownMenuItem>Selecionar mensagens</DropdownMenuItem>
                                         <DropdownMenuItem>Silenciar notificações</DropdownMenuItem>
-                                        {conversaSelecionada.modo === 'humano' ? (
-                                            <DropdownMenuItem
-                                                onClick={handleDevolverParaIA}
-                                                className="text-blue-600"
-                                            >
-                                                <Bot className="h-4 w-4 mr-2" />
-                                                Devolver para IA
-                                            </DropdownMenuItem>
-                                        ) : (
-                                            <DropdownMenuItem
-                                                onClick={handleAssumirConversa}
-                                                className="text-green-600"
-                                            >
-                                                <User className="h-4 w-4 mr-2" />
-                                                Assumir conversa
-                                            </DropdownMenuItem>
-                                        )}
                                         <DropdownMenuItem className="text-red-600">Apagar conversa</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -369,63 +385,65 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
                         </div>
 
                         {/* Messages Area */}
-                        <div
-                            className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-4"
+                        <ScrollArea
+                            className="flex-1"
                             style={{
                                 backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')",
                                 backgroundRepeat: 'repeat',
                                 backgroundSize: '400px'
                             }}
                         >
-                            {loadingMensagens ? (
-                                <div className="flex justify-center py-8">
-                                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                                </div>
-                            ) : (
-                                mensagens.map((msg) => {
-                                    const isIncoming = msg.direcao === 'entrada'
-                                    return (
-                                        <div
-                                            key={msg.id}
-                                            className={cn(
-                                                "flex w-full",
-                                                isIncoming ? "justify-start" : "justify-end"
-                                            )}
-                                        >
+                            <div className="p-4 sm:p-6 space-y-3 min-h-full">
+                                {loadingMensagens ? (
+                                    <div className="flex justify-center py-8">
+                                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                    </div>
+                                ) : (
+                                    mensagens.map((msg) => {
+                                        const isIncoming = msg.direcao === 'entrada'
+                                        return (
                                             <div
+                                                key={msg.id}
                                                 className={cn(
-                                                    "max-w-[85%] sm:max-w-[65%] rounded-lg px-3 py-2 shadow-sm relative text-sm",
-                                                    isIncoming
-                                                        ? "bg-white dark:bg-zinc-800 rounded-tl-none"
-                                                        : "bg-[#d9fdd3] dark:bg-[#005c4b] rounded-tr-none"
+                                                    "flex w-full",
+                                                    isIncoming ? "justify-start" : "justify-end"
                                                 )}
                                             >
-                                                <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words leading-relaxed">
-                                                    {msg.conteudo}
-                                                </p>
-                                                <div className="flex items-center justify-end gap-1 mt-1 select-none">
-                                                    <span className="text-[10px] text-gray-500 dark:text-gray-400">
-                                                        {format(new Date(msg.createdAt), 'HH:mm')}
-                                                    </span>
-                                                    {!isIncoming && (
-                                                        <CheckCheck className="h-3 w-3 text-blue-500" />
+                                                <div
+                                                    className={cn(
+                                                        "max-w-[85%] sm:max-w-[65%] rounded-lg px-3 py-2 shadow-sm relative text-sm",
+                                                        isIncoming
+                                                            ? "bg-white dark:bg-zinc-800 rounded-tl-none"
+                                                            : "bg-[#d9fdd3] dark:bg-[#005c4b] rounded-tr-none"
                                                     )}
-                                                </div>
+                                                >
+                                                    <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words leading-relaxed">
+                                                        {msg.conteudo}
+                                                    </p>
+                                                    <div className="flex items-center justify-end gap-1 mt-1 select-none">
+                                                        <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                                                            {format(new Date(msg.createdAt), 'HH:mm')}
+                                                        </span>
+                                                        {!isIncoming && (
+                                                            <CheckCheck className="h-3 w-3 text-blue-500" />
+                                                        )}
+                                                    </div>
 
-                                                {/* Triângulo do balão */}
-                                                <div className={cn(
-                                                    "absolute top-0 w-0 h-0 border-[6px] border-transparent",
-                                                    isIncoming
-                                                        ? "left-[-6px] border-t-white dark:border-t-zinc-800 border-r-white dark:border-r-zinc-800"
-                                                        : "right-[-6px] border-t-[#d9fdd3] dark:border-t-[#005c4b] border-l-[#d9fdd3] dark:border-l-[#005c4b]"
-                                                )} />
+                                                    {/* Triângulo do balão */}
+                                                    <div className={cn(
+                                                        "absolute top-0 w-0 h-0 border-[6px] border-transparent",
+                                                        isIncoming
+                                                            ? "left-[-6px] border-t-white dark:border-t-zinc-800 border-r-white dark:border-r-zinc-800"
+                                                            : "right-[-6px] border-t-[#d9fdd3] dark:border-t-[#005c4b] border-l-[#d9fdd3] dark:border-l-[#005c4b]"
+                                                    )} />
+                                                </div>
                                             </div>
-                                        </div>
-                                    )
-                                })
-                            )}
-                            <div ref={messagesEndRef} />
-                        </div>
+                                        )
+                                    })
+                                )}
+                                <div ref={messagesEndRef} />
+                            </div>
+                        </ScrollArea>
 
                         {/* Input Area */}
                         <div className="p-3 bg-muted/30 border-t bg-background flex items-end gap-2">
@@ -468,21 +486,28 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
                     </>
                 ) : (
                     /* Empty State */
-                    <div className="flex-1 flex flex-col items-center justify-center bg-background border-b-8 border-[#25d366]">
-                        <div className="text-center space-y-4 max-w-md p-6">
-                            <div className="mx-auto w-64 h-64 bg-contain bg-no-repeat bg-center opacity-80"
-                                style={{ backgroundImage: "url('https://static.whatsapp.net/rsrc.php/v3/y6/r/wa669ae.svg')" }}>
+                    <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-background to-muted/30">
+                        <div className="text-center space-y-6 max-w-md p-8">
+                            <div className="mx-auto w-32 h-32 rounded-full bg-[#25d366]/10 flex items-center justify-center">
+                                <MessageSquare className="h-16 w-16 text-[#25d366]" />
                             </div>
-                            <h2 className="text-3xl font-light text-foreground">
-                                WhatsApp Web Admin
-                            </h2>
-                            <p className="text-muted-foreground">
-                                Envie e receba mensagens sem precisar manter seu celular conectado.
-                                Use o WhatsApp em até 4 aparelhos e 1 celular ao mesmo tempo.
-                            </p>
-                            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-8">
-                                <Bot className="h-3 w-3" />
-                                <span>Protegido com criptografia de ponta a ponta</span>
+                            <div className="space-y-2">
+                                <h2 className="text-2xl font-semibold text-foreground">
+                                    Central de Atendimento
+                                </h2>
+                                <p className="text-muted-foreground text-sm">
+                                    Selecione uma conversa para visualizar as mensagens e gerenciar o atendimento.
+                                </p>
+                            </div>
+                            <div className="flex flex-col gap-3 pt-4">
+                                <div className="flex items-center gap-3 text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
+                                    <Bot className="h-5 w-5 text-blue-500" />
+                                    <span><strong>Cinthia IA</strong> responde automaticamente</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
+                                    <User className="h-5 w-5 text-green-500" />
+                                    <span><strong>Assumir</strong> para atendimento humano</span>
+                                </div>
                             </div>
                         </div>
                     </div>
