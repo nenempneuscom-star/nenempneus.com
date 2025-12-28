@@ -259,7 +259,7 @@ export async function gerarRespostaBot(
         // 11. Adicionar link de pagamento se cliente quer pagar
         if (linkPagamento) {
             // Remove qualquer menção de "vou mandar o link" já que estamos mandando agora
-            respostaBot += `\n\n💳 *Link de pagamento:*\n${linkPagamento}\n\n✅ PIX: *5% de desconto* automático!\n💳 Cartão: até *12x sem juros*`
+            respostaBot += `\n\n💳 *Link de pagamento:*\n${linkPagamento}\n\n✅ PIX disponível!\n💳 Cartão: até *12x*`
         } else if (ctx.orcamentoId && ctx.etapaFunil === 'fechando' && !linkPagamento) {
             // Fallback: se tiver orçamento e estiver fechando mas não detectou pagamento
             const orcamentoSalvo = await criarOrcamentoRapido(produtos[0]?.id || '', tel)

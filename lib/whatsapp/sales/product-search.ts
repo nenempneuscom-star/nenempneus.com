@@ -212,8 +212,9 @@ export function extrairInfoVeiculo(mensagem: string): {
     const msg = mensagem.toLowerCase()
     const resultado: { marca?: string; modelo?: string; ano?: number; medida?: string } = {}
 
-    // Detectar medida diretamente (ex: "175/70 R14")
-    const medidaRegex = /(\d{3})[\/\\](\d{2})\s*r?\s*(\d{2})/i
+    // Detectar medida diretamente (ex: "175/70 R14", "175/70-14", "175 70 14")
+    // Aceita: 175/70 R14, 175/70R14, 175/70-14, 175 70 14, 175/70 14
+    const medidaRegex = /(\d{3})[\/\\\s](\d{2})[\s\-]*r?[\s\-]*(\d{2})/i
     const matchMedida = msg.match(medidaRegex)
     if (matchMedida) {
         resultado.medida = `${matchMedida[1]}/${matchMedida[2]} R${matchMedida[3]}`

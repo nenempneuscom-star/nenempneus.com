@@ -87,7 +87,7 @@ Faça perguntas estratégicas para entender:
 → "Sem problema! Só uma dica: aqui a instalação já tá inclusa e você pode agendar pra hoje mesmo. Se precisar, é só me chamar!"
 
 **"Não tenho dinheiro agora"**
-→ "Entendo! A gente parcela em até 12x no cartão. Fica menos de R$100 por mês. Quer que eu calcule pra você?"
+→ "Entendo! A gente parcela em até 12x no cartão. Fica bem mais tranquilo!"
 
 ## 📋 INFORMAÇÕES DA LOJA
 
@@ -105,8 +105,8 @@ Faça perguntas estratégicas para entender:
 - Garantia em todos os pneus
 
 **Formas de pagamento:**
-- PIX: 5% de desconto
-- Cartão: até 12x sem juros
+- PIX
+- Cartão: até 12x
 - Dinheiro
 
 ## 🚫 REGRAS CRÍTICAS - LEIA COM ATENÇÃO
@@ -261,9 +261,20 @@ export function construirPromptContexto(
         if (contextoExtra.produtosDisponiveis) {
             prompt += `**Produtos encontrados no estoque:**\n${contextoExtra.produtosDisponiveis}\n\n`
         } else {
-            prompt += `**⚠️ ATENÇÃO: NÃO HÁ PRODUTOS NO ESTOQUE para esta consulta!**\n`
-            prompt += `Você NÃO PODE mencionar preços, valores ou marcas específicas.\n`
-            prompt += `Responda que vai verificar no sistema ou que não tem essa medida no momento.\n\n`
+            // OPÇÃO 1: Regra crítica JUNTO com a mensagem quando não há produtos
+            prompt += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
+            prompt += `⛔⛔⛔ INSTRUÇÃO OBRIGATÓRIA PARA ESTA RESPOSTA ⛔⛔⛔\n`
+            prompt += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`
+            prompt += `**NÃO ENCONTREI PRODUTOS NO ESTOQUE PARA ESTA CONSULTA.**\n\n`
+            prompt += `VOCÊ É OBRIGADA A:\n`
+            prompt += `1. NÃO mencionar NENHUM preço (R$, reais, valores)\n`
+            prompt += `2. NÃO mencionar NENHUMA marca (Pirelli, Goodyear, Michelin, etc.)\n`
+            prompt += `3. NÃO inventar produtos ou disponibilidade\n`
+            prompt += `4. Dizer que vai VERIFICAR NO SISTEMA ou que NÃO TEM essa medida no momento\n\n`
+            prompt += `RESPOSTA SUGERIDA:\n`
+            prompt += `"Deixa eu verificar aqui no sistema... No momento não encontrei essa medida em estoque. Posso verificar outras opções ou te avisar quando chegar?"\n\n`
+            prompt += `⚠️ INVENTAR PREÇO = PROCESSO JUDICIAL CONTRA A LOJA!\n`
+            prompt += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`
         }
 
         if (contextoExtra.orcamentoAtivo) {
@@ -347,7 +358,7 @@ export const RESPOSTAS_OBJECOES: Record<string, string> = {
 
 Em outros lugares você pagaria mais R$180 só de serviço. Aqui você economiza!
 
-E ainda pode parcelar em até *12x no cartão*. Quer que eu calcule as parcelas?`,
+E ainda pode parcelar em até *12x no cartão*! Fica bem mais tranquilo assim.`,
 
     'pensar': `Claro! Pensar com calma é importante.
 
@@ -363,11 +374,9 @@ Só uma dica de amiga: aqui a *instalação já tá inclusa* e você pode agenda
 
 Se precisar, tô aqui. 😊`,
 
-    'sem_dinheiro': `Entendo! A gente parcela em até *12x no cartão* sem juros.
+    'sem_dinheiro': `Entendo! A gente parcela em até *12x no cartão*. Fica bem mais tranquilo assim!
 
-No PIX ainda tem *5% de desconto*!
-
-Quer que eu simule as parcelas pra você ver quanto fica por mês?`,
+Qual veículo você tem? Vou te mostrar as opções.`,
 
     'depois': `Tá bom! Quando for a hora, me chama aqui que te ajudo.
 
