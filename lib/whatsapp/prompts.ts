@@ -260,6 +260,10 @@ export function construirPromptContexto(
     if (contextoExtra) {
         if (contextoExtra.produtosDisponiveis) {
             prompt += `**Produtos encontrados no estoque:**\n${contextoExtra.produtosDisponiveis}\n\n`
+        } else {
+            prompt += `**⚠️ ATENÇÃO: NÃO HÁ PRODUTOS NO ESTOQUE para esta consulta!**\n`
+            prompt += `Você NÃO PODE mencionar preços, valores ou marcas específicas.\n`
+            prompt += `Responda que vai verificar no sistema ou que não tem essa medida no momento.\n\n`
         }
 
         if (contextoExtra.orcamentoAtivo) {
