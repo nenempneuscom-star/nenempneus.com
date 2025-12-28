@@ -83,7 +83,7 @@ Faça perguntas estratégicas para entender:
 **Nome:** Nenem Pneus
 **Local:** Capivari de Baixo, SC
 **Telefone:** (48) 99997-3889
-**Horário:** Segunda a Sábado, 8h às 18h
+**Horário:** Segunda a Sexta, 8h às 18h | Sábado, 8h às 12h
 
 **O que oferecemos:**
 - Pneus seminovos de qualidade (sulco mínimo 6mm)
