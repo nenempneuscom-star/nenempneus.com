@@ -65,8 +65,10 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
     const [enviando, setEnviando] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const scrollAreaRef = useRef<HTMLDivElement>(null)
     const previousMensagensCountRef = useRef<number>(0)
     const isFirstLoadRef = useRef<boolean>(true)
+    const scrollPositionRef = useRef<number>(0)
     const [isMobileView, setIsMobileView] = useState(false)
     const [showChat, setShowChat] = useState(false)
 
@@ -82,17 +84,39 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
     useEffect(() => {
         const currentCount = mensagens.length
         const previousCount = previousMensagensCountRef.current
+        const scrollViewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null
 
         // Fazer scroll apenas se:
         // 1. É o primeiro carregamento da conversa (isFirstLoadRef é true)
         // 2. Há mensagens novas (currentCount > previousCount)
         if (isFirstLoadRef.current || currentCount > previousCount) {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+            // Scroll para o final
+            if (scrollViewport) {
+                scrollViewport.scrollTop = scrollViewport.scrollHeight
+            } else {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+            }
             isFirstLoadRef.current = false
+        } else if (scrollViewport && scrollPositionRef.current > 0) {
+            // Restaurar posição de scroll anterior (polling sem mensagens novas)
+            scrollViewport.scrollTop = scrollPositionRef.current
         }
 
         previousMensagensCountRef.current = currentCount
     }, [mensagens])
+
+    // Salvar posição de scroll antes do polling atualizar
+    useEffect(() => {
+        const scrollViewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null
+        if (!scrollViewport) return
+
+        const handleScroll = () => {
+            scrollPositionRef.current = scrollViewport.scrollTop
+        }
+
+        scrollViewport.addEventListener('scroll', handleScroll)
+        return () => scrollViewport.removeEventListener('scroll', handleScroll)
+    }, [conversaSelecionada])
 
     // Carregar conversas periodicamente
     const carregarConversas = useCallback(async () => {
@@ -402,6 +426,7 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
 
                         {/* Messages Area */}
                         <ScrollArea
+                            ref={scrollAreaRef}
                             className="flex-1"
                             style={{
                                 backgroundImage: "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')",
