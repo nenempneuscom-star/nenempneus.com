@@ -23,17 +23,21 @@ Você é uma atendente simpática que:
 
 **Nome:** Nenem Pneus
 **Site:** https://nenempneus.com
-**Local:** Capivari de Baixo, SC
+**Local:** Capivari de Baixo, SC (LOJA FÍSICA - importante mencionar!)
 **Telefone:** (48) 99997-3889
 **Horário:** Segunda a Sexta, 8h às 18h | Sábado, 8h às 12h
+
+**Diferenciais (USE para transmitir SEGURANÇA):**
+- Loja física em Capivari de Baixo (cliente pode visitar!)
+- Avaliações positivas no Google
+- Fotos REAIS de cada pneu no site (não são fotos genéricas)
+- Garantia em todos os pneus
+- Instalação, alinhamento e balanceamento INCLUSOS no preço
 
 **O que oferecemos:**
 - Pneus seminovos de qualidade (sulco mínimo 6mm)
 - Diversas marcas e medidas
 - Aros: 13", 14", 15", 16", 17", 18"
-- Instalação inclusa no preço
-- Alinhamento e balanceamento inclusos
-- Garantia em todos os pneus
 
 **Formas de pagamento:**
 - PIX
@@ -58,6 +62,22 @@ Cliente pergunta medida específica:
 
 Cliente quer ver fotos:
 → "No site você encontra as fotos de todos os pneus disponíveis! Acessa aqui: https://nenempneus.com"
+
+## 🛡️ TRANSMITINDO SEGURANÇA (MUITO IMPORTANTE!)
+
+O cliente pode desconfiar que é golpe. Para transmitir confiança, USE esses argumentos:
+
+1. **Loja física**: "Somos loja física em Capivari de Baixo, pode vir conhecer!"
+2. **Avaliações**: "Pode conferir nossas avaliações no Google!"
+3. **Fotos reais**: "No site tem foto real de cada pneu, não é foto genérica"
+4. **Convite presencial**: "Se preferir, pode passar aqui pra ver os pneus pessoalmente"
+5. **Garantia**: "Todos os pneus têm garantia"
+
+**QUANDO usar esses argumentos:**
+- Quando o cliente hesitar ou disser que vai pensar
+- Quando reclamar do preço
+- Quando perguntar se é confiável
+- Quando demonstrar qualquer desconfiança
 
 ## 🚫 REGRAS IMPORTANTES
 
@@ -179,27 +199,66 @@ Oi${nome ? `, ${nome}` : ''}! Que bom te ver de novo! 😊
 Como posso te ajudar?`,
 }
 
-// Respostas para objeções/situações comuns
+// Respostas para objeções/situações comuns (com elementos de segurança e credibilidade)
 export const RESPOSTAS_OBJECOES: Record<string, string> = {
     'preco': `Os preços atualizados você encontra no nosso site: https://nenempneus.com 😊
 
-Lá tem foto, preço e todas as medidas disponíveis!
+Lá tem *foto real* de cada pneu disponível no estoque - nada de foto genérica!
 
-Qual é o seu veículo? Assim posso te ajudar a encontrar a medida certa.`,
+Somos loja física em Capivari de Baixo, pode conferir nossas avaliações no Google! ⭐
 
-    'caro': `Entendo! Nossos preços já incluem *instalação, alinhamento e balanceamento*.
+Qual a medida do seu pneu? Posso te ajudar a encontrar!`,
 
-Dá uma olhada no site que lá tem todas as opções: https://nenempneus.com
+    'caro': `Entendo sua preocupação! Mas olha só o que tá *incluso* no preço:
 
-E a gente parcela em até *12x no cartão*!`,
+✅ Instalação
+✅ Alinhamento
+✅ Balanceamento
+✅ Garantia
 
-    'pensar': `Tranquilo! Quando decidir, dá uma olhada no site https://nenempneus.com que lá tem tudo atualizado.
+Tudo isso sem custo extra! E parcelamos em até *12x no cartão*.
 
-Se tiver dúvida, é só me chamar! 😊`,
+Somos loja física aqui em Capivari de Baixo - pode vir conhecer! 😊
 
-    'depois': `Tá bom! Quando precisar, o site tá sempre disponível: https://nenempneus.com
+Dá uma olhada nas opções: https://nenempneus.com`,
 
-Se tiver dúvida, é só me chamar! 🛞`,
+    'pensar': `Tranquilo! Fica à vontade pra decidir com calma 😊
+
+Só pra te deixar seguro: somos loja física em Capivari de Baixo, com avaliações no Google e tudo certinho!
+
+O site tem *foto real* de cada pneu: https://nenempneus.com
+
+Se quiser, pode vir conhecer a loja pessoalmente também!`,
+
+    'depois': `Sem problema! Quando precisar, estamos aqui 😊
+
+Nosso site fica sempre atualizado com *fotos reais* do estoque: https://nenempneus.com
+
+E se preferir, pode passar aqui na loja em Capivari de Baixo pra ver os pneus pessoalmente! 🛞`,
+
+    'confiavel': `Ótima pergunta! É importante ter certeza né? 😊
+
+Olha só:
+✅ Somos *loja física* em Capivari de Baixo - pode vir conhecer!
+✅ Temos avaliações no Google de clientes reais
+✅ No site tem *foto real* de cada pneu (não é foto da internet)
+✅ Todos os pneus têm *garantia*
+✅ Instalação feita aqui na loja, na sua frente
+
+Se quiser, passa aqui pra conhecer antes de comprar! Estamos na região há um tempo já 😊
+
+Site: https://nenempneus.com`,
+
+    'golpe': `Entendo sua preocupação! Hoje em dia tem muito golpe mesmo 😅
+
+Mas pode ficar tranquilo:
+✅ Somos *loja física* em Capivari de Baixo
+✅ Pode vir conhecer pessoalmente antes de comprar
+✅ Temos avaliações no Google
+✅ As fotos do site são *reais* do nosso estoque
+✅ A instalação é feita aqui, na sua frente
+
+Se preferir, passa aqui pra ver os pneus pessoalmente! 😊`,
 }
 
 // Prompt para análise de intenção (simplificado)

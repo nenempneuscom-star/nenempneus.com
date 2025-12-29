@@ -32,6 +32,8 @@ const SITUACOES_KEYWORDS: Record<string, string[]> = {
     'caro': ['caro', 'muito caro', 'preço alto', 'puxado', 'salgado'],
     'pensar': ['vou pensar', 'deixa eu pensar', 'preciso pensar', 'vou ver'],
     'depois': ['depois', 'outra hora', 'outro dia', 'mais tarde', 'não agora'],
+    'golpe': ['golpe', 'é golpe', 'parece golpe', 'fake', 'falso', 'fraude', 'pilantra', 'enganação'],
+    'confiavel': ['confiável', 'confiavel', 'é seguro', 'posso confiar', 'é verdade', 'é real', 'existe mesmo', 'loja de verdade'],
 }
 
 // Detecta situação na mensagem
