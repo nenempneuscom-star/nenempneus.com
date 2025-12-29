@@ -5,32 +5,19 @@ import {
     Search,
     Send,
     CheckCheck,
-    Check,
     Bot,
     User,
     Phone,
     MoreVertical,
-    Smile,
-    Paperclip,
     ArrowLeft,
-    Settings,
     LogOut,
     Filter,
     Star,
     Clock,
     MessageCircle,
-    Users,
-    TrendingUp,
-    ChevronDown,
     X,
     ExternalLink,
     Copy,
-    Bell,
-    BellOff,
-    Trash2,
-    Archive,
-    Pin,
-    Tag,
     Menu,
     LayoutDashboard,
     ShoppingBag,
@@ -669,12 +656,6 @@ export function WhatsAppCRM({ initialConversas }: { initialConversas: Conversa[]
 
                                 {/* Input */}
                                 <div className="px-4 py-3 bg-[#202c33] flex items-center gap-2">
-                                    <button className="p-2 text-gray-400 hover:bg-[#2a3942] rounded-full transition-colors">
-                                        <Smile className="h-6 w-6" />
-                                    </button>
-                                    <button className="p-2 text-gray-400 hover:bg-[#2a3942] rounded-full transition-colors">
-                                        <Paperclip className="h-6 w-6" />
-                                    </button>
                                     <div className="flex-1">
                                         <input
                                             ref={inputRef}
