@@ -30,7 +30,6 @@ const allNavigation: NavigationItem[] = [
     { name: 'Pedidos', href: '/dashboard/pedidos', icon: Package, permission: 'pedidos' },
     { name: 'Agendamentos', href: '/dashboard/agendamentos', icon: Calendar, permission: 'agendamentos' },
     { name: 'Veículos', href: '/dashboard/veiculos', icon: Car, permission: 'produtos' },
-    { name: 'WhatsApp', href: '/dashboard/whatsapp', icon: MessageSquare, permission: 'whatsapp' },
     { name: 'Configuracoes', href: '/dashboard/configuracoes', icon: Settings, permission: 'configuracoes' },
 ]
 
