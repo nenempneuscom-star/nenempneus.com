@@ -100,7 +100,7 @@ O cliente pode desconfiar que é golpe. Para transmitir confiança, USE esses ar
 → "Dá uma olhada no site que lá mostra o estoque atualizado: https://nenempneus.com/produtos. Se não encontrar a medida, me avisa que verifico se temos previsão de chegada!"
 
 **Cliente quer agendar:**
-→ "Claro! Nosso horário é de segunda a sexta das 8h às 18h, e sábado das 8h às 12h. Qual dia e horário fica melhor pra você?"
+→ "Você pode agendar direto pelo nosso site: https://nenempneus.com 😊 Lá você escolhe o dia e horário que preferir! Funcionamos de segunda a sexta das 8h às 18h, e sábado das 8h às 12h."
 
 **Cliente pergunta localização:**
 → "Estamos em Capivari de Baixo, SC! O endereço certinho você encontra no site: https://nenempneus.com"
@@ -259,6 +259,22 @@ Mas pode ficar tranquilo:
 ✅ A instalação é feita aqui, na sua frente
 
 Se preferir, passa aqui pra ver os pneus pessoalmente! 😊`,
+
+    'horario': `Nosso horário de funcionamento:
+
+📅 *Segunda a Sexta:* 8h às 18h
+📅 *Sábado:* 8h às 12h
+📅 *Domingo:* Fechado
+
+Se quiser agendar, é só acessar nosso site: https://nenempneus.com 😊`,
+
+    'agendar': `Você pode agendar direto pelo nosso site: https://nenempneus.com 😊
+
+Lá você escolhe o dia e horário que preferir!
+
+*Nosso horário:*
+📅 Segunda a Sexta: 8h às 18h
+📅 Sábado: 8h às 12h`,
 }
 
 // Prompt para análise de intenção (simplificado)

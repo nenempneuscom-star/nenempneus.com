@@ -44,12 +44,13 @@ function normalizeMessage(mensagem: string): string {
 const FAQ: Record<string, string> = {
   'ola': 'Olá! Como posso ajudar você hoje?',
   'oi': 'Oi! Em que posso ser útil?',
-  'horario': 'Atendemos de segunda a sábado, das 8h às 18h.',
-  'endereco': 'Estamos em Capivari de Baixo, SC. Av. Nereu Ramos, 740 - Centro.',
+  'horario': 'Atendemos de segunda a sexta das 8h às 18h, e sábado das 8h às 12h! 😊',
+  'funciona': 'Atendemos de segunda a sexta das 8h às 18h, e sábado das 8h às 12h! 😊',
+  'aberto': 'Atendemos de segunda a sexta das 8h às 18h, e sábado das 8h às 12h! 😊',
+  'endereco': 'Estamos em Capivari de Baixo, SC! O endereço certinho você encontra no site: https://nenempneus.com 😊',
   'telefone': 'Nosso telefone é (48) 99997-3889.',
-  'preco': 'Nossos pneus seminovos começam a partir de R$380. Os preços variam conforme marca, aro e modelo.',
-  'garantia': 'Todos nossos pneus têm garantia de qualidade!',
-  'instalacao': 'Sim! Fazemos a instalação no mesmo dia da compra, mediante agendamento.',
+  'garantia': 'Todos nossos pneus têm garantia! 😊',
+  'instalacao': 'Sim! Instalação, alinhamento e balanceamento já estão inclusos no preço! 🛞',
 }
 
 export function getQuickResponse(mensagem: string): string | null {

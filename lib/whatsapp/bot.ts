@@ -34,6 +34,8 @@ const SITUACOES_KEYWORDS: Record<string, string[]> = {
     'depois': ['depois', 'outra hora', 'outro dia', 'mais tarde', 'não agora'],
     'golpe': ['golpe', 'é golpe', 'parece golpe', 'fake', 'falso', 'fraude', 'pilantra', 'enganação'],
     'confiavel': ['confiável', 'confiavel', 'é seguro', 'posso confiar', 'é verdade', 'é real', 'existe mesmo', 'loja de verdade'],
+    'horario': ['horário', 'horario', 'que horas', 'hora funciona', 'hora abre', 'hora fecha', 'aberto', 'fechado', 'funciona'],
+    'agendar': ['agendar', 'agendamento', 'marcar', 'reservar', 'hora marcada'],
 }
 
 // Detecta situação na mensagem
