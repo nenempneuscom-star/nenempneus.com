@@ -284,13 +284,13 @@ Lá você escolhe o dia e horário que preferir!
 
     'reparo': `Sim, fazemos *reparo de pneus*! 🔧
 
-Consertamos furos, fazemos remendos e avaliamos se o pneu pode ser reparado com segurança.
+Para saber o valor, precisa trazer o carro ou moto aqui na loja pra gente avaliar o pneu. Cada caso é diferente e a gente só consegue dar o valor certinho vendo o estado do pneu.
 
 *Nosso horário:*
 📅 Segunda a Sexta: 8h às 18h
 📅 Sábado: 8h às 12h
 
-É só passar aqui na loja em Capivari de Baixo! 😊`,
+É só passar aqui em Capivari de Baixo! A avaliação é rapidinha 😊`,
 }
 
 // Prompt para análise de intenção (simplificado)
