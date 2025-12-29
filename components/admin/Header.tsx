@@ -26,7 +26,7 @@ interface HeaderProps {
 
 export function Header({ user }: HeaderProps) {
     const router = useRouter()
-    const { toggle } = useMobileMenu()
+    const { toggle, isCollapsed } = useMobileMenu()
 
     const handleLogout = async () => {
         await fetch('/api/auth/logout', { method: 'POST' })
@@ -50,11 +50,11 @@ export function Header({ user }: HeaderProps) {
     return (
         <header className="bg-background border-b h-16 flex items-center justify-between px-4 lg:px-6">
             <div className="flex items-center gap-3">
-                {/* Botão hamburguer - visível apenas em mobile */}
+                {/* Botão hamburguer - visível em mobile ou quando sidebar colapsada */}
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="lg:hidden"
+                    className={isCollapsed ? '' : 'lg:hidden'}
                     onClick={toggle}
                     aria-label="Abrir menu"
                 >

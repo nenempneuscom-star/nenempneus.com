@@ -40,7 +40,7 @@ interface SidebarProps {
 
 export function Sidebar({ permissoes }: SidebarProps) {
     const pathname = usePathname()
-    const { isOpen, close } = useMobileMenu()
+    const { isOpen, isCollapsed, close } = useMobileMenu()
 
     // Filtrar navegação baseado nas permissões do usuário
     const navigation = allNavigation.filter(item => permissoes[item.permission] === true)
@@ -69,11 +69,11 @@ export function Sidebar({ permissoes }: SidebarProps) {
             {/* Sidebar */}
             <div
                 className={`
-                    fixed lg:static inset-y-0 left-0 z-50
+                    fixed inset-y-0 left-0 z-50
                     flex h-screen w-64 flex-col bg-secondary
                     transform transition-transform duration-300 ease-in-out
                     ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-                    lg:translate-x-0
+                    ${!isCollapsed ? 'lg:static lg:translate-x-0' : ''}
                 `}
             >
                 {/* Header com logo e botão fechar (mobile) */}
