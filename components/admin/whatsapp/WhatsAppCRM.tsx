@@ -30,7 +30,13 @@ import {
     Trash2,
     Archive,
     Pin,
-    Tag
+    Tag,
+    Menu,
+    LayoutDashboard,
+    ShoppingBag,
+    Package,
+    Calendar,
+    Car
 } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -72,6 +78,7 @@ export function WhatsAppCRM({ initialConversas }: { initialConversas: Conversa[]
     const [favoritas, setFavoritas] = useState<Set<string>>(new Set())
     const [mobile, setMobile] = useState(false)
     const [showSidebar, setShowSidebar] = useState(true)
+    const [showNavMenu, setShowNavMenu] = useState(false)
 
     // Refs
     const chatRef = useRef<HTMLDivElement>(null)
@@ -253,6 +260,14 @@ export function WhatsAppCRM({ initialConversas }: { initialConversas: Conversa[]
                 {/* Header */}
                 <div className="h-[60px] px-4 flex items-center justify-between bg-[#202c33]">
                     <div className="flex items-center gap-3">
+                        {/* Botão hambúrguer */}
+                        <button
+                            onClick={() => setShowNavMenu(!showNavMenu)}
+                            className="p-2 -ml-2 rounded-full text-gray-400 hover:bg-[#2a3942] transition-colors"
+                            title="Menu de navegação"
+                        >
+                            <Menu className="h-5 w-5" />
+                        </button>
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-sm shadow-lg">
                             NP
                         </div>
@@ -280,6 +295,77 @@ export function WhatsAppCRM({ initialConversas }: { initialConversas: Conversa[]
                         </Link>
                     </div>
                 </div>
+
+                {/* Menu de navegação lateral */}
+                {showNavMenu && (
+                    <>
+                        <div
+                            className="fixed inset-0 bg-black/50 z-40"
+                            onClick={() => setShowNavMenu(false)}
+                        />
+                        <div className="fixed left-0 top-0 h-full w-64 bg-[#111b21] z-50 shadow-2xl flex flex-col">
+                            <div className="h-[60px] px-4 flex items-center justify-between bg-[#202c33] border-b border-[#222d34]">
+                                <span className="font-semibold text-white">Menu</span>
+                                <button
+                                    onClick={() => setShowNavMenu(false)}
+                                    className="p-2 rounded-full text-gray-400 hover:bg-[#2a3942]"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+                            <nav className="flex-1 p-3 space-y-1">
+                                <Link
+                                    href="/dashboard"
+                                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2a3942] transition-colors"
+                                >
+                                    <LayoutDashboard className="h-5 w-5" />
+                                    Dashboard
+                                </Link>
+                                <Link
+                                    href="/dashboard/produtos"
+                                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2a3942] transition-colors"
+                                >
+                                    <ShoppingBag className="h-5 w-5" />
+                                    Produtos
+                                </Link>
+                                <Link
+                                    href="/dashboard/pedidos"
+                                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2a3942] transition-colors"
+                                >
+                                    <Package className="h-5 w-5" />
+                                    Pedidos
+                                </Link>
+                                <Link
+                                    href="/dashboard/agendamentos"
+                                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2a3942] transition-colors"
+                                >
+                                    <Calendar className="h-5 w-5" />
+                                    Agendamentos
+                                </Link>
+                                <Link
+                                    href="/dashboard/veiculos"
+                                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2a3942] transition-colors"
+                                >
+                                    <Car className="h-5 w-5" />
+                                    Veículos
+                                </Link>
+                                <Link
+                                    href="/dashboard/whatsapp"
+                                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2a3942] transition-colors"
+                                >
+                                    <MessageCircle className="h-5 w-5" />
+                                    WhatsApp
+                                </Link>
+                                <div className="pt-2 border-t border-[#222d34] mt-2">
+                                    <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#00a884]/20 text-[#00a884]">
+                                        <MessageCircle className="h-5 w-5" />
+                                        CRM WhatsApp
+                                    </div>
+                                </div>
+                            </nav>
+                        </div>
+                    </>
+                )}
 
                 {/* Stats Bar */}
                 <div className="px-4 py-2 bg-[#182229] border-b border-[#222d34] flex items-center gap-4">
