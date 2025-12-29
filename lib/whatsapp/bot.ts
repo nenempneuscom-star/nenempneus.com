@@ -43,7 +43,22 @@ const SITUACOES_KEYWORDS: Record<string, string[]> = {
 function detectarSituacao(mensagem: string): string | null {
     const msgLower = mensagem.toLowerCase()
 
+    // Prioridade alta: verificar reparo primeiro (evita confusão com "quanto custa consertar")
+    const prioridadeAlta = ['reparo', 'agendar', 'horario']
+    for (const tipo of prioridadeAlta) {
+        const keywords = SITUACOES_KEYWORDS[tipo]
+        if (keywords) {
+            for (const keyword of keywords) {
+                if (msgLower.includes(keyword)) {
+                    return tipo
+                }
+            }
+        }
+    }
+
+    // Depois verificar as demais situações
     for (const [tipo, keywords] of Object.entries(SITUACOES_KEYWORDS)) {
+        if (prioridadeAlta.includes(tipo)) continue // já verificado
         for (const keyword of keywords) {
             if (msgLower.includes(keyword)) {
                 return tipo
