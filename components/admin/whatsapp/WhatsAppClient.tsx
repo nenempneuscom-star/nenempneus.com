@@ -68,7 +68,6 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
     const scrollAreaRef = useRef<HTMLDivElement>(null)
     const previousMensagensCountRef = useRef<number>(0)
     const isFirstLoadRef = useRef<boolean>(true)
-    const scrollPositionRef = useRef<number>(0)
     const [isMobileView, setIsMobileView] = useState(false)
     const [showChat, setShowChat] = useState(false)
 
@@ -86,37 +85,35 @@ export function WhatsAppClient({ initialConversas }: WhatsAppClientProps) {
         const previousCount = previousMensagensCountRef.current
         const scrollViewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null
 
-        // Fazer scroll apenas se:
-        // 1. É o primeiro carregamento da conversa (isFirstLoadRef é true)
-        // 2. Há mensagens novas (currentCount > previousCount)
-        if (isFirstLoadRef.current || currentCount > previousCount) {
-            // Scroll para o final
-            if (scrollViewport) {
-                scrollViewport.scrollTop = scrollViewport.scrollHeight
-            } else {
-                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-            }
-            isFirstLoadRef.current = false
-        } else if (scrollViewport && scrollPositionRef.current > 0) {
-            // Restaurar posição de scroll anterior (polling sem mensagens novas)
-            scrollViewport.scrollTop = scrollPositionRef.current
+        if (!scrollViewport) {
+            previousMensagensCountRef.current = currentCount
+            return
         }
+
+        // Calcular se o usuário está perto do final (dentro de 100px)
+        const isNearBottom = scrollViewport.scrollHeight - scrollViewport.scrollTop - scrollViewport.clientHeight < 100
+
+        // Fazer scroll para o final apenas se:
+        // 1. É o primeiro carregamento da conversa (isFirstLoadRef é true)
+        // 2. Há mensagens novas E o usuário está perto do final
+        if (isFirstLoadRef.current) {
+            // Primeiro carregamento: sempre vai pro final
+            requestAnimationFrame(() => {
+                scrollViewport.scrollTop = scrollViewport.scrollHeight
+            })
+            isFirstLoadRef.current = false
+        } else if (currentCount > previousCount && isNearBottom) {
+            // Mensagens novas e usuário perto do final: vai pro final
+            requestAnimationFrame(() => {
+                scrollViewport.scrollTop = scrollViewport.scrollHeight
+            })
+        }
+        // Se não é primeiro load e não tem mensagens novas (ou usuário não está no final),
+        // NÃO mexe no scroll - deixa onde o usuário está
 
         previousMensagensCountRef.current = currentCount
     }, [mensagens])
 
-    // Salvar posição de scroll antes do polling atualizar
-    useEffect(() => {
-        const scrollViewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement | null
-        if (!scrollViewport) return
-
-        const handleScroll = () => {
-            scrollPositionRef.current = scrollViewport.scrollTop
-        }
-
-        scrollViewport.addEventListener('scroll', handleScroll)
-        return () => scrollViewport.removeEventListener('scroll', handleScroll)
-    }, [conversaSelecionada])
 
     // Carregar conversas periodicamente
     const carregarConversas = useCallback(async () => {
