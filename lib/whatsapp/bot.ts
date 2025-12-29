@@ -36,6 +36,7 @@ const SITUACOES_KEYWORDS: Record<string, string[]> = {
     'confiavel': ['confiável', 'confiavel', 'é seguro', 'posso confiar', 'é verdade', 'é real', 'existe mesmo', 'loja de verdade'],
     'horario': ['horário', 'horario', 'que horas', 'hora funciona', 'hora abre', 'hora fecha', 'aberto', 'fechado', 'funciona'],
     'agendar': ['agendar', 'agendamento', 'marcar', 'reservar', 'hora marcada'],
+    'reparo': ['reparo', 'reparar', 'conserto', 'consertar', 'furou', 'furo', 'remendo', 'remendar', 'vazando', 'murchando', 'murcho'],
 }
 
 // Detecta situação na mensagem

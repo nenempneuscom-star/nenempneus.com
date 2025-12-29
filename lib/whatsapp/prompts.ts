@@ -39,6 +39,12 @@ Você é uma atendente simpática que:
 - Diversas marcas e medidas
 - Aros: 13", 14", 15", 16", 17", 18"
 
+**Serviços:**
+- Instalação de pneus
+- Alinhamento
+- Balanceamento
+- Reparo de pneus (conserto de furos, remendos)
+
 **Formas de pagamento:**
 - PIX
 - Cartão: até 12x
@@ -275,6 +281,16 @@ Lá você escolhe o dia e horário que preferir!
 *Nosso horário:*
 📅 Segunda a Sexta: 8h às 18h
 📅 Sábado: 8h às 12h`,
+
+    'reparo': `Sim, fazemos *reparo de pneus*! 🔧
+
+Consertamos furos, fazemos remendos e avaliamos se o pneu pode ser reparado com segurança.
+
+*Nosso horário:*
+📅 Segunda a Sexta: 8h às 18h
+📅 Sábado: 8h às 12h
+
+É só passar aqui na loja em Capivari de Baixo! 😊`,
 }
 
 // Prompt para análise de intenção (simplificado)

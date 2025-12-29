@@ -14,6 +14,7 @@ import {
     LogOut,
     Car,
     X,
+    ExternalLink,
 } from 'lucide-react'
 
 interface NavigationItem {
@@ -107,6 +108,25 @@ export function Sidebar({ permissoes }: SidebarProps) {
                             </Link>
                         )
                     })}
+
+                    {/* Botão CRM WhatsApp - abre em nova aba */}
+                    {permissoes['whatsapp'] && (
+                        <a
+                            href="/crm"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={handleNavClick}
+                        >
+                            <Button
+                                variant="ghost"
+                                className="w-full justify-start bg-gradient-to-r from-green-600/20 to-green-500/10 hover:from-green-600/30 hover:to-green-500/20 border border-green-500/30 text-green-400"
+                            >
+                                <MessageSquare className="mr-2 h-4 w-4" />
+                                CRM WhatsApp
+                                <ExternalLink className="ml-auto h-3 w-3 opacity-60" />
+                            </Button>
+                        </a>
+                    )}
                 </nav>
 
                 <div className="border-t p-3">
