@@ -1,5 +1,5 @@
 import { getConversas } from '@/lib/admin/whatsapp'
-import { WhatsAppClient } from '@/components/admin/whatsapp/WhatsAppClient'
+import { WhatsAppChat } from '@/components/admin/whatsapp/WhatsAppChat'
 import { WhatsAppMetrics } from '@/components/admin/whatsapp/WhatsAppMetrics'
 import { WhatsAppTraining } from '@/components/admin/whatsapp/WhatsAppTraining'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -42,7 +42,7 @@ export default async function WhatsAppPage() {
         </TabsList>
 
         <TabsContent value="conversas" className="h-[calc(100vh-220px)]">
-          <WhatsAppClient initialConversas={conversas} />
+          <WhatsAppChat initialConversas={conversas} />
         </TabsContent>
 
         <TabsContent value="metricas">
