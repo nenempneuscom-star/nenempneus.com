@@ -336,13 +336,6 @@ export function WhatsAppCRM({ initialConversas }: { initialConversas: Conversa[]
                                     <Car className="h-5 w-5" />
                                     Veículos
                                 </Link>
-                                <Link
-                                    href="/dashboard/whatsapp"
-                                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-[#2a3942] transition-colors"
-                                >
-                                    <MessageCircle className="h-5 w-5" />
-                                    WhatsApp
-                                </Link>
                                 <div className="pt-2 border-t border-[#222d34] mt-2">
                                     <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#00a884]/20 text-[#00a884]">
                                         <MessageCircle className="h-5 w-5" />
