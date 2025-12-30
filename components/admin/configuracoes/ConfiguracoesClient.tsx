@@ -534,7 +534,20 @@ export function ConfiguracoesClient({ initialSettings }: ConfiguracoesClientProp
 
                                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                                     <p className="text-sm text-blue-900">
-                                        <strong>Exemplo:</strong> Um produto de R$ 400,00 parcelado em {settings.parcelasMaximas}x {settings.taxaJuros === 0 ? 'sem juros' : `com ${settings.taxaJuros}% a.m. de juros`} = {settings.parcelasMaximas}x de R$ {(400 / settings.parcelasMaximas).toFixed(2)}
+                                        {(() => {
+                                            const precoBase = 400
+                                            const parcelas = settings.parcelasMaximas
+                                            const taxa = settings.taxaJuros
+                                            const totalComJuros = taxa > 0
+                                                ? precoBase * (1 + (taxa / 100) * parcelas)
+                                                : precoBase
+                                            const valorParcela = totalComJuros / parcelas
+                                            return (
+                                                <>
+                                                    <strong>Exemplo:</strong> Um produto de R$ {precoBase.toFixed(2)} parcelado em {parcelas}x {taxa === 0 ? 'sem juros' : `com ${taxa}% a.m.`} = {parcelas}x de R$ {valorParcela.toFixed(2)} (total: R$ {totalComJuros.toFixed(2)})
+                                                </>
+                                            )
+                                        })()}
                                     </p>
                                 </div>
                             </CardContent>
