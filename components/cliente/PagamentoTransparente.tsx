@@ -238,12 +238,16 @@ export function PagamentoTransparente({
             }
 
             // Calcular valor total com juros para parcelamento
+            // O cliente escolhe parcelas, mas enviamos para o MP como pagamento único
+            // com o valor já incluindo os juros da loja
             const numParcelas = parseInt(installments)
             const valorComJuros = taxaJuros > 0 && numParcelas > 1
                 ? total * (1 + (taxaJuros / 100) * numParcelas)
                 : total
 
             // Enviar pagamento para API
+            // IMPORTANTE: installments sempre 1 para o MP processar como pagamento único
+            // O parcelamento é feito pelo cartão do cliente, não pelo MP
             const response = await fetch('/api/mercadopago/process-payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -252,7 +256,7 @@ export function PagamentoTransparente({
                     transaction_amount: valorComJuros,
                     payment_method_id: paymentMethodId,
                     token: tokenResponse.id,
-                    installments: numParcelas,
+                    installments: 1, // Sempre 1 - MP processa como pagamento único
                     issuer_id: issuer,
                     payer: {
                         email: payer.email,
@@ -581,7 +585,11 @@ export function PagamentoTransparente({
                             ) : (
                                 <>
                                     <Lock className="mr-2 h-5 w-5" />
-                                    Pagar {formatPrice(total)}
+                                    Pagar {formatPrice(
+                                        taxaJuros > 0 && parseInt(installments) > 1
+                                            ? total * (1 + (taxaJuros / 100) * parseInt(installments))
+                                            : total
+                                    )}
                                 </>
                             )}
                         </Button>
