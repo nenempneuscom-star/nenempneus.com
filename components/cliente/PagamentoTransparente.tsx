@@ -65,7 +65,10 @@ export function PagamentoTransparente({
     const [paymentMethodId, setPaymentMethodId] = useState<string | null>(null)
     const [cardBrand, setCardBrand] = useState<string | null>(null)
     const [installmentOptions, setInstallmentOptions] = useState<any[]>([])
-    const [loadingInstallments, setLoadingInstallments] = useState(false)
+
+    // Configurações de parcelamento da loja
+    const [parcelasMaximas, setParcelasMaximas] = useState(12)
+    const [taxaJuros, setTaxaJuros] = useState(0)
 
     // Estados do PIX
     const [pixQrCode, setPixQrCode] = useState<string | null>(null)
@@ -77,6 +80,45 @@ export function PagamentoTransparente({
 
     // Mercado Pago SDK
     const mpRef = useRef<any>(null)
+
+    // Buscar configurações de parcelamento da loja
+    useEffect(() => {
+        async function fetchSettings() {
+            try {
+                const res = await fetch('/api/settings')
+                if (res.ok) {
+                    const data = await res.json()
+                    setParcelasMaximas(data.parcelasMaximas || 12)
+                    setTaxaJuros(Number(data.taxaJuros) || 0)
+                }
+            } catch (error) {
+                console.error('Erro ao buscar settings:', error)
+            }
+        }
+        fetchSettings()
+    }, [])
+
+    // Gerar opções de parcelamento locais (baseado nas configurações da loja)
+    useEffect(() => {
+        if (parcelasMaximas > 0) {
+            const options = []
+            for (let i = 1; i <= parcelasMaximas; i++) {
+                // Calcular valor com juros: preço * (1 + taxa * parcelas)
+                const valorTotalComJuros = taxaJuros > 0 && i > 1
+                    ? total * (1 + (taxaJuros / 100) * i)
+                    : total
+                const valorParcela = valorTotalComJuros / i
+
+                options.push({
+                    installments: i,
+                    installment_amount: valorParcela,
+                    total_amount: valorTotalComJuros,
+                    installment_rate: i === 1 ? 0 : taxaJuros
+                })
+            }
+            setInstallmentOptions(options)
+        }
+    }, [total, parcelasMaximas, taxaJuros])
 
     useEffect(() => {
         const initMP = () => {
@@ -110,12 +152,11 @@ export function PagamentoTransparente({
         }
     }, [])
 
-    // Detectar bandeira do cartão e buscar parcelas
+    // Detectar bandeira do cartão (não sobrescreve parcelas - usamos as da loja)
     useEffect(() => {
         const detectCardBrand = async () => {
             const cleanNumber = cardNumber.replace(/\D/g, '')
             if (cleanNumber.length >= 6 && mpRef.current) {
-                setLoadingInstallments(true)
                 try {
                     const bin = cleanNumber.substring(0, 6)
                     const paymentMethods = await mpRef.current.getPaymentMethods({ bin })
@@ -125,31 +166,17 @@ export function PagamentoTransparente({
                         setPaymentMethodId(pm.id)
                         setCardBrand(pm.name)
                         setIssuer(pm.issuer?.id || null)
-
-                        // Buscar opções de parcelamento
-                        const installmentData = await mpRef.current.getInstallments({
-                            amount: String(total),
-                            bin: bin,
-                            paymentTypeId: 'credit_card'
-                        })
-
-                        if (installmentData.length > 0) {
-                            setInstallmentOptions(installmentData[0].payer_costs || [])
-                        }
                     }
                 } catch (error) {
                     console.error('Erro ao detectar bandeira:', error)
-                } finally {
-                    setLoadingInstallments(false)
                 }
             } else {
                 setCardBrand(null)
-                setInstallmentOptions([])
             }
         }
 
         detectCardBrand()
-    }, [cardNumber, total])
+    }, [cardNumber])
 
     // Formatar número do cartão
     const formatCardNumber = (value: string) => {
@@ -510,7 +537,7 @@ export function PagamentoTransparente({
                                 <Select
                                     value={installments}
                                     onValueChange={setInstallments}
-                                    disabled={status === 'processing' || loadingInstallments}
+                                    disabled={status === 'processing'}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Selecione as parcelas" />
