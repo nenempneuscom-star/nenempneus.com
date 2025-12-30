@@ -237,16 +237,22 @@ export function PagamentoTransparente({
                 throw new Error('Erro ao processar dados do cartão')
             }
 
+            // Calcular valor total com juros para parcelamento
+            const numParcelas = parseInt(installments)
+            const valorComJuros = taxaJuros > 0 && numParcelas > 1
+                ? total * (1 + (taxaJuros / 100) * numParcelas)
+                : total
+
             // Enviar pagamento para API
             const response = await fetch('/api/mercadopago/process-payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     pedidoNumero,
-                    transaction_amount: total,
+                    transaction_amount: valorComJuros,
                     payment_method_id: paymentMethodId,
                     token: tokenResponse.id,
-                    installments: parseInt(installments),
+                    installments: numParcelas,
                     issuer_id: issuer,
                     payer: {
                         email: payer.email,
