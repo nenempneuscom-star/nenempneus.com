@@ -47,10 +47,10 @@ const FAQ: Record<string, string> = {
   'horario': 'Atendemos de segunda a sexta das 8h às 18h, e sábado das 8h às 12h! 😊',
   'funciona': 'Atendemos de segunda a sexta das 8h às 18h, e sábado das 8h às 12h! 😊',
   'aberto': 'Atendemos de segunda a sexta das 8h às 18h, e sábado das 8h às 12h! 😊',
-  'endereco': 'Estamos em Capivari de Baixo, SC! O endereço certinho você encontra no site: https://nenempneus.com 😊',
+  'endereco': '📍 Estamos na Av. Nereu Ramos, 740 - Centro, Capivari de Baixo - SC. Venha nos visitar!',
   'telefone': 'Nosso telefone é (48) 99997-3889.',
   'garantia': 'Todos nossos pneus têm garantia! 😊',
-  'instalacao': 'Sim! Instalação, alinhamento e balanceamento já estão inclusos no preço! 🛞',
+  'instalacao': 'Sim! A instalação está inclusa no preço. Alinhamento e balanceamento são serviços à parte. 🛞',
 }
 
 export function getQuickResponse(mensagem: string): string | null {
