@@ -98,27 +98,19 @@ export function PagamentoTransparente({
         fetchSettings()
     }, [])
 
-    // Gerar opções de parcelamento locais (baseado nas configurações da loja)
+    // Gerar opções de parcelamento padrão (antes de detectar o cartão)
+    // Será substituído pelas parcelas reais do MP quando o cartão for digitado
     useEffect(() => {
-        if (parcelasMaximas > 0) {
-            const options = []
-            for (let i = 1; i <= parcelasMaximas; i++) {
-                // Calcular valor com juros: preço * (1 + taxa * parcelas)
-                const valorTotalComJuros = taxaJuros > 0 && i > 1
-                    ? total * (1 + (taxaJuros / 100) * i)
-                    : total
-                const valorParcela = valorTotalComJuros / i
-
-                options.push({
-                    installments: i,
-                    installment_amount: valorParcela,
-                    total_amount: valorTotalComJuros,
-                    installment_rate: i === 1 ? 0 : taxaJuros
-                })
-            }
-            setInstallmentOptions(options)
+        if (parcelasMaximas > 0 && installmentOptions.length === 0) {
+            // Opção padrão: apenas 1x sem juros até detectar o cartão
+            setInstallmentOptions([{
+                installments: 1,
+                installment_amount: total,
+                total_amount: total,
+                installment_rate: 0
+            }])
         }
-    }, [total, parcelasMaximas, taxaJuros])
+    }, [total, parcelasMaximas])
 
     useEffect(() => {
         const initMP = () => {
@@ -152,7 +144,7 @@ export function PagamentoTransparente({
         }
     }, [])
 
-    // Detectar bandeira do cartão (não sobrescreve parcelas - usamos as da loja)
+    // Detectar bandeira do cartão e buscar parcelas reais do Mercado Pago
     useEffect(() => {
         const detectCardBrand = async () => {
             const cleanNumber = cardNumber.replace(/\D/g, '')
@@ -166,6 +158,18 @@ export function PagamentoTransparente({
                         setPaymentMethodId(pm.id)
                         setCardBrand(pm.name)
                         setIssuer(pm.issuer?.id || null)
+
+                        // Buscar parcelas reais do Mercado Pago
+                        const installmentData = await mpRef.current.getInstallments({
+                            amount: String(total),
+                            bin: bin,
+                            paymentTypeId: 'credit_card'
+                        })
+
+                        if (installmentData.length > 0 && installmentData[0].payer_costs) {
+                            // Usar parcelas do MP (parcelamento real)
+                            setInstallmentOptions(installmentData[0].payer_costs)
+                        }
                     }
                 } catch (error) {
                     console.error('Erro ao detectar bandeira:', error)
@@ -176,7 +180,7 @@ export function PagamentoTransparente({
         }
 
         detectCardBrand()
-    }, [cardNumber])
+    }, [cardNumber, total])
 
     // Formatar número do cartão
     const formatCardNumber = (value: string) => {
@@ -237,26 +241,18 @@ export function PagamentoTransparente({
                 throw new Error('Erro ao processar dados do cartão')
             }
 
-            // Calcular valor total com juros para parcelamento
-            // O cliente escolhe parcelas, mas enviamos para o MP como pagamento único
-            // com o valor já incluindo os juros da loja
+            // Enviar pagamento para API com parcelamento real do Mercado Pago
             const numParcelas = parseInt(installments)
-            const valorComJuros = taxaJuros > 0 && numParcelas > 1
-                ? total * (1 + (taxaJuros / 100) * numParcelas)
-                : total
 
-            // Enviar pagamento para API
-            // IMPORTANTE: installments sempre 1 para o MP processar como pagamento único
-            // O parcelamento é feito pelo cartão do cliente, não pelo MP
             const response = await fetch('/api/mercadopago/process-payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     pedidoNumero,
-                    transaction_amount: valorComJuros,
+                    transaction_amount: total, // Valor à vista - MP calcula as parcelas
                     payment_method_id: paymentMethodId,
                     token: tokenResponse.id,
-                    installments: 1, // Sempre 1 - MP processa como pagamento único
+                    installments: numParcelas, // Parcelas reais do MP
                     issuer_id: issuer,
                     payer: {
                         email: payer.email,
@@ -586,9 +582,7 @@ export function PagamentoTransparente({
                                 <>
                                     <Lock className="mr-2 h-5 w-5" />
                                     Pagar {formatPrice(
-                                        taxaJuros > 0 && parseInt(installments) > 1
-                                            ? total * (1 + (taxaJuros / 100) * parseInt(installments))
-                                            : total
+                                        installmentOptions.find(o => o.installments === parseInt(installments))?.total_amount || total
                                     )}
                                 </>
                             )}
