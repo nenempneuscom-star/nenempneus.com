@@ -73,7 +73,12 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
         fetchSettings()
     }, [])
 
-    const valorParcela = (Number(produto.preco) * quantidade) / parcelasMaximas
+    // Calcular valor total com juros (preço à vista + acréscimo de juros por parcela)
+    const precoBase = Number(produto.preco) * quantidade
+    const valorTotalComJuros = taxaJuros > 0
+        ? precoBase * (1 + (taxaJuros / 100) * parcelasMaximas)
+        : precoBase
+    const valorParcela = valorTotalComJuros / parcelasMaximas
 
     const handleAdicionarCarrinho = () => {
         adicionarItem(
@@ -305,8 +310,12 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
                                 {quantidade > 1 ? `(${formatPrice(Number(produto.preco))} cada)` : 'por unidade'}
                             </span>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                            ou {parcelasMaximas}x de {formatPrice(valorParcela)} {taxaJuros === 0 ? 'sem juros' : `(${taxaJuros}% a.m.)`}
+                        <div className="text-sm text-green-600 font-medium">
+                            à vista no PIX
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                            ou {parcelasMaximas}x de {formatPrice(valorParcela)} no cartão
+                            {taxaJuros > 0 && ` (total: ${formatPrice(valorTotalComJuros)})`}
                         </div>
                     </div>
 
