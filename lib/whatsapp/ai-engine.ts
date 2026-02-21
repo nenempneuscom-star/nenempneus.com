@@ -118,7 +118,7 @@ function isPerguntaMoto(mensagem: string): boolean {
 }
 
 /**
- * Detecta se é uma saudação simples
+ * Detecta se é uma saudação ou conversa casual
  */
 function isSaudacao(mensagem: string): boolean {
     const msgLower = mensagem.toLowerCase().trim()
@@ -135,6 +135,23 @@ function isSaudacao(mensagem: string): boolean {
         msgLower.startsWith(s + ',') ||
         msgLower.startsWith(s + '!')
     )
+}
+
+/**
+ * Detecta se é conversa casual (não relacionada a produto)
+ */
+function isConversaCasual(mensagem: string): boolean {
+    const msgLower = mensagem.toLowerCase().trim()
+    const casualPatterns = [
+        'tudo bem', 'tudo bom', 'tudo certo', 'tudo tranquilo',
+        'como vai', 'como está', 'como esta', 'como vc está', 'como vc ta',
+        'você tá bem', 'voce ta bem', 'vc tá bem', 'vc ta bem',
+        'td bem', 'td bom', 'blz', 'beleza', 'suave', 'de boa',
+        'obrigado', 'obrigada', 'valeu', 'vlw', 'brigado', 'brigada',
+        'tchau', 'até mais', 'ate mais', 'flw', 'falou', 'bye'
+    ]
+
+    return casualPatterns.some(p => msgLower.includes(p))
 }
 
 /**
@@ -467,6 +484,8 @@ function validarResposta(resposta: string, contexto: ContextoDados): { valida: b
  * Resposta de fallback segura
  */
 function respostaFallback(contexto: ContextoDados, mensagem: string, nomeCliente?: string): string {
+    const msgLower = mensagem.toLowerCase().trim()
+
     // Se for saudação, retornar saudação apropriada
     if (isSaudacao(mensagem)) {
         const nome = nomeCliente ? `, ${nomeCliente}` : ''
@@ -479,6 +498,34 @@ Trabalhamos com:
 🏍️ Pneus pra moto (novos!)
 
 Dá uma olhada no nosso site: ${LOJA_INFO.site}`
+    }
+
+    // Se for conversa casual (tudo bem, como vai, etc.)
+    if (isConversaCasual(mensagem)) {
+        // Agradecimento
+        if (msgLower.includes('obrigad') || msgLower.includes('valeu') || msgLower.includes('vlw') || msgLower.includes('brigad')) {
+            return `Por nada! 😊 Se precisar de mais alguma coisa, é só chamar!
+
+Nosso site: ${LOJA_INFO.site}`
+        }
+
+        // Despedida
+        if (msgLower.includes('tchau') || msgLower.includes('até') || msgLower.includes('flw') || msgLower.includes('bye') || msgLower.includes('falou')) {
+            return `Até mais! 😊 Quando precisar de pneus, é só chamar!
+
+Nosso site: ${LOJA_INFO.site}`
+        }
+
+        // Pergunta de como está
+        const nome = nomeCliente ? `, ${nomeCliente}` : ''
+        return `Tô bem sim${nome}, obrigada por perguntar! 😊
+
+E você, tá precisando de pneus? Posso te ajudar!
+
+🛞 Pneus pra carro (seminovos de qualidade)
+🏍️ Pneus pra moto (novos!)
+
+Me conta, qual a medida do seu pneu?`
     }
 
     // Se tem produtos no contexto, mostrar
@@ -498,13 +545,12 @@ Quer ver mais opções? Dá uma olhada no nosso site: ${LOJA_INFO.site} 😊`
     // Resposta genérica
     return `Oi! Sou a Cinthia, da Nenem Pneus! 😊
 
-Pra te ajudar melhor, dá uma olhada no nosso site que lá tem todos os pneus com foto e preço atualizado: ${LOJA_INFO.site}
+Posso te ajudar com pneus! Me conta o que você precisa:
 
-Trabalhamos com:
 🛞 Pneus pra carro (seminovos de qualidade)
 🏍️ Pneus pra moto (novos!)
 
-Me conta, qual a medida do seu pneu?`
+Qual a medida do seu pneu? Ou dá uma olhada no site: ${LOJA_INFO.site}`
 }
 
 /**
