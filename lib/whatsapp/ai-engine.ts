@@ -118,6 +118,41 @@ function isPerguntaMoto(mensagem: string): boolean {
 }
 
 /**
+ * Detecta se é uma saudação simples
+ */
+function isSaudacao(mensagem: string): boolean {
+    const msgLower = mensagem.toLowerCase().trim()
+    const saudacoes = [
+        'oi', 'ola', 'olá', 'bom dia', 'boa tarde', 'boa noite',
+        'eae', 'e aí', 'eai', 'hey', 'hello', 'salve', 'opa',
+        'fala', 'fala aí', 'oi oi', 'oii', 'oiee', 'oie'
+    ]
+
+    // Verifica se a mensagem é exatamente uma saudação ou começa com saudação
+    return saudacoes.some(s =>
+        msgLower === s ||
+        msgLower.startsWith(s + ' ') ||
+        msgLower.startsWith(s + ',') ||
+        msgLower.startsWith(s + '!')
+    )
+}
+
+/**
+ * Detecta se é uma pergunta sobre produto/preço
+ */
+function isPerguntaProduto(mensagem: string): boolean {
+    const msgLower = mensagem.toLowerCase()
+    const keywords = [
+        'pneu', 'pneus', 'preço', 'preco', 'quanto', 'valor',
+        'tem', 'disponível', 'disponivel', 'estoque', 'medida',
+        'r13', 'r14', 'r15', 'r16', 'r17', 'r18', 'r19', 'r20',
+        'aro', '175', '185', '195', '205', '215', '225',
+        'comprar', 'quero', 'preciso'
+    ]
+    return keywords.some(k => msgLower.includes(k))
+}
+
+/**
  * Busca produtos relevantes no banco de dados
  */
 async function buscarProdutosRelevantes(
@@ -227,8 +262,11 @@ async function buscarContextoDados(mensagem: string): Promise<ContextoDados> {
             }
         }
 
-        // Buscar produtos relevantes
-        const produtos = await buscarProdutosRelevantes(mensagem)
+        // Só buscar produtos se for pergunta sobre produto (não em saudações)
+        let produtos: ProdutoContexto[] = []
+        if (isPerguntaProduto(mensagem) && !isSaudacao(mensagem)) {
+            produtos = await buscarProdutosRelevantes(mensagem)
+        }
 
         // Contar total de produtos ativos
         const totalProdutos = await db.produto.count({
@@ -428,7 +466,22 @@ function validarResposta(resposta: string, contexto: ContextoDados): { valida: b
 /**
  * Resposta de fallback segura
  */
-function respostaFallback(contexto: ContextoDados): string {
+function respostaFallback(contexto: ContextoDados, mensagem: string, nomeCliente?: string): string {
+    // Se for saudação, retornar saudação apropriada
+    if (isSaudacao(mensagem)) {
+        const nome = nomeCliente ? `, ${nomeCliente}` : ''
+        return `Oi${nome}! Sou a Cinthia, da *Nenem Pneus*! 😊
+
+Como posso te ajudar hoje?
+
+Trabalhamos com:
+🛞 Pneus pra carro (seminovos de qualidade)
+🏍️ Pneus pra moto (novos!)
+
+Dá uma olhada no nosso site: ${LOJA_INFO.site}`
+    }
+
+    // Se tem produtos no contexto, mostrar
     if (contexto.produtos.length > 0) {
         const produto = contexto.produtos[0]
         return `Oi! Encontrei essa opção pra você:
@@ -442,6 +495,7 @@ Veja mais detalhes aqui: ${produto.link}
 Quer ver mais opções? Dá uma olhada no nosso site: ${LOJA_INFO.site} 😊`
     }
 
+    // Resposta genérica
     return `Oi! Sou a Cinthia, da Nenem Pneus! 😊
 
 Pra te ajudar melhor, dá uma olhada no nosso site que lá tem todos os pneus com foto e preço atualizado: ${LOJA_INFO.site}
@@ -538,7 +592,7 @@ export async function gerarRespostaIA(
 
         if (!respostaIA) {
             console.log('⚠️ [AI Engine] Grok não respondeu, usando fallback')
-            return respostaFallback(contexto)
+            return respostaFallback(contexto, mensagem, nomeCliente)
         }
 
         // 6. Validar resposta
@@ -548,7 +602,7 @@ export async function gerarRespostaIA(
         if (!validacao.valida) {
             console.log(`🚫 [AI Engine] Resposta inválida: ${validacao.motivo}`)
             console.log(`🚫 [AI Engine] Resposta rejeitada: ${respostaIA.substring(0, 100)}...`)
-            return respostaFallback(contexto)
+            return respostaFallback(contexto, mensagem, nomeCliente)
         }
 
         console.log('✅ [AI Engine] Resposta validada com sucesso')
@@ -576,7 +630,7 @@ export async function gerarRespostaIA(
             horarioFuncionamento: `${LOJA_INFO.horario.semana} | ${LOJA_INFO.horario.sabado}`,
             endereco: LOJA_INFO.endereco,
             formasPagamento: LOJA_INFO.pagamento
-        })
+        }, mensagem, nomeCliente)
     }
 }
 
