@@ -48,6 +48,7 @@ import {
 } from 'lucide-react'
 import { formatPrice, formatDate } from '@/lib/utils'
 import { useDebounce } from '@/hooks/use-debounce'
+import { toast } from 'sonner'
 
 interface PedidosClientProps {
     initialPedidos: any[]
@@ -106,7 +107,7 @@ export function PedidosClient({ initialPedidos, total, pages }: PedidosClientPro
 
         // Converter para CSV
         if (csvData.length === 0) {
-            alert('Nenhum pedido para exportar')
+            toast.warning('Nenhum pedido para exportar')
             return
         }
 

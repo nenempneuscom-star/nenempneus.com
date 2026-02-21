@@ -37,6 +37,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 // Função para extrair hora de forma consistente (ignora problemas de timezone)
 function formatarHora(hora: any): string {
@@ -101,10 +102,10 @@ export function AgendamentosClient({ initialAgendamentos }: AgendamentosClientPr
                 router.refresh()
             } else {
                 const data = await res.json()
-                alert(data.error || 'Erro ao cancelar agendamento')
+                toast.error(data.error || 'Erro ao cancelar agendamento')
             }
         } catch (error) {
-            alert('Erro ao cancelar agendamento')
+            toast.error('Erro ao cancelar agendamento')
         } finally {
             setCancelando(null)
         }

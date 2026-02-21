@@ -18,6 +18,7 @@ import { Calendar, Clock, User, Search, Loader2 } from 'lucide-react'
 import { format, addDays, startOfWeek, addWeeks, isSameDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { SeletorHorario } from '@/components/cliente/SeletorHorario'
+import { toast } from 'sonner'
 
 export function NovoAgendamentoForm() {
     const router = useRouter()
@@ -82,12 +83,12 @@ export function NovoAgendamentoForm() {
                 setClienteEncontrado(data.cliente)
                 setClienteId(data.cliente.id)
             } else {
-                alert('Cliente não encontrado')
+                toast.warning('Cliente não encontrado')
                 setClienteEncontrado(null)
                 setClienteId('')
             }
         } catch (error) {
-            alert('Erro ao buscar cliente')
+            toast.error('Erro ao buscar cliente')
             console.error(error)
         } finally {
             setBuscandoCliente(false)
@@ -111,12 +112,12 @@ export function NovoAgendamentoForm() {
                     setClienteId(data.pedido.cliente.id)
                 }
             } else {
-                alert('Pedido não encontrado')
+                toast.warning('Pedido não encontrado')
                 setPedidoEncontrado(null)
                 setPedidoId('')
             }
         } catch (error) {
-            alert('Erro ao buscar pedido')
+            toast.error('Erro ao buscar pedido')
             console.error(error)
         } finally {
             setBuscandoPedido(false)
@@ -127,12 +128,12 @@ export function NovoAgendamentoForm() {
         e.preventDefault()
 
         if (!clienteId) {
-            alert('Selecione um cliente')
+            toast.warning('Selecione um cliente')
             return
         }
 
         if (!dataSelecionada || !horarioSelecionado) {
-            alert('Selecione data e horário')
+            toast.warning('Selecione data e horário')
             return
         }
 
@@ -154,14 +155,14 @@ export function NovoAgendamentoForm() {
             const data = await response.json()
 
             if (data.success) {
-                alert('Agendamento criado com sucesso!')
+                toast.success('Agendamento criado com sucesso!')
                 router.push('/dashboard/agendamentos')
                 router.refresh()
             } else {
-                alert(data.error || 'Erro ao criar agendamento')
+                toast.error(data.error || 'Erro ao criar agendamento')
             }
         } catch (error) {
-            alert('Erro ao criar agendamento')
+            toast.error('Erro ao criar agendamento')
             console.error(error)
         } finally {
             setLoading(false)

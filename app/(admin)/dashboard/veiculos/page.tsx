@@ -38,6 +38,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Search, Car, Plus, Pencil, Trash2, Loader2, X } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface VeiculoModelo {
     nome: string
@@ -145,7 +146,7 @@ export default function VeiculosPage() {
         // Validar formato: 175/70/14 ou 175/70R14
         const match = medidaFormatada.match(/^(\d{3})\/(\d{2})[R\/]?(\d{2})$/i)
         if (!match) {
-            alert('Formato inválido. Use: 175/70/14 ou 175/70R14')
+            toast.warning('Formato inválido. Use: 175/70/14 ou 175/70R14')
             return
         }
 
@@ -182,10 +183,10 @@ export default function VeiculosPage() {
                 setModalMarcaAberto(false)
                 setNovaMarca('')
             } else {
-                alert(data.error || 'Erro ao salvar marca')
+                toast.error(data.error || 'Erro ao salvar marca')
             }
         } catch (error) {
-            alert('Erro ao salvar marca')
+            toast.error('Erro ao salvar marca')
         } finally {
             setSalvando(false)
         }
@@ -194,7 +195,7 @@ export default function VeiculosPage() {
     // Salvar novo modelo
     const salvarModelo = async () => {
         if (!marcaSelecionada || !novoModelo.trim() || medidas.length === 0) {
-            alert('Preencha todos os campos obrigatórios')
+            toast.warning('Preencha todos os campos obrigatórios')
             return
         }
 
@@ -220,10 +221,10 @@ export default function VeiculosPage() {
                 setModalModeloAberto(false)
                 resetFormModelo()
             } else {
-                alert(data.error || 'Erro ao salvar modelo')
+                toast.error(data.error || 'Erro ao salvar modelo')
             }
         } catch (error) {
-            alert('Erro ao salvar modelo')
+            toast.error('Erro ao salvar modelo')
         } finally {
             setSalvando(false)
         }
@@ -256,10 +257,10 @@ export default function VeiculosPage() {
                 setEditando(null)
                 resetFormModelo()
             } else {
-                alert(data.error || 'Erro ao atualizar modelo')
+                toast.error(data.error || 'Erro ao atualizar modelo')
             }
         } catch (error) {
-            alert('Erro ao atualizar modelo')
+            toast.error('Erro ao atualizar modelo')
         } finally {
             setSalvando(false)
         }
@@ -286,10 +287,10 @@ export default function VeiculosPage() {
                 setConfirmDeleteAberto(false)
                 setDeletando(null)
             } else {
-                alert(data.error || 'Erro ao deletar')
+                toast.error(data.error || 'Erro ao deletar')
             }
         } catch (error) {
-            alert('Erro ao deletar')
+            toast.error('Erro ao deletar')
         } finally {
             setSalvando(false)
         }
