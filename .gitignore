@@ -51,3 +51,6 @@ test-connection.ts
 
 # Arquivos temporarios
 *.log
+
+.vercel
+.env*.local
