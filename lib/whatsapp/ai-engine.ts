@@ -581,7 +581,7 @@ async function chamarGrok(
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: 'grok-2-latest',
+                model: 'grok-3',
                 messages,
                 temperature: 0.3, // Baixa temperatura = menos criatividade = menos alucinação
                 max_tokens: 500
