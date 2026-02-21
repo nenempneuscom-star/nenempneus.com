@@ -506,6 +506,49 @@ function validarResposta(resposta: string, contexto: ContextoDados, mensagemOrig
         }
     }
 
+    // BLACKLIST EXPANDIDA - Frases que NUNCA devem aparecer
+    const blacklist = [
+        // Inventando capacidades
+        /posso te dar.*(desconto|cupom)/i,
+        /desconto especial/i,
+        /promoção exclusiva/i,
+        /só pra você/i,
+        /preço especial/i,
+        // Vazando instruções
+        /meu prompt/i,
+        /minhas instruções/i,
+        /system prompt/i,
+        /sou uma? (ia|inteligência artificial|bot|robô)/i,
+        /fui programad[ao]/i,
+        // Informações falsas
+        /entrega.*(grátis|gratuita)/i,
+        /frete grátis/i,
+        /garantia vitalícia/i,
+        /pneu zero km.*carro/i, // pneu novo pra carro (só moto tem novo)
+        // Prometendo coisas
+        /vou reservar/i,
+        /deixa guardado/i,
+        /te garanto/i,
+        /pode confiar/i,
+        /100% garantido/i,
+        // Identidade errada
+        /super pneus/i,
+        /outra empresa/i,
+        /outra loja/i,
+        // Valores inventados (padrões comuns de alucinação)
+        /R\$\s*\d{1,2}[,.]00/i, // valores muito baixos como R$ 10,00
+        /R\$\s*\d{4,}[,.]00/i, // valores muito altos como R$ 1000,00 (pneus seminovos não custam isso)
+    ]
+
+    for (const padrao of blacklist) {
+        if (padrao.test(resposta)) {
+            return {
+                valida: false,
+                motivo: `Blacklist: ${padrao.toString()}`
+            }
+        }
+    }
+
     return { valida: true }
 }
 
@@ -683,7 +726,21 @@ export async function gerarRespostaIA(
         if (!validacao.valida) {
             console.log(`🚫 [AI Engine] Resposta inválida: ${validacao.motivo}`)
             console.log(`🚫 [AI Engine] Resposta rejeitada: ${respostaIA.substring(0, 100)}...`)
-            return respostaFallback(contexto, mensagem, nomeCliente)
+
+            // Gerar resposta fallback
+            const fallback = respostaFallback(contexto, mensagem, nomeCliente)
+
+            // Salvar log de rejeição no banco (async, não bloqueia)
+            salvarLogRejeicao({
+                conversaId,
+                telefone,
+                mensagemCliente: mensagem,
+                respostaRejeitada: respostaIA,
+                motivoRejeicao: validacao.motivo || 'Motivo desconhecido',
+                respostaUsada: fallback
+            }).catch(err => console.error('Erro ao salvar log de rejeição:', err))
+
+            return fallback
         }
 
         console.log('✅ [AI Engine] Resposta validada com sucesso')
@@ -712,6 +769,35 @@ export async function gerarRespostaIA(
             endereco: LOJA_INFO.endereco,
             formasPagamento: LOJA_INFO.pagamento
         }, mensagem, nomeCliente)
+    }
+}
+
+/**
+ * Salva log de rejeição no banco para análise posterior
+ */
+async function salvarLogRejeicao(dados: {
+    conversaId?: string
+    telefone?: string
+    mensagemCliente: string
+    respostaRejeitada: string
+    motivoRejeicao: string
+    respostaUsada: string
+}): Promise<void> {
+    try {
+        await db.logRejeicaoIA.create({
+            data: {
+                conversaId: dados.conversaId,
+                telefone: dados.telefone,
+                mensagemCliente: dados.mensagemCliente,
+                respostaRejeitada: dados.respostaRejeitada,
+                motivoRejeicao: dados.motivoRejeicao,
+                respostaUsada: dados.respostaUsada,
+                modelo: 'grok-3'
+            }
+        })
+        console.log('📝 [AI Engine] Log de rejeição salvo')
+    } catch (error) {
+        console.error('Erro ao salvar log de rejeição:', error)
     }
 }
 

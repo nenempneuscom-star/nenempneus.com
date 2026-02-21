@@ -578,3 +578,24 @@ model FeedbackIA {
   @@index([tipo])
   @@map("feedbacks_ia")
 }
+
+// ==========================================
+// LOG DE REJEIÇÕES DA IA (Guardrails)
+// ==========================================
+
+model LogRejeicaoIA {
+  id                String   @id @default(uuid())
+  conversaId        String?  @map("conversa_id")
+  telefone          String?
+  mensagemCliente   String   @map("mensagem_cliente")
+  respostaRejeitada String   @map("resposta_rejeitada")
+  motivoRejeicao    String   @map("motivo_rejeicao")
+  respostaUsada     String   @map("resposta_usada") // fallback que foi usado
+  modelo            String   @default("grok-3") // modelo da IA
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@index([conversaId])
+  @@index([motivoRejeicao])
+  @@index([createdAt])
+  @@map("log_rejeicoes_ia")
+}
