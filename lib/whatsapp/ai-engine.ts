@@ -143,15 +143,34 @@ function isSaudacao(mensagem: string): boolean {
 function isConversaCasual(mensagem: string): boolean {
     const msgLower = mensagem.toLowerCase().trim()
     const casualPatterns = [
+        // Confirmações e respostas curtas
         'tudo bem', 'tudo bom', 'tudo certo', 'tudo tranquilo',
         'como vai', 'como está', 'como esta', 'como vc está', 'como vc ta',
         'você tá bem', 'voce ta bem', 'vc tá bem', 'vc ta bem',
         'td bem', 'td bom', 'blz', 'beleza', 'suave', 'de boa',
+        'joia', 'jóia', 'joinha', 'top', 'show', 'massa', 'daora', 'dahora',
+        'firmeza', 'tranquilo', 'tranquilão', 'de boas', 'safe',
+        // Agradecimentos
         'obrigado', 'obrigada', 'valeu', 'vlw', 'brigado', 'brigada',
-        'tchau', 'até mais', 'ate mais', 'flw', 'falou', 'bye'
+        // Despedidas
+        'tchau', 'até mais', 'ate mais', 'flw', 'falou', 'bye',
+        // Risadas e expressões
+        'kkk', 'kkkk', 'haha', 'hehe', 'rsrs', 'lol',
+        // Expressões regionais
+        'oxe', 'oxente', 'eita', 'vixe', 'uai', 'opa', 'orra'
     ]
 
     return casualPatterns.some(p => msgLower.includes(p))
+}
+
+/**
+ * Detecta se é uma mensagem muito curta que precisa de resposta contextual
+ * (não é saudação nem produto, mas precisa de resposta natural)
+ */
+function isMensagemCurtaContextual(mensagem: string): boolean {
+    const msgLower = mensagem.toLowerCase().trim()
+    // Mensagens curtas que não são sobre produto nem saudação padrão
+    return msgLower.length < 15 && !isPerguntaProduto(msgLower) && !isSaudacao(msgLower)
 }
 
 /**
@@ -431,8 +450,19 @@ SE NÃO TIVER A INFORMAÇÃO NOS DADOS ACIMA:
 /**
  * Valida a resposta da IA antes de enviar
  * Verifica se não inventou preços ou produtos
+ * IMPORTANTE: Só valida rigorosamente quando fala de produtos/preços
  */
-function validarResposta(resposta: string, contexto: ContextoDados): { valida: boolean; motivo?: string } {
+function validarResposta(resposta: string, contexto: ContextoDados, mensagemOriginal: string): { valida: boolean; motivo?: string } {
+    // Se for conversa casual ou saudação, não precisa validar rigorosamente
+    if (isSaudacao(mensagemOriginal) || isConversaCasual(mensagemOriginal)) {
+        return { valida: true }
+    }
+
+    // Se a resposta é curta (< 100 chars) e não menciona preço, provavelmente é conversa
+    if (resposta.length < 100 && !resposta.includes('R$')) {
+        return { valida: true }
+    }
+
     // Extrair valores monetários da resposta
     const valoresMatch = resposta.match(/R\$\s*[\d.,]+/g)
 
@@ -455,24 +485,23 @@ function validarResposta(resposta: string, contexto: ContextoDados): { valida: b
         }
     }
 
-    // Verificar se menciona produtos que não existem
-    const produtosNomes = contexto.produtos.map(p => p.nome.toLowerCase())
+    // Padrões suspeitos de alucinação (só verificar se fala de produto/preço)
+    if (isPerguntaProduto(mensagemOriginal)) {
+        const padroesSuspeitos = [
+            /temos.*pneus.*a partir de/i,
+            /aproximadamente/i,
+            /acredito que/i,
+            /provavelmente/i,
+            /deve custar/i,
+            /por volta de/i
+        ]
 
-    // Padrões suspeitos de alucinação
-    const padroesSuspeitos = [
-        /temos.*pneus.*a partir de/i,
-        /aproximadamente/i,
-        /acredito que/i,
-        /provavelmente/i,
-        /deve custar/i,
-        /por volta de/i
-    ]
-
-    for (const padrao of padroesSuspeitos) {
-        if (padrao.test(resposta)) {
-            return {
-                valida: false,
-                motivo: `Linguagem incerta detectada: ${padrao.toString()}`
+        for (const padrao of padroesSuspeitos) {
+            if (padrao.test(resposta)) {
+                return {
+                    valida: false,
+                    motivo: `Linguagem incerta detectada: ${padrao.toString()}`
+                }
             }
         }
     }
@@ -504,28 +533,36 @@ Dá uma olhada no nosso site: ${LOJA_INFO.site}`
     if (isConversaCasual(mensagem)) {
         // Agradecimento
         if (msgLower.includes('obrigad') || msgLower.includes('valeu') || msgLower.includes('vlw') || msgLower.includes('brigad')) {
-            return `Por nada! 😊 Se precisar de mais alguma coisa, é só chamar!
-
-Nosso site: ${LOJA_INFO.site}`
+            return `Por nada! 😊 Se precisar de mais alguma coisa, é só chamar!`
         }
 
         // Despedida
         if (msgLower.includes('tchau') || msgLower.includes('até') || msgLower.includes('flw') || msgLower.includes('bye') || msgLower.includes('falou')) {
-            return `Até mais! 😊 Quando precisar de pneus, é só chamar!
+            return `Até mais! 😊 Quando precisar de pneus, é só chamar!`
+        }
 
-Nosso site: ${LOJA_INFO.site}`
+        // Risadas
+        if (msgLower.includes('kkk') || msgLower.includes('haha') || msgLower.includes('hehe') || msgLower.includes('rsrs')) {
+            return `😄 Posso te ajudar com alguma coisa?`
+        }
+
+        // Expressões regionais (oxe, eita, etc)
+        if (msgLower.includes('oxe') || msgLower.includes('eita') || msgLower.includes('vixe') || msgLower.includes('uai')) {
+            return `Haha 😅 Posso te ajudar com pneus? Me conta o que você precisa!`
+        }
+
+        // Confirmações curtas (joia, top, show, etc)
+        if (msgLower.includes('joia') || msgLower.includes('jóia') || msgLower.includes('top') ||
+            msgLower.includes('show') || msgLower.includes('massa') || msgLower.includes('firmeza') ||
+            msgLower.includes('tranquilo') || msgLower.includes('suave') || msgLower.includes('beleza') ||
+            msgLower.includes('blz')) {
+            const nome = nomeCliente ? `, ${nomeCliente}` : ''
+            return `Que bom${nome}! 😊 Posso te ajudar com alguma coisa? Qual a medida do seu pneu?`
         }
 
         // Pergunta de como está
         const nome = nomeCliente ? `, ${nomeCliente}` : ''
-        return `Tô bem sim${nome}, obrigada por perguntar! 😊
-
-E você, tá precisando de pneus? Posso te ajudar!
-
-🛞 Pneus pra carro (seminovos de qualidade)
-🏍️ Pneus pra moto (novos!)
-
-Me conta, qual a medida do seu pneu?`
+        return `Tô bem sim${nome}, obrigada por perguntar! 😊 E você, tá precisando de pneus?`
     }
 
     // Se tem produtos no contexto, mostrar
@@ -542,15 +579,13 @@ Veja mais detalhes aqui: ${produto.link}
 Quer ver mais opções? Dá uma olhada no nosso site: ${LOJA_INFO.site} 😊`
     }
 
-    // Resposta genérica
-    return `Oi! Sou a Cinthia, da Nenem Pneus! 😊
+    // Se for mensagem curta contextual (não saudação, não produto, não casual padrão)
+    // Deixar o Grok responder naturalmente - não usar fallback genérico
+    // Isso evita que "Sal é doce?" receba apresentação da loja
 
-Posso te ajudar com pneus! Me conta o que você precisa:
-
-🛞 Pneus pra carro (seminovos de qualidade)
-🏍️ Pneus pra moto (novos!)
-
-Qual a medida do seu pneu? Ou dá uma olhada no site: ${LOJA_INFO.site}`
+    // Resposta genérica (só quando realmente não souber o que fazer)
+    const nome = nomeCliente ? `, ${nomeCliente}` : ''
+    return `Oi${nome}! 😊 Posso te ajudar com pneus? Me conta o que você precisa!`
 }
 
 /**
@@ -641,9 +676,9 @@ export async function gerarRespostaIA(
             return respostaFallback(contexto, mensagem, nomeCliente)
         }
 
-        // 6. Validar resposta
+        // 6. Validar resposta (passa mensagem original para contexto)
         console.log('✅ [AI Engine] Validando resposta...')
-        const validacao = validarResposta(respostaIA, contexto)
+        const validacao = validarResposta(respostaIA, contexto, mensagem)
 
         if (!validacao.valida) {
             console.log(`🚫 [AI Engine] Resposta inválida: ${validacao.motivo}`)
