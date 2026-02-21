@@ -197,23 +197,34 @@ function isForaDeContexto(mensagem: string): boolean {
 
     // Palavras que indicam CLARAMENTE fora de contexto (blacklist)
     const foraContexto = [
-        // Medicamentos/saúde
-        'remedio', 'remédio', 'farmacia', 'farmácia', 'ibuprofeno', 'dipirona',
-        'paracetamol', 'aspirina', 'antibiotico', 'antibiótico', 'receita',
-        'médico', 'medico', 'hospital', 'doente', 'dor de',
+        // Medicamentos/saúde (incluindo erros de digitação comuns)
+        'remedio', 'remédio', 'farmacia', 'farmácia', 'ibuprofeno', 'hibuprofeno',
+        'ibuprofeno', 'ibuprofen', 'dipirona', 'dipiron', 'paracetamol', 'paracetamo',
+        'aspirina', 'antibiotico', 'antibiótico', 'receita médica', 'receita medica',
+        'médico', 'medico', 'hospital', 'doente', 'dor de', 'febre', 'gripe',
+        'vacina', 'exame', 'consulta', 'dentista', 'pomada', 'xarope', 'comprimido',
+        'remédio', 'medicamento', 'drogaria', 'posto de saúde', 'posto de saude',
         // Comida/bebida
         'pizza', 'lanche', 'hamburguer', 'hambúrguer', 'refrigerante', 'cerveja',
         'restaurante', 'comida', 'almoço', 'almoco', 'jantar', 'café', 'cafe',
+        'açaí', 'acai', 'sorvete', 'bolo', 'pastel', 'coxinha', 'esfiha',
+        'sushi', 'churrasco', 'padaria', 'supermercado', 'mercado',
         // Eletrônicos
         'celular', 'iphone', 'samsung', 'notebook', 'computador', 'televisão',
-        'televisao', 'tv', 'videogame', 'playstation', 'xbox',
+        'televisao', 'tv', 'videogame', 'playstation', 'xbox', 'tablet', 'fone',
         // Roupas
         'roupa', 'camisa', 'calça', 'calca', 'sapato', 'tênis', 'tenis',
+        'vestido', 'bermuda', 'chinelo', 'sandália', 'sandalia', 'meia',
         // Perguntas aleatórias/testes
         'sal é doce', 'agua é seca', 'céu é verde', 'terra é plana',
         'capital do', 'presidente', 'futebol', 'jogo do',
+        'qual seu nome', 'quem te criou', 'voce é real', 'você é real',
+        'conte uma piada', 'me conta uma piada',
         // Outros serviços
-        'uber', 'taxi', 'táxi', 'entrega', 'delivery', 'frete'
+        'uber', 'taxi', 'táxi', 'entrega', 'delivery', 'frete',
+        'encanador', 'eletricista', 'pedreiro', 'pintor', 'diarista',
+        // Animais
+        'cachorro', 'gato', 'pet', 'veterinário', 'veterinario', 'ração', 'racao'
     ]
 
     return foraContexto.some(p => msgLower.includes(p))
@@ -299,6 +310,9 @@ async function buscarProdutosRelevantes(
             })
             if (categoriaMoto) {
                 where.categoriaId = categoriaMoto.id
+            } else {
+                // Não existe categoria de moto → retornar vazio para NÃO mostrar pneus de carro
+                return []
             }
         }
 
@@ -647,8 +661,8 @@ function validarResposta(resposta: string, contexto: ContextoDados, mensagemOrig
         /outra empresa/i,
         /outra loja/i,
         // Valores inventados (padrões comuns de alucinação)
-        /R\$\s*\d{1,2}[,.]00/i, // valores muito baixos como R$ 10,00
-        /R\$\s*\d{4,}[,.]00/i, // valores muito altos como R$ 1000,00 (pneus seminovos não custam isso)
+        /R\$\s*\d{1}[,.]00\b/i, // valores absurdamente baixos como R$ 1,00 a R$ 9,00
+        /R\$\s*\d{5,}/i, // valores acima de R$ 10.000 (impossível para pneus)
     ]
 
     for (const padrao of blacklist) {
@@ -739,7 +753,10 @@ Dá uma olhada no nosso site: ${LOJA_INFO.site}`
             const produtosMoto = contexto.produtos.filter(p =>
                 p.categoria.toLowerCase().includes('moto')
             )
-            if (produtosMoto.length > 0) {
+            if (produtosMoto.length === 0) {
+                // Pediu moto mas só tem carro no contexto → NÃO mostrar carro, cair pro fallback de moto abaixo
+                produtosFiltrados = []
+            } else {
                 produtosFiltrados = produtosMoto
             }
         } else {
@@ -752,11 +769,12 @@ Dá uma olhada no nosso site: ${LOJA_INFO.site}`
             }
         }
 
-        const produto = produtosFiltrados[0]
-        const emoji = isMoto ? '🏍️' : '🛞'
-        const tipo = isMoto ? 'moto' : 'carro'
+        if (produtosFiltrados.length > 0) {
+            const produto = produtosFiltrados[0]
+            const emoji = isMoto ? '🏍️' : '🛞'
+            const tipo = isMoto ? 'moto' : 'carro'
 
-        return `Oi! Encontrei essa opção de ${tipo} pra você:
+            return `Oi! Encontrei essa opção de ${tipo} pra você:
 
 ${emoji} *${produto.nome}*
 💰 R$ ${produto.preco.toFixed(2)}
@@ -765,6 +783,7 @@ ${emoji} *${produto.nome}*
 Veja mais detalhes aqui: ${produto.link}
 
 Quer ver mais opções? Dá uma olhada no nosso site: ${LOJA_INFO.site} 😊`
+        }
     }
 
     // Se pediu moto mas não tem produtos de moto no contexto
