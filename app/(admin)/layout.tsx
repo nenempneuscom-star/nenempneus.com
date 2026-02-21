@@ -5,6 +5,7 @@ import { getSession } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { PermissionsProvider } from '@/contexts/PermissionsContext'
 import { MobileMenuProvider } from '@/contexts/MobileMenuContext'
+import { Toaster } from 'sonner'
 
 export default async function AdminLayout({
   children,
@@ -56,6 +57,7 @@ export default async function AdminLayout({
             </main>
           </div>
         </div>
+        <Toaster position="top-right" richColors />
       </MobileMenuProvider>
     </PermissionsProvider>
   )

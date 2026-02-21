@@ -40,6 +40,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { MultiImageUpload } from '@/components/admin/MultiImageUpload'
 import { ImportDialog } from '@/components/admin/produtos/ImportDialog'
 import { useFeatureFlag } from '@/hooks/use-feature-flag'
+import { toast } from 'sonner'
 
 interface Categoria {
   id: string
@@ -180,13 +181,13 @@ export function ProdutosClient({
 
   const salvarProduto = async () => {
     if (!formNome || !formCategoria || !formPreco) {
-      alert('Preencha nome, categoria e preço')
+      toast.warning('Preencha nome, categoria e preço')
       return
     }
 
     // Imagem obrigatória para novos produtos
     if (!produtoEditando && formImagens.length === 0) {
-      alert('Adicione pelo menos uma foto do produto')
+      toast.warning('Adicione pelo menos uma foto do produto')
       return
     }
 
@@ -242,11 +243,11 @@ export function ProdutosClient({
         router.refresh()
       } else {
         const data = await response.json()
-        alert(data.error || 'Erro ao salvar produto')
+        toast.error(data.error || 'Erro ao salvar produto')
       }
     } catch (err) {
       console.error('Erro ao salvar:', err)
-      alert('Erro ao salvar produto')
+      toast.error('Erro ao salvar produto')
     } finally {
       setSalvando(false)
     }
@@ -268,18 +269,18 @@ export function ProdutosClient({
           setProdutos((prev) => prev.map((p) =>
             p.id === produto.id ? { ...p, ativo: false } : p
           ))
-          alert('Produto desativado pois possui pedidos vinculados. Ele não aparecerá mais no catálogo.')
+          toast.info('Produto desativado pois possui pedidos vinculados. Ele não aparecerá mais no catálogo.')
         } else {
           // Produto foi deletado
           setProdutos((prev) => prev.filter((p) => p.id !== produto.id))
         }
         setConfirmDelete(null)
       } else {
-        alert(data.error || 'Erro ao deletar produto')
+        toast.error(data.error || 'Erro ao deletar produto')
       }
     } catch (err) {
       console.error('Erro ao deletar:', err)
-      alert('Erro ao deletar produto')
+      toast.error('Erro ao deletar produto')
     } finally {
       setDeletando(null)
     }
