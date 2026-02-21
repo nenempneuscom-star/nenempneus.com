@@ -388,9 +388,10 @@ async function buscarContextoDados(mensagem: string): Promise<ContextoDados> {
             }
         }
 
-        // Só buscar produtos se for pergunta sobre produto (não em saudações ou fora de contexto)
+        // Buscar produtos se for pergunta sobre produto (mesmo que comece com saudação)
+        // Ex: "oi, tem pneu 175/70r14?" é saudação MAS também é pergunta de produto
         let produtos: ProdutoContexto[] = []
-        if (isPerguntaProduto(mensagem) && !isSaudacao(mensagem) && !isForaDeContexto(mensagem)) {
+        if (isPerguntaProduto(mensagem) && !isForaDeContexto(mensagem)) {
             produtos = await buscarProdutosRelevantes(mensagem)
         }
 
@@ -693,8 +694,9 @@ function respostaFallback(contexto: ContextoDados, mensagem: string, nomeCliente
         return respostasForaContexto[Math.floor(Math.random() * respostasForaContexto.length)]
     }
 
-    // Se for saudação, retornar saudação apropriada
-    if (isSaudacao(mensagem)) {
+    // Se for saudação PURA (sem pergunta de produto junto), retornar saudação
+    // Ex: "oi" → saudação, mas "oi, tem pneu 175/70r14?" → priorizar produtos
+    if (isSaudacao(mensagem) && !isPerguntaProduto(mensagem)) {
         const nome = nomeCliente ? `, ${nomeCliente}` : ''
         return `Oi${nome}! Sou a Cinthia, da *Nenem Pneus*! 😊
 
