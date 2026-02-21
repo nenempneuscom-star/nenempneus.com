@@ -204,7 +204,14 @@ export async function POST(req: NextRequest) {
                                 const msgDesculpa = 'Desculpe a demora! Nosso atendente não está disponível no momento. Vou te atender por aqui mesmo! 😊 Como posso te ajudar?'
                                 await whatsapp.sendMessage(telefone, msgDesculpa)
                                 await salvarMensagemEnviada(conversa.id, msgDesculpa)
-                                // Não dar continue — processar mensagem com IA abaixo
+
+                                // Se a mensagem é só saudação/casual, a desculpa já basta — evita resposta dupla
+                                const { isSaudacaoOuCasual } = await import('@/lib/whatsapp/ai-engine')
+                                if (isSaudacaoOuCasual(conteudo)) {
+                                    console.log('💬 Timeout + saudação: desculpa já enviada, pulando IA')
+                                    continue
+                                }
+                                // Se é pergunta de produto, processar com IA abaixo
                             } else {
                                 console.log(`👤 Aguardando atendente humano (${Math.round(minutosEmHumano)}min de ${30}min)`)
                                 continue

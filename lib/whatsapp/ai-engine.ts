@@ -1057,6 +1057,14 @@ export function verificarTransferenciaHumano(mensagem: string): boolean {
 }
 
 /**
+ * Verifica se é saudação ou conversa casual (sem pergunta de produto)
+ * Usado para evitar resposta dupla no timeout do modo humano
+ */
+export function isSaudacaoOuCasual(mensagem: string): boolean {
+    return (isSaudacao(mensagem) || isConversaCasual(mensagem)) && !isPerguntaProduto(mensagem)
+}
+
+/**
  * Gera resposta de transferência
  */
 export function gerarRespostaTransferencia(): string {
