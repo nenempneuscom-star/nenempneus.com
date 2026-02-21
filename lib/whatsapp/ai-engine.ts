@@ -961,9 +961,11 @@ export async function gerarRespostaIA(
 
         // 5.5. Remover saudação repetida em conversas em andamento
         let respostaLimpa = respostaIA
-        if (historico.length > 0) {
-            // Remove "Oi, Nome!" / "Oi Nome!" / "Oi, Nome," no início da resposta
-            respostaLimpa = respostaLimpa.replace(/^Oi[,!]?\s*\w+[,!]?\s*😊?\s*/i, '').trim()
+        if (historico.length > 0 && nomeCliente) {
+            // Remove "Oi, Nome!", "Sim, Nome!", "Claro, Nome!", etc. no início da resposta
+            const escapedName = nomeCliente.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            const regexSaudacao = new RegExp(`^\\w{2,10}[,!]?\\s*${escapedName}[,!]?\\s*😊?\\s*`, 'i')
+            respostaLimpa = respostaLimpa.replace(regexSaudacao, '').trim()
             // Capitalizar primeira letra se ficou minúscula
             if (respostaLimpa.length > 0) {
                 respostaLimpa = respostaLimpa.charAt(0).toUpperCase() + respostaLimpa.slice(1)
