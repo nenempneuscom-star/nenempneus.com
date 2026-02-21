@@ -181,8 +181,27 @@ export async function POST(req: NextRequest) {
                         })
 
                         if (conversaAtual?.modo === 'humano') {
-                            console.log('👤 Aguardando atendente humano - bot não responde')
-                            continue
+                            // Verificar timeout de 30 minutos
+                            const agora = new Date()
+                            const ultimaAtualizacao = conversaAtual.updatedAt ? new Date(conversaAtual.updatedAt) : agora
+                            const minutosEmHumano = (agora.getTime() - ultimaAtualizacao.getTime()) / (1000 * 60)
+
+                            if (minutosEmHumano > 30) {
+                                // Timeout: reverter para modo bot
+                                await db.conversaWhatsApp.update({
+                                    where: { id: conversa.id },
+                                    data: { modo: 'bot' },
+                                })
+                                console.log(`⏰ Timeout modo humano (${Math.round(minutosEmHumano)}min) - revertendo para bot`)
+
+                                const msgDesculpa = 'Desculpe a demora! Nosso atendente não está disponível no momento. Vou te atender por aqui mesmo! 😊 Como posso te ajudar?'
+                                await whatsapp.sendMessage(telefone, msgDesculpa)
+                                await salvarMensagemEnviada(conversa.id, msgDesculpa)
+                                // Não dar continue — processar mensagem com IA abaixo
+                            } else {
+                                console.log(`👤 Aguardando atendente humano (${Math.round(minutosEmHumano)}min de ${30}min)`)
+                                continue
+                            }
                         }
 
                         // Gerar resposta com IA Anti-Alucinação

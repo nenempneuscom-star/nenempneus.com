@@ -35,6 +35,12 @@ interface ProdutoContexto {
     link: string
 }
 
+interface ResultadoBusca {
+    produtos: ProdutoContexto[]
+    matchExato: boolean
+    medidaSolicitada: string | null
+}
+
 interface ContextoDados {
     produtos: ProdutoContexto[]
     totalProdutos: number
@@ -42,6 +48,8 @@ interface ContextoDados {
     horarioFuncionamento: string
     endereco: string
     formasPagamento: string[]
+    matchExato: boolean
+    medidaSolicitada: string | null
 }
 
 // Informações FIXAS da loja (não podem ser alteradas pela IA)
@@ -83,7 +91,17 @@ function extrairMedidaPneu(mensagem: string): { largura?: string; perfil?: strin
         }
     }
 
-    // Padrão para moto: 100/80-17 ou 100/80 17
+    // Padrão para moto com perfil 3 dígitos: 60/100-17 ou 80/100-14
+    const padraoMoto3Match = msgLower.match(/(\d{2,3})[\s\/](\d{3})[\s\-](\d{2})/i)
+    if (padraoMoto3Match) {
+        return {
+            largura: padraoMoto3Match[1],
+            perfil: padraoMoto3Match[2],
+            aro: padraoMoto3Match[3]
+        }
+    }
+
+    // Padrão para moto com perfil 2 dígitos: 100/80-17 ou 100/80 17
     const padraoMotoMatch = msgLower.match(/(\d{2,3})[\s\/]?(\d{2})[\s\-]?(\d{2})/i)
     if (padraoMotoMatch) {
         return {
@@ -281,14 +299,19 @@ function isPerguntaProduto(mensagem: string): boolean {
 async function buscarProdutosRelevantes(
     mensagem: string,
     limite: number = 5
-): Promise<ProdutoContexto[]> {
+): Promise<ResultadoBusca> {
     try {
         const medida = extrairMedidaPneu(mensagem)
         const isMoto = isPerguntaMoto(mensagem)
 
+        // Formatar medida solicitada para exibição
+        const medidaSolicitada = medida
+            ? [medida.largura, medida.perfil].filter(Boolean).join('/') + (medida.aro ? (isMoto ? `-${medida.aro}` : `R${medida.aro}`) : '')
+            : null
+
         // Buscar loja padrão (única loja no sistema)
         const loja = await db.loja.findFirst()
-        if (!loja) return []
+        if (!loja) return { produtos: [], matchExato: false, medidaSolicitada }
 
         // Construir filtros
         const where: any = {
@@ -312,7 +335,7 @@ async function buscarProdutosRelevantes(
                 where.categoriaId = categoriaMoto.id
             } else {
                 // Não existe categoria de moto → retornar vazio para NÃO mostrar pneus de carro
-                return []
+                return { produtos: [], matchExato: false, medidaSolicitada }
             }
         }
 
@@ -331,6 +354,7 @@ async function buscarProdutosRelevantes(
 
         // Filtrar por medida se especificada
         let produtosFiltrados = produtos
+        let matchExato = true
         if (medida) {
             produtosFiltrados = produtos.filter(p => {
                 const specs = p.specs as any || {}
@@ -338,7 +362,7 @@ async function buscarProdutosRelevantes(
 
                 // Verificar match no nome ou specs
                 const matchAro = medida.aro ?
-                    (specs.aro === medida.aro || nome.includes(`r${medida.aro}`) || nome.includes(`aro ${medida.aro}`)) : true
+                    (specs.aro === medida.aro || nome.includes(`r${medida.aro}`) || nome.includes(`aro ${medida.aro}`) || nome.includes(`-${medida.aro}`)) : true
                 const matchLargura = medida.largura ?
                     (specs.largura === medida.largura || nome.includes(medida.largura)) : true
                 const matchPerfil = medida.perfil ?
@@ -346,15 +370,16 @@ async function buscarProdutosRelevantes(
 
                 return matchAro && matchLargura && matchPerfil
             })
-        }
 
-        // Se não encontrou com filtros, retornar alguns produtos gerais
-        if (produtosFiltrados.length === 0) {
-            produtosFiltrados = produtos.slice(0, limite)
+            // Se não encontrou com filtros exatos, retornar aproximados
+            if (produtosFiltrados.length === 0) {
+                matchExato = false
+                produtosFiltrados = produtos.slice(0, limite)
+            }
         }
 
         // Mapear para formato de contexto
-        return produtosFiltrados.slice(0, limite).map(p => ({
+        const resultado = produtosFiltrados.slice(0, limite).map(p => ({
             id: p.id,
             nome: p.nome,
             preco: Number(p.preco),
@@ -365,9 +390,11 @@ async function buscarProdutosRelevantes(
             link: `${LOJA_INFO.site}/produto/${p.slug}`
         }))
 
+        return { produtos: resultado, matchExato, medidaSolicitada }
+
     } catch (error) {
         console.error('Erro ao buscar produtos:', error)
-        return []
+        return { produtos: [], matchExato: false, medidaSolicitada: null }
     }
 }
 
@@ -375,24 +402,26 @@ async function buscarProdutosRelevantes(
  * Busca contexto completo do banco de dados
  */
 async function buscarContextoDados(mensagem: string): Promise<ContextoDados> {
+    const defaultResult: ContextoDados = {
+        produtos: [],
+        totalProdutos: 0,
+        categorias: [],
+        horarioFuncionamento: `${LOJA_INFO.horario.semana} | ${LOJA_INFO.horario.sabado}`,
+        endereco: LOJA_INFO.endereco,
+        formasPagamento: LOJA_INFO.pagamento,
+        matchExato: true,
+        medidaSolicitada: null
+    }
+
     try {
         const loja = await db.loja.findFirst()
-        if (!loja) {
-            return {
-                produtos: [],
-                totalProdutos: 0,
-                categorias: [],
-                horarioFuncionamento: `${LOJA_INFO.horario.semana} | ${LOJA_INFO.horario.sabado}`,
-                endereco: LOJA_INFO.endereco,
-                formasPagamento: LOJA_INFO.pagamento
-            }
-        }
+        if (!loja) return defaultResult
 
         // Buscar produtos se for pergunta sobre produto (mesmo que comece com saudação)
         // Ex: "oi, tem pneu 175/70r14?" é saudação MAS também é pergunta de produto
-        let produtos: ProdutoContexto[] = []
+        let resultado: ResultadoBusca = { produtos: [], matchExato: true, medidaSolicitada: null }
         if (isPerguntaProduto(mensagem) && !isForaDeContexto(mensagem)) {
-            produtos = await buscarProdutosRelevantes(mensagem)
+            resultado = await buscarProdutosRelevantes(mensagem)
         }
 
         // Contar total de produtos ativos
@@ -407,24 +436,19 @@ async function buscarContextoDados(mensagem: string): Promise<ContextoDados> {
         })
 
         return {
-            produtos,
+            produtos: resultado.produtos,
             totalProdutos,
             categorias: categorias.map(c => c.nome),
             horarioFuncionamento: `${LOJA_INFO.horario.semana} | ${LOJA_INFO.horario.sabado}`,
             endereco: LOJA_INFO.endereco,
-            formasPagamento: LOJA_INFO.pagamento
+            formasPagamento: LOJA_INFO.pagamento,
+            matchExato: resultado.matchExato,
+            medidaSolicitada: resultado.medidaSolicitada
         }
 
     } catch (error) {
         console.error('Erro ao buscar contexto:', error)
-        return {
-            produtos: [],
-            totalProdutos: 0,
-            categorias: [],
-            horarioFuncionamento: `${LOJA_INFO.horario.semana} | ${LOJA_INFO.horario.sabado}`,
-            endereco: LOJA_INFO.endereco,
-            formasPagamento: LOJA_INFO.pagamento
-        }
+        return defaultResult
     }
 }
 
@@ -433,7 +457,7 @@ async function buscarContextoDados(mensagem: string): Promise<ContextoDados> {
  */
 async function buscarHistoricoConversa(
     conversaId: string,
-    limite: number = 6
+    limite: number = 10
 ): Promise<Array<{ role: 'user' | 'assistant'; content: string }>> {
     try {
         const mensagens = await db.mensagemWhatsApp.findMany({
@@ -514,7 +538,13 @@ ${LOJA_INFO.diferenciais.map(d => `- ${d}`).join('\n')}
 `
 
     if (contexto.produtos.length > 0) {
-        prompt += `\nEncontramos ${contexto.produtos.length} produto(s) relevante(s):\n\n`
+        if (!contexto.matchExato && contexto.medidaSolicitada) {
+            prompt += `\n⚠️ NÃO encontramos a medida exata "${contexto.medidaSolicitada}" no estoque.`
+            prompt += `\nOs produtos abaixo são as opções MAIS PRÓXIMAS disponíveis.`
+            prompt += `\nIMPORTANTE: Avise o cliente que NÃO temos a medida ${contexto.medidaSolicitada}, mas mostre as alternativas.\n\n`
+        } else {
+            prompt += `\nEncontramos ${contexto.produtos.length} produto(s) relevante(s):\n\n`
+        }
 
         contexto.produtos.forEach((p, i) => {
             prompt += `${i + 1}. **${p.nome}**\n`
@@ -798,7 +828,12 @@ Dá uma olhada no nosso site: ${LOJA_INFO.site}`
             const emoji = isMoto ? '🏍️' : '🛞'
             const tipo = isMoto ? 'moto' : 'carro'
 
-            return `Oi! Encontrei essa opção de ${tipo} pra você:
+            // Prefixo de match aproximado
+            const prefixo = (!contexto.matchExato && contexto.medidaSolicitada)
+                ? `Não encontrei a medida *${contexto.medidaSolicitada}* no estoque, mas temos essas opções de ${tipo}:`
+                : `Oi! Encontrei essa opção de ${tipo} pra você:`
+
+            return `${prefixo}
 
 ${emoji} *${produto.nome}*
 💰 R$ ${produto.preco.toFixed(2)}
@@ -960,7 +995,9 @@ export async function gerarRespostaIA(
             categorias: [],
             horarioFuncionamento: `${LOJA_INFO.horario.semana} | ${LOJA_INFO.horario.sabado}`,
             endereco: LOJA_INFO.endereco,
-            formasPagamento: LOJA_INFO.pagamento
+            formasPagamento: LOJA_INFO.pagamento,
+            matchExato: true,
+            medidaSolicitada: null
         }, mensagem, nomeCliente)
     }
 }
