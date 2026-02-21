@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { User, Phone, Mail, CreditCard, Loader2, CheckCircle } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface DadosCliente {
   id: string
@@ -82,11 +83,11 @@ export default function MeusDadosPage() {
         setTimeout(() => setSucesso(false), 3000)
       } else {
         const data = await res.json()
-        alert(data.error || 'Erro ao salvar dados')
+        toast.error(data.error || 'Erro ao salvar dados')
       }
     } catch (error) {
       console.error('Erro ao salvar:', error)
-      alert('Erro ao salvar dados')
+      toast.error('Erro ao salvar dados')
     } finally {
       setSalvando(false)
     }

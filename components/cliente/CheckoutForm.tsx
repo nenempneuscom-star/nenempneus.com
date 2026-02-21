@@ -12,6 +12,7 @@ import { checkoutSchema, CheckoutFormData } from '@/lib/validations'
 import { criarPedido } from '@/lib/actions'
 import { useCarrinhoStore } from '@/lib/store/carrinho-store'
 import { Loader2, ArrowRight, ArrowLeft } from 'lucide-react'
+import { toast } from 'sonner'
 import { CalendarioAgendamento } from './CalendarioAgendamento'
 import { RevisaoPedido } from './RevisaoPedido'
 import { PagamentoTransparente } from './PagamentoTransparente'
@@ -104,7 +105,7 @@ export function CheckoutForm() {
     const onAvancar = async (data: CheckoutFormData) => {
         // Validar agendamento
         if (!agendamento) {
-            alert('Por favor, selecione data e horário para instalação')
+            toast.warning('Por favor, selecione data e horário para instalação')
             return
         }
 
@@ -161,7 +162,7 @@ export function CheckoutForm() {
             })
 
             if (!resultado.success || !resultado.pedido) {
-                alert('Erro ao criar pedido. Tente novamente.')
+                toast.error('Erro ao criar pedido. Tente novamente.')
                 return
             }
 
@@ -179,7 +180,7 @@ export function CheckoutForm() {
             const agendamentoData = await agendamentoResponse.json()
 
             if (!agendamentoData.success) {
-                alert('Erro ao criar agendamento. Tente novamente.')
+                toast.error('Erro ao criar agendamento. Tente novamente.')
                 return
             }
 
@@ -190,7 +191,7 @@ export function CheckoutForm() {
 
         } catch (error) {
             console.error('Erro:', error)
-            alert('Erro ao processar pedido. Tente novamente.')
+            toast.error('Erro ao processar pedido. Tente novamente.')
         } finally {
             setLoading(false)
         }

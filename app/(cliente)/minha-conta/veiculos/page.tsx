@@ -16,6 +16,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Car, Plus, Pencil, Trash2, Star, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface Veiculo {
   id: string
@@ -90,7 +91,7 @@ export default function MeusVeiculosPage() {
 
   const salvarVeiculo = async () => {
     if (!marca || !modelo) {
-      alert('Preencha marca e modelo')
+      toast.warning('Preencha marca e modelo')
       return
     }
 
@@ -122,11 +123,11 @@ export default function MeusVeiculosPage() {
         carregarVeiculos()
       } else {
         const data = await res.json()
-        alert(data.error || 'Erro ao salvar veiculo')
+        toast.error(data.error || 'Erro ao salvar veiculo')
       }
     } catch (error) {
       console.error('Erro ao salvar:', error)
-      alert('Erro ao salvar veiculo')
+      toast.error('Erro ao salvar veiculo')
     } finally {
       setSalvando(false)
     }
@@ -145,7 +146,7 @@ export default function MeusVeiculosPage() {
       if (res.ok) {
         setVeiculos((prev) => prev.filter((v) => v.id !== id))
       } else {
-        alert('Erro ao remover veiculo')
+        toast.error('Erro ao remover veiculo')
       }
     } catch (error) {
       console.error('Erro ao deletar:', error)
