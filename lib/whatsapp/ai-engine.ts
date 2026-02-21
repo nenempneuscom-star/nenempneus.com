@@ -959,9 +959,23 @@ export async function gerarRespostaIA(
             return respostaFallback(contexto, mensagem, nomeCliente)
         }
 
+        // 5.5. Remover saudação repetida em conversas em andamento
+        let respostaLimpa = respostaIA
+        if (historico.length > 0) {
+            // Remove "Oi, Nome!" / "Oi Nome!" / "Oi, Nome," no início da resposta
+            respostaLimpa = respostaLimpa.replace(/^Oi[,!]?\s*\w+[,!]?\s*😊?\s*/i, '').trim()
+            // Capitalizar primeira letra se ficou minúscula
+            if (respostaLimpa.length > 0) {
+                respostaLimpa = respostaLimpa.charAt(0).toUpperCase() + respostaLimpa.slice(1)
+            }
+            if (respostaLimpa !== respostaIA) {
+                console.log('✂️ [AI Engine] Saudação repetida removida da resposta')
+            }
+        }
+
         // 6. Validar resposta (passa mensagem original para contexto)
         console.log('✅ [AI Engine] Validando resposta...')
-        const validacao = validarResposta(respostaIA, contexto, mensagem)
+        const validacao = validarResposta(respostaLimpa, contexto, mensagem)
 
         if (!validacao.valida) {
             console.log(`🚫 [AI Engine] Resposta inválida: ${validacao.motivo}`)
@@ -997,7 +1011,7 @@ export async function gerarRespostaIA(
             }
         })
 
-        return respostaIA
+        return respostaLimpa
 
     } catch (error) {
         console.error('❌ [AI Engine] Erro:', error)
