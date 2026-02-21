@@ -37,7 +37,15 @@ export async function POST(req: NextRequest) {
     // Validacoes basicas
     if (!data.nome || !data.categoriaId || data.preco === undefined) {
       return NextResponse.json(
-        { error: 'Nome, categoria e preco sao obrigatorios' },
+        { error: 'Nome, categoria e preço são obrigatórios' },
+        { status: 400 }
+      )
+    }
+
+    // Imagem obrigatória para novos produtos
+    if (!data.imagens || data.imagens.length === 0) {
+      return NextResponse.json(
+        { error: 'Adicione pelo menos uma foto do produto' },
         { status: 400 }
       )
     }

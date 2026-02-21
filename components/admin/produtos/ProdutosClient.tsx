@@ -180,7 +180,13 @@ export function ProdutosClient({
 
   const salvarProduto = async () => {
     if (!formNome || !formCategoria || !formPreco) {
-      alert('Preencha nome, categoria e preco')
+      alert('Preencha nome, categoria e preço')
+      return
+    }
+
+    // Imagem obrigatória para novos produtos
+    if (!produtoEditando && formImagens.length === 0) {
+      alert('Adicione pelo menos uma foto do produto')
       return
     }
 
@@ -603,7 +609,7 @@ export function ProdutosClient({
             </div>
 
             <div className="space-y-2">
-              <Label>Fotos do Produto (até 3)</Label>
+              <Label>Fotos do Produto (até 3) {!produtoEditando && <span className="text-destructive">*</span>}</Label>
               <MultiImageUpload
                 value={formImagens}
                 onChange={setFormImagens}

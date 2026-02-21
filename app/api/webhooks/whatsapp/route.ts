@@ -156,7 +156,7 @@ export async function POST(req: NextRequest) {
                         await whatsapp.sendTypingIndicator(messageId)
 
                         // Verificar se precisa transferir para humano
-                        const { verificarTransferenciaHumano } = await import('@/lib/whatsapp/bot')
+                        const { verificarTransferenciaHumano } = await import('@/lib/whatsapp/ai-engine')
                         if (verificarTransferenciaHumano(conteudo)) {
                             // Atualizar modo da conversa
                             const { db } = await import('@/lib/db')
@@ -185,21 +185,15 @@ export async function POST(req: NextRequest) {
                             continue
                         }
 
-                        // Gerar resposta com IA (incluindo imagens de produtos)
-                        console.log('🤖 Gerando resposta com Claude...')
-                        const { gerarRespostaBotComImagens } = await import('@/lib/whatsapp/bot')
-                        const { texto: respostaBot, produtosComImagem } = await gerarRespostaBotComImagens(
+                        // Gerar resposta com IA Anti-Alucinação
+                        console.log('🤖 Gerando resposta com IA (Grok + Banco de Dados)...')
+                        const { gerarRespostaIA } = await import('@/lib/whatsapp/ai-engine')
+                        const respostaBot = await gerarRespostaIA(
                             conversa.id,
                             nomeContato,
                             conteudo,
                             telefone
                         )
-
-                        // Enviar imagens dos produtos primeiro (se houver)
-                        if (produtosComImagem.length > 0) {
-                            console.log(`📸 Enviando ${produtosComImagem.length} imagens de produtos...`)
-                            await whatsapp.sendProductImages(telefone, produtosComImagem)
-                        }
 
                         // Enviar resposta de texto
                         const responseData = await whatsapp.sendMessage(telefone, respostaBot)
@@ -211,7 +205,7 @@ export async function POST(req: NextRequest) {
                             responseData.messages?.[0]?.id
                         )
 
-                        console.log('✅ Resposta IA enviada com sucesso')
+                        console.log('✅ Resposta IA (Grok) enviada com sucesso')
                     }
                 }
 

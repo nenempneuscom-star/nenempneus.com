@@ -1,7 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk'
-import { SYSTEM_PROMPT, construirPromptContexto, PROMPTS_SITUACIONAIS, RESPOSTAS_OBJECOES } from './prompts'
+import { PROMPTS_SITUACIONAIS, RESPOSTAS_OBJECOES } from './prompts'
 import { db } from '../db'
-import { getCachedResponse, setCachedResponse, getQuickResponse } from './cache'
+import { getQuickResponse } from './cache'
 
 // Tipo de retorno para resposta (mantido para compatibilidade)
 export interface RespostaBotComImagens {
@@ -14,13 +13,6 @@ export interface RespostaBotComImagens {
     }>
 }
 
-// Usar placeholder temporário se não configurado (para build)
-const apiKey = process.env.ANTHROPIC_API_KEY || 'sk-ant-placeholder-temp'
-
-const anthropic = new Anthropic({
-    apiKey: apiKey,
-})
-
 // Cache de contexto de conversa (telefone -> contexto)
 const conversaContexto = new Map<string, {
     etapaConversa: 'novo' | 'conversando'
@@ -28,23 +20,79 @@ const conversaContexto = new Map<string, {
 
 // Palavras-chave para detecção de situações comuns
 const SITUACOES_KEYWORDS: Record<string, string[]> = {
-    'preco': ['preço', 'preco', 'quanto', 'valor', 'custa', 'custo'],
+    'preco': ['preço', 'preco', 'quanto', 'valor', 'custa', 'custo', 'tabela', 'valores'],
     'caro': ['caro', 'muito caro', 'preço alto', 'puxado', 'salgado'],
     'pensar': ['vou pensar', 'deixa eu pensar', 'preciso pensar', 'vou ver'],
     'depois': ['depois', 'outra hora', 'outro dia', 'mais tarde', 'não agora'],
     'golpe': ['golpe', 'é golpe', 'parece golpe', 'fake', 'falso', 'fraude', 'pilantra', 'enganação'],
     'confiavel': ['confiável', 'confiavel', 'é seguro', 'posso confiar', 'é verdade', 'é real', 'existe mesmo', 'loja de verdade'],
-    'horario': ['horário', 'horario', 'que horas', 'hora funciona', 'hora abre', 'hora fecha', 'aberto', 'fechado', 'funciona'],
+    'horario': ['horário', 'horario', 'que horas', 'hora funciona', 'hora abre', 'hora fecha', 'aberto', 'fechado', 'funciona', 'abre', 'fecha'],
     'agendar': ['agendar', 'agendamento', 'marcar', 'reservar', 'hora marcada'],
     'reparo': ['reparo', 'reparar', 'conserto', 'consertar', 'furou', 'furo', 'remendo', 'remendar', 'vazando', 'murchando', 'murcho'],
+    'moto': ['moto', 'motocicleta', 'motinha', 'duas rodas', 'honda', 'yamaha', 'suzuki', 'kawasaki', 'bmw moto', 'fazer', 'cg', 'biz', 'pcx', 'xre', 'cb', 'bros', 'factor', 'crosser', 'lander', 'tenere', 'pop'],
+    'localizacao': ['onde fica', 'endereço', 'endereco', 'localização', 'localizacao', 'como chego', 'mapa', 'rua', 'avenida'],
+    'pagamento': ['pagamento', 'pagar', 'parcela', 'parcelas', 'pix', 'cartão', 'cartao', 'dinheiro', 'débito', 'debito', 'crédito', 'credito'],
+    'medida': ['medida', 'tamanho', 'aro', 'r14', 'r15', 'r16', 'r17', 'r18', '175', '185', '195', '205', '215', '225'],
+    'disponibilidade': ['tem', 'disponível', 'disponivel', 'estoque', 'ainda tem', 'vocês tem', 'voces tem'],
+    'obrigado': ['obrigado', 'obrigada', 'valeu', 'vlw', 'agradeço', 'agradeco', 'thanks', 'brigado', 'brigada'],
 }
+
+// Respostas adicionais que não estão no prompts.ts
+const RESPOSTAS_ADICIONAIS: Record<string, string> = {
+    'localizacao': `📍 Estamos na *Av. Nereu Ramos, 740* - Centro, Capivari de Baixo - SC.
+
+Somos loja física, pode vir conhecer! 😊
+
+*Horário:*
+Segunda a Sexta: 8h às 18h
+Sábado: 8h às 12h`,
+
+    'pagamento': `Aceitamos várias formas de pagamento! 💳
+
+✅ *PIX* (à vista)
+✅ *Cartão* em até 12x
+✅ *Dinheiro*
+
+Dá uma olhada no site pra ver os preços: https://nenempneus.com`,
+
+    'medida': `A medida do pneu fica na *lateral do pneu*! 🛞
+
+Pra carro é tipo: *175/70 R14*
+Pra moto é tipo: *100/80-17*
+
+Se não conseguir ver, me fala o modelo do veículo que te ajudo!`,
+
+    'disponibilidade': `Nosso estoque muda toda semana! 📦
+
+Dá uma olhada no site que lá tem tudo atualizado com *foto real* de cada pneu: https://nenempneus.com/produtos
+
+Se não encontrar a medida, me avisa que verifico se temos previsão de chegada! 😊`,
+
+    'obrigado': `Por nada! 😊
+
+Se precisar de mais alguma coisa, é só chamar!
+
+Nosso site: https://nenempneus.com`,
+}
+
+// Resposta genérica para quando não identificar a intenção
+const RESPOSTA_GENERICA = `Oi! Sou a Cinthia, da Nenem Pneus! 😊
+
+Posso te ajudar com:
+🛞 Pneus pra carro (seminovos)
+🏍️ Pneus pra moto (novos)
+🔧 Serviços (instalação, alinhamento, balanceamento)
+
+Dá uma olhada no nosso site que tem tudo com foto e preço: https://nenempneus.com
+
+Me conta, o que você precisa?`
 
 // Detecta situação na mensagem
 function detectarSituacao(mensagem: string): string | null {
     const msgLower = mensagem.toLowerCase()
 
-    // Prioridade alta: verificar reparo primeiro (evita confusão com "quanto custa consertar")
-    const prioridadeAlta = ['reparo', 'agendar', 'horario']
+    // Prioridade alta
+    const prioridadeAlta = ['reparo', 'agendar', 'horario', 'moto', 'localizacao', 'obrigado']
     for (const tipo of prioridadeAlta) {
         const keywords = SITUACOES_KEYWORDS[tipo]
         if (keywords) {
@@ -58,7 +106,7 @@ function detectarSituacao(mensagem: string): string | null {
 
     // Depois verificar as demais situações
     for (const [tipo, keywords] of Object.entries(SITUACOES_KEYWORDS)) {
-        if (prioridadeAlta.includes(tipo)) continue // já verificado
+        if (prioridadeAlta.includes(tipo)) continue
         for (const keyword of keywords) {
             if (msgLower.includes(keyword)) {
                 return tipo
@@ -79,7 +127,20 @@ function getContexto(telefone: string) {
     return conversaContexto.get(telefone)!
 }
 
-// Gera resposta do bot atendente
+// Obtém resposta para uma situação
+function obterResposta(situacao: string): string | null {
+    // Primeiro verifica nas respostas de objeções (prompts.ts)
+    if (RESPOSTAS_OBJECOES[situacao]) {
+        return RESPOSTAS_OBJECOES[situacao]
+    }
+    // Depois nas respostas adicionais
+    if (RESPOSTAS_ADICIONAIS[situacao]) {
+        return RESPOSTAS_ADICIONAIS[situacao]
+    }
+    return null
+}
+
+// Gera resposta do bot atendente - SEM IA, apenas respostas pré-definidas
 export async function gerarRespostaBot(
     conversaId: string,
     nomeCliente: string,
@@ -89,87 +150,41 @@ export async function gerarRespostaBot(
     try {
         const tel = telefone || ''
         const ctx = getContexto(tel)
+        const msgLower = mensagem.toLowerCase().trim()
 
-        // 1. Verificar se é situação conhecida (resposta rápida)
-        const situacao = detectarSituacao(mensagem)
-        if (situacao && RESPOSTAS_OBJECOES[situacao]) {
-            console.log(`⚡ Resposta para situação: ${situacao}`)
-            return RESPOSTAS_OBJECOES[situacao]
+        // 1. Verificar saudação
+        const saudacoes = ['oi', 'ola', 'olá', 'bom dia', 'boa tarde', 'boa noite', 'eae', 'e aí', 'eai', 'hey', 'hello', 'salve']
+        if (saudacoes.some(s => msgLower === s || msgLower.startsWith(s + ' ') || msgLower.startsWith(s + ','))) {
+            const isNovaConversa = ctx.etapaConversa === 'novo'
+            ctx.etapaConversa = 'conversando'
+            console.log('⚡ Saudação detectada')
+            if (isNovaConversa) {
+                return PROMPTS_SITUACIONAIS.boasVindas(nomeCliente)
+            } else {
+                return PROMPTS_SITUACIONAIS.clienteRetornando(nomeCliente)
+            }
         }
 
-        // 2. Verificar FAQ (respostas instantâneas básicas)
-        const respostaRapida = getQuickResponse(mensagem)
-        if (respostaRapida && mensagem.length < 20) {
-            console.log('⚡ Resposta rápida (FAQ)')
-
-            // Se for saudação, usa boas-vindas personalizadas
-            if (['oi', 'ola', 'olá', 'bom dia', 'boa tarde', 'boa noite'].includes(mensagem.toLowerCase().trim())) {
-                const isNovaConversa = ctx.etapaConversa === 'novo'
+        // 2. Verificar se é situação conhecida
+        const situacao = detectarSituacao(mensagem)
+        if (situacao) {
+            const resposta = obterResposta(situacao)
+            if (resposta) {
+                console.log(`⚡ Resposta para situação: ${situacao}`)
                 ctx.etapaConversa = 'conversando'
-                if (isNovaConversa) {
-                    return PROMPTS_SITUACIONAIS.boasVindas(nomeCliente)
-                } else {
-                    return PROMPTS_SITUACIONAIS.clienteRetornando(nomeCliente)
-                }
+                return resposta
             }
+        }
 
+        // 3. Verificar FAQ (respostas instantâneas básicas)
+        const respostaRapida = getQuickResponse(mensagem)
+        if (respostaRapida) {
+            console.log('⚡ Resposta rápida (FAQ)')
+            ctx.etapaConversa = 'conversando'
             return respostaRapida
         }
 
-        // 3. Verificar cache de respostas similares
-        const respostaCache = getCachedResponse(mensagem)
-        if (respostaCache) {
-            console.log('💾 Resposta do cache')
-            return respostaCache
-        }
-
-        // 4. Buscar histórico recente da conversa
-        const mensagensAnteriores = await db.mensagemWhatsApp.findMany({
-            where: { conversaId },
-            orderBy: { createdAt: 'desc' },
-            take: 10,
-        })
-
-        // Converter para formato Claude
-        const historico = mensagensAnteriores.reverse().map((msg) => ({
-            role: msg.direcao === 'entrada' ? 'user' : 'assistant',
-            content: msg.conteudo,
-        }))
-
-        // 5. Construir prompt com contexto
-        const promptUsuario = construirPromptContexto(
-            nomeCliente,
-            mensagem,
-            historico as any,
-            {
-                telefoneCliente: tel || undefined,
-            }
-        )
-
-        // 6. Gerar resposta com IA
-        console.log('🤖 Gerando resposta com Claude...')
-
-        const response = await anthropic.messages.create({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 512, // Respostas mais curtas
-            system: SYSTEM_PROMPT,
-            messages: [
-                {
-                    role: 'user',
-                    content: promptUsuario,
-                },
-            ],
-        })
-
-        // Extrair resposta
-        const respostaBot = response.content[0].type === 'text'
-            ? response.content[0].text
-            : 'Desculpe, não consegui processar sua mensagem. Um atendente vai te ajudar!'
-
-        // 7. Salvar no cache
-        setCachedResponse(mensagem, respostaBot)
-
-        // 8. Marcar mensagens como processadas
+        // 4. Marcar mensagens como processadas
         await db.mensagemWhatsApp.updateMany({
             where: {
                 conversaId,
@@ -181,10 +196,11 @@ export async function gerarRespostaBot(
             },
         })
 
-        // Atualizar contexto
+        // 5. Resposta genérica (sem chamar IA)
+        console.log('📝 Resposta genérica (sem IA)')
         ctx.etapaConversa = 'conversando'
+        return RESPOSTA_GENERICA
 
-        return respostaBot
     } catch (error) {
         console.error('Erro ao gerar resposta do bot:', error)
         return 'Opa, tive um probleminha técnico aqui. 😅 Mas calma que um atendente já vai te ajudar!'
