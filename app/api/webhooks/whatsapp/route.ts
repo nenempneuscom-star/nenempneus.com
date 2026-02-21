@@ -182,9 +182,16 @@ export async function POST(req: NextRequest) {
 
                         if (conversaAtual?.modo === 'humano') {
                             // Verificar timeout de 30 minutos
+                            // Usa timestamp da última mensagem de SAÍDA (bot), não updatedAt da conversa
+                            // (updatedAt é atualizado a cada mensagem recebida, invalidando o timeout)
                             const agora = new Date()
-                            const ultimaAtualizacao = conversaAtual.updatedAt ? new Date(conversaAtual.updatedAt) : agora
-                            const minutosEmHumano = (agora.getTime() - ultimaAtualizacao.getTime()) / (1000 * 60)
+                            const ultimaMsgBot = await db.mensagemWhatsApp.findFirst({
+                                where: { conversaId: conversa.id, direcao: 'saida' },
+                                orderBy: { createdAt: 'desc' },
+                                select: { createdAt: true }
+                            })
+                            const ultimaRespostaBot = ultimaMsgBot?.createdAt ? new Date(ultimaMsgBot.createdAt) : agora
+                            const minutosEmHumano = (agora.getTime() - ultimaRespostaBot.getTime()) / (1000 * 60)
 
                             if (minutosEmHumano > 30) {
                                 // Timeout: reverter para modo bot
