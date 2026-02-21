@@ -260,6 +260,16 @@ function isPerguntaProduto(mensagem: string): boolean {
         return false
     }
 
+    // Se contém uma medida de pneu (175/70R14, 80/100-14, etc), é pergunta de produto
+    if (extrairMedidaPneu(mensagem)) {
+        return true
+    }
+
+    // Se é claramente sobre moto (Biz, CG, etc), é pergunta de produto
+    if (isPerguntaMoto(mensagem)) {
+        return true
+    }
+
     // Palavras que SOZINHAS indicam produto (alta confiança)
     const keywordsFortes = [
         'pneu', 'pneus', 'aro',
