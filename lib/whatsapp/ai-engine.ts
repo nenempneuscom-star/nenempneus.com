@@ -174,18 +174,94 @@ function isMensagemCurtaContextual(mensagem: string): boolean {
 }
 
 /**
+ * Detecta se a mensagem é CLARAMENTE fora do contexto de pneus/loja
+ * Usado para evitar que perguntas como "tem ibuprofeno?" virem oferta de pneu
+ */
+function isForaDeContexto(mensagem: string): boolean {
+    const msgLower = mensagem.toLowerCase()
+
+    // Palavras que indicam contexto de pneus/veículos (whitelist)
+    const contextoPneu = [
+        'pneu', 'pneus', 'aro', 'roda', 'carro', 'moto', 'veículo', 'veiculo',
+        'r13', 'r14', 'r15', 'r16', 'r17', 'r18', 'r19', 'r20',
+        '175', '185', '195', '205', '215', '225',
+        'pirelli', 'goodyear', 'continental', 'bridgestone', 'michelin',
+        'alinhamento', 'balanceamento', 'instalação', 'instalacao',
+        'seminovo', 'semi-novo', 'usado', 'novo'
+    ]
+
+    // Se contém palavra de contexto de pneu, NÃO é fora de contexto
+    if (contextoPneu.some(p => msgLower.includes(p))) {
+        return false
+    }
+
+    // Palavras que indicam CLARAMENTE fora de contexto (blacklist)
+    const foraContexto = [
+        // Medicamentos/saúde
+        'remedio', 'remédio', 'farmacia', 'farmácia', 'ibuprofeno', 'dipirona',
+        'paracetamol', 'aspirina', 'antibiotico', 'antibiótico', 'receita',
+        'médico', 'medico', 'hospital', 'doente', 'dor de',
+        // Comida/bebida
+        'pizza', 'lanche', 'hamburguer', 'hambúrguer', 'refrigerante', 'cerveja',
+        'restaurante', 'comida', 'almoço', 'almoco', 'jantar', 'café', 'cafe',
+        // Eletrônicos
+        'celular', 'iphone', 'samsung', 'notebook', 'computador', 'televisão',
+        'televisao', 'tv', 'videogame', 'playstation', 'xbox',
+        // Roupas
+        'roupa', 'camisa', 'calça', 'calca', 'sapato', 'tênis', 'tenis',
+        // Perguntas aleatórias/testes
+        'sal é doce', 'agua é seca', 'céu é verde', 'terra é plana',
+        'capital do', 'presidente', 'futebol', 'jogo do',
+        // Outros serviços
+        'uber', 'taxi', 'táxi', 'entrega', 'delivery', 'frete'
+    ]
+
+    return foraContexto.some(p => msgLower.includes(p))
+}
+
+/**
  * Detecta se é uma pergunta sobre produto/preço
+ * MAIS RESTRITIVA: evita falsos positivos como "tem ibuprofeno?"
  */
 function isPerguntaProduto(mensagem: string): boolean {
     const msgLower = mensagem.toLowerCase()
-    const keywords = [
-        'pneu', 'pneus', 'preço', 'preco', 'quanto', 'valor',
-        'tem', 'disponível', 'disponivel', 'estoque', 'medida',
+
+    // Primeiro: se é fora de contexto, NÃO é pergunta de produto
+    if (isForaDeContexto(mensagem)) {
+        return false
+    }
+
+    // Palavras que SOZINHAS indicam produto (alta confiança)
+    const keywordsFortes = [
+        'pneu', 'pneus', 'aro',
         'r13', 'r14', 'r15', 'r16', 'r17', 'r18', 'r19', 'r20',
-        'aro', '175', '185', '195', '205', '215', '225',
-        'comprar', 'quero', 'preciso'
+        '175/', '185/', '195/', '205/', '215/', '225/',
+        '175 ', '185 ', '195 ', '205 ', '215 ', '225 '
     ]
-    return keywords.some(k => msgLower.includes(k))
+
+    if (keywordsFortes.some(k => msgLower.includes(k))) {
+        return true
+    }
+
+    // Palavras que precisam de COMBINAÇÃO (evitar "tem ibuprofeno?")
+    const keywordsFracas = ['tem', 'disponível', 'disponivel', 'estoque', 'quero', 'preciso', 'comprar']
+    const contextoPneu = ['pneu', 'carro', 'moto', 'veículo', 'veiculo', 'medida', 'aro']
+
+    const temKeywordFraca = keywordsFracas.some(k => msgLower.includes(k))
+    const temContexto = contextoPneu.some(k => msgLower.includes(k))
+
+    // Só retorna true se tiver keyword fraca + contexto de pneu
+    if (temKeywordFraca && temContexto) {
+        return true
+    }
+
+    // Perguntas sobre preço/valor (geralmente sobre pneus nesse contexto)
+    const keywordsPreco = ['preço', 'preco', 'quanto', 'valor']
+    if (keywordsPreco.some(k => msgLower.includes(k))) {
+        return true
+    }
+
+    return false
 }
 
 /**
@@ -298,9 +374,9 @@ async function buscarContextoDados(mensagem: string): Promise<ContextoDados> {
             }
         }
 
-        // Só buscar produtos se for pergunta sobre produto (não em saudações)
+        // Só buscar produtos se for pergunta sobre produto (não em saudações ou fora de contexto)
         let produtos: ProdutoContexto[] = []
-        if (isPerguntaProduto(mensagem) && !isSaudacao(mensagem)) {
+        if (isPerguntaProduto(mensagem) && !isSaudacao(mensagem) && !isForaDeContexto(mensagem)) {
             produtos = await buscarProdutosRelevantes(mensagem)
         }
 
@@ -439,12 +515,31 @@ Para risadas (kkk, haha), expressões (oxe, eita), ou respostas curtas (joia, to
 - NÃO se apresente novamente como "Sou a Cinthia" em conversa casual
 - Exemplos: "😄 Posso te ajudar com alguma coisa?" ou "Haha 😅 Precisa de pneus?"
 
-## PERGUNTAS FORA DO CONTEXTO
+## PERGUNTAS FORA DO CONTEXTO (MUITO IMPORTANTE!)
 
-Se o cliente perguntar algo totalmente não relacionado a pneus ou à loja (tipo "sal é doce?"):
-- Responda de forma CURTA, bem-humorada, e volte ao assunto (máximo 2 linhas)
+Se o cliente perguntar algo que NÃO É sobre pneus, carros, motos ou a loja:
+- Exemplos: "tem ibuprofeno?", "vende pizza?", "sal é doce?", "quanto custa um celular?"
+- NUNCA ofereça pneus como resposta a perguntas fora de contexto
+- Responda de forma CURTA, bem-humorada, e volte ao assunto
 - NÃO se apresente nem explique o que a loja faz
-- Exemplo: "Haha, sal é salgado! 😄 Mas e aí, precisa de pneus?"
+- Máximo 2 linhas
+
+Exemplos de respostas corretas:
+- "Haha, isso não tenho não! 😅 Aqui é só pneus. Posso te ajudar com alguma medida?"
+- "Eita, essa não é comigo! 😄 Mas se precisar de pneus, tô aqui!"
+- "Opa, isso aí não vendo não! 🛞 Mas pneus eu tenho de monte, quer ver?"
+
+## DIFERENCIANDO MOTO E CARRO (CRÍTICO!)
+
+Preste MUITA atenção se o cliente menciona MOTO ou CARRO:
+- Se mencionar "moto", "motocicleta", "Honda CG", "Biz", etc → mostrar pneus de MOTO
+- Se mencionar "carro", "veículo", medidas de carro (175/70R14) → mostrar pneus de CARRO
+- NUNCA ofereça pneu de carro quando o cliente pedir de moto (e vice-versa)
+- Pneus de MOTO são NOVOS (zero km)
+- Pneus de CARRO são SEMINOVOS
+
+Se o cliente pedir "pneu de moto" mas você não tem dados de moto no contexto:
+→ "Temos pneus novos pra moto sim! 🏍️ Me fala a medida (tipo 100/80-17) ou o modelo da moto!"
 
 ## RESPOSTAS PROIBIDAS
 
@@ -574,6 +669,16 @@ function validarResposta(resposta: string, contexto: ContextoDados, mensagemOrig
 function respostaFallback(contexto: ContextoDados, mensagem: string, nomeCliente?: string): string {
     const msgLower = mensagem.toLowerCase().trim()
 
+    // PRIMEIRO: Se for claramente fora de contexto, responder de forma leve
+    if (isForaDeContexto(mensagem)) {
+        const respostasForaContexto = [
+            `Haha, isso não tenho não! 😅 Aqui é só pneus mesmo. Posso te ajudar com alguma medida?`,
+            `Eita, isso aí não é comigo não! 😄 Mas se precisar de pneus, tô aqui!`,
+            `Opa, aqui é loja de pneus! 🛞 Posso te ajudar com alguma coisa nessa área?`
+        ]
+        return respostasForaContexto[Math.floor(Math.random() * respostasForaContexto.length)]
+    }
+
     // Se for saudação, retornar saudação apropriada
     if (isSaudacao(mensagem)) {
         const nome = nomeCliente ? `, ${nomeCliente}` : ''
@@ -624,12 +729,36 @@ Dá uma olhada no nosso site: ${LOJA_INFO.site}`
         return `Tô bem sim${nome}, obrigada por perguntar! 😊 E você, tá precisando de pneus?`
     }
 
-    // Se tem produtos no contexto, mostrar
+    // Se tem produtos no contexto, mostrar (respeitando categoria moto/carro)
     if (contexto.produtos.length > 0) {
-        const produto = contexto.produtos[0]
-        return `Oi! Encontrei essa opção pra você:
+        const isMoto = isPerguntaMoto(mensagem)
 
-🛞 *${produto.nome}*
+        // Filtrar produtos pela categoria correta
+        let produtosFiltrados = contexto.produtos
+        if (isMoto) {
+            const produtosMoto = contexto.produtos.filter(p =>
+                p.categoria.toLowerCase().includes('moto')
+            )
+            if (produtosMoto.length > 0) {
+                produtosFiltrados = produtosMoto
+            }
+        } else {
+            // Se não é moto, preferir pneus de carro
+            const produtosCarro = contexto.produtos.filter(p =>
+                !p.categoria.toLowerCase().includes('moto')
+            )
+            if (produtosCarro.length > 0) {
+                produtosFiltrados = produtosCarro
+            }
+        }
+
+        const produto = produtosFiltrados[0]
+        const emoji = isMoto ? '🏍️' : '🛞'
+        const tipo = isMoto ? 'moto' : 'carro'
+
+        return `Oi! Encontrei essa opção de ${tipo} pra você:
+
+${emoji} *${produto.nome}*
 💰 R$ ${produto.preco.toFixed(2)}
 📦 ${produto.estoque} em estoque
 
@@ -638,9 +767,14 @@ Veja mais detalhes aqui: ${produto.link}
 Quer ver mais opções? Dá uma olhada no nosso site: ${LOJA_INFO.site} 😊`
     }
 
-    // Se for mensagem curta contextual (não saudação, não produto, não casual padrão)
-    // Deixar o Grok responder naturalmente - não usar fallback genérico
-    // Isso evita que "Sal é doce?" receba apresentação da loja
+    // Se pediu moto mas não tem produtos de moto no contexto
+    if (isPerguntaMoto(mensagem)) {
+        return `Temos pneus *novos* pra moto sim! 🏍️
+
+Me fala a *medida do seu pneu* (fica na lateral, tipo 100/80-17) ou o *modelo da sua moto* que te ajudo a encontrar!
+
+Dá uma olhada no site também: ${LOJA_INFO.site}`
+    }
 
     // Resposta genérica (só quando realmente não souber o que fazer)
     const nome = nomeCliente ? `, ${nomeCliente}` : ''
