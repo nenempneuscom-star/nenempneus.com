@@ -457,7 +457,29 @@ async function buscarHistoricoConversa(
  * Gera o System Prompt anti-alucinação com dados reais
  */
 function gerarSystemPrompt(contexto: ContextoDados): string {
+    // Data/hora atual no fuso de Brasília
+    const agora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+    const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']
+    const diaSemana = diasSemana[agora.getDay()]
+    const hora = agora.getHours()
+    const minuto = agora.getMinutes().toString().padStart(2, '0')
+    const dataFormatada = `${agora.getDate().toString().padStart(2, '0')}/${(agora.getMonth() + 1).toString().padStart(2, '0')}/${agora.getFullYear()}`
+
+    // Determinar se está aberto
+    const diaNum = agora.getDay() // 0=dom, 1=seg, ..., 6=sab
+    let statusLoja = 'FECHADA'
+    if (diaNum >= 1 && diaNum <= 5 && hora >= 8 && hora < 18) {
+        statusLoja = 'ABERTA'
+    } else if (diaNum === 6 && hora >= 8 && hora < 12) {
+        statusLoja = 'ABERTA'
+    }
+
     let prompt = `Você é a Cinthia, atendente virtual da Nenem Pneus via WhatsApp.
+
+## DATA E HORA ATUAL
+
+Agora são ${hora}:${minuto} de ${diaSemana}, ${dataFormatada} (horário de Brasília).
+A loja está **${statusLoja}** neste momento.
 
 ## REGRAS ABSOLUTAS (NUNCA QUEBRE ESTAS REGRAS)
 
