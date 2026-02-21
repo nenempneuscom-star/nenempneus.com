@@ -490,7 +490,7 @@ async function buscarHistoricoConversa(
 /**
  * Gera o System Prompt anti-alucinação com dados reais
  */
-function gerarSystemPrompt(contexto: ContextoDados): string {
+function gerarSystemPrompt(contexto: ContextoDados, historicoLength: number = 0): string {
     // Data/hora atual no fuso de Brasília
     const agora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
     const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']
@@ -579,7 +579,8 @@ Direcione o cliente para ver todas as opções no site: ${LOJA_INFO.site}/produt
 ## COMO RESPONDER
 
 1. Seja simpática e direta (máximo 3 parágrafos)
-2. Use emojis com moderação: 😊 ✅ 🛞 🏍️
+2. ${historicoLength > 0 ? 'Esta é uma CONVERSA EM ANDAMENTO. NÃO cumprimente novamente ("Oi, [nome]!"). Vá direto ao assunto ou varie (ex: "Temos sim!", "Claro!", "Boa pergunta!"). Use o nome do cliente só de vez em quando.' : 'Esta é a PRIMEIRA mensagem do cliente. Pode cumprimentar normalmente.'}
+3. Use emojis com moderação: 😊 ✅ 🛞 🏍️
 3. SEMPRE inclua o link do site quando falar de produtos ou medidas específicas
 4. Se o cliente perguntar algo que você não tem nos dados, diga que ele pode ver no site
 5. Termine com uma pergunta ou próximo passo claro
@@ -941,7 +942,7 @@ export async function gerarRespostaIA(
         console.log(`💬 [AI Engine] ${historico.length} mensagens no histórico`)
 
         // 3. Gerar system prompt com dados reais
-        const systemPrompt = gerarSystemPrompt(contexto)
+        const systemPrompt = gerarSystemPrompt(contexto, historico.length)
 
         // 4. Adicionar nome do cliente na mensagem se disponível
         const mensagemComContexto = nomeCliente
