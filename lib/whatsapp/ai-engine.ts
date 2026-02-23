@@ -349,7 +349,8 @@ async function buscarProdutosRelevantes(
             }
         }
 
-        // Buscar produtos
+        // Buscar produtos - quando tem medida específica, buscar TODOS para não perder
+        // produtos com estoque baixo; sem medida, limitar a 20
         const produtos = await db.produto.findMany({
             where,
             include: {
@@ -359,7 +360,7 @@ async function buscarProdutosRelevantes(
                 { destaque: 'desc' },
                 { estoque: 'desc' }
             ],
-            take: 20 // Pegar mais e filtrar depois
+            ...(medida ? {} : { take: 20 })
         })
 
         // Filtrar por medida se especificada
