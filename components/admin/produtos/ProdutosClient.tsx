@@ -647,36 +647,44 @@ export function ProdutosClient({
                   <Label htmlFor="aro">Aro</Label>
                   <Input
                     id="aro"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     placeholder="15"
                     value={formAro}
-                    onChange={(e) => setFormAro(e.target.value)}
+                    onChange={(e) => setFormAro(e.target.value.replace(/\D/g, ''))}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="largura">Largura</Label>
                   <Input
                     id="largura"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     placeholder="195"
                     value={formLargura}
-                    onChange={(e) => setFormLargura(e.target.value)}
+                    onChange={(e) => setFormLargura(e.target.value.replace(/\D/g, ''))}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="perfil">Perfil</Label>
                   <Input
                     id="perfil"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     placeholder="65"
                     value={formPerfil}
-                    onChange={(e) => setFormPerfil(e.target.value)}
+                    onChange={(e) => setFormPerfil(e.target.value.replace(/\D/g, ''))}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="sulco">Sulco (mm)</Label>
                   <Input
                     id="sulco"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     placeholder="8"
                     value={formSulco}
-                    onChange={(e) => setFormSulco(e.target.value)}
+                    onChange={(e) => setFormSulco(e.target.value.replace(/\D/g, ''))}
                   />
                 </div>
               </div>

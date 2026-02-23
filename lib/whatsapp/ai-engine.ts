@@ -400,6 +400,17 @@ async function buscarProdutosRelevantes(
             link: `${LOJA_INFO.site}/produto/${p.slug}`
         }))
 
+        // Log detalhado para debug
+        if (medida) {
+            console.log(`🔍 [AI Engine] Busca por medida: ${medidaSolicitada}`)
+            console.log(`🔍 [AI Engine] Filtros: largura=${medida.largura || '-'}, perfil=${medida.perfil || '-'}, aro=${medida.aro || '-'}`)
+            console.log(`🔍 [AI Engine] Total encontrado antes do filtro: ${produtos.length}`)
+            console.log(`🔍 [AI Engine] Após filtro de medida: ${produtosFiltrados.length} (match exato: ${matchExato})`)
+            resultado.forEach(p => {
+                console.log(`   📦 ${p.nome} | estoque: ${p.estoque} | imagem: ${p.imagemUrl ? 'sim' : 'não'} | specs: ${JSON.stringify(p.specs)}`)
+            })
+        }
+
         return { produtos: resultado, matchExato, medidaSolicitada }
 
     } catch (error) {
@@ -561,9 +572,14 @@ ${LOJA_INFO.diferenciais.map(d => `- ${d}`).join('\n')}
             prompt += `${i + 1}. **${p.nome}**\n`
             prompt += `   - Preço: R$ ${p.preco.toFixed(2)}\n`
             prompt += `   - Estoque: ${p.estoque} unidade(s)\n`
+            if (p.estoque <= 2) {
+                prompt += `   - ⚠️ ATENÇÃO: estoque limitado, apenas ${p.estoque} unidade(s)!\n`
+            }
             prompt += `   - Categoria: ${p.categoria}\n`
             if (p.specs.marca) prompt += `   - Marca: ${p.specs.marca}\n`
             if (p.specs.aro) prompt += `   - Aro: ${p.specs.aro}\n`
+            prompt += `   - Foto: ${p.imagemUrl ? 'Sim' : 'Não'}\n`
+            if (p.imagemUrl) prompt += `   - Imagem: ${p.imagemUrl}\n`
             prompt += `   - Link: ${p.link}\n\n`
         })
     } else {
@@ -582,10 +598,12 @@ Direcione o cliente para ver todas as opções no site: ${LOJA_INFO.site}/produt
 1. Seja simpática e direta (máximo 3 parágrafos)
 2. ${historicoLength > 0 ? 'NÃO cumprimente — vá DIRETO ao assunto (regra 5 acima)' : 'Esta é a PRIMEIRA mensagem do cliente. Pode cumprimentar normalmente.'}
 3. Use emojis com moderação: 😊 ✅ 🛞 🏍️
-3. SEMPRE inclua o link do site quando falar de produtos ou medidas específicas
-4. Se o cliente perguntar algo que você não tem nos dados, diga que ele pode ver no site
-5. Termine com uma pergunta ou próximo passo claro
-6. Use *asteriscos* para negrito (formato WhatsApp)
+4. SEMPRE inclua o link do site quando falar de produtos ou medidas específicas
+5. Se o cliente perguntar algo que você não tem nos dados, diga que ele pode ver no site
+6. Termine com uma pergunta ou próximo passo claro
+7. Use *asteriscos* para negrito (formato WhatsApp)
+8. Se o produto TEM foto, informe: "Temos foto real no site, dá uma olhada!"
+9. Se o estoque for 1-2 unidades, avise: "Temos sim, mas restam apenas X unidade(s), garanta o seu!"
 
 ## CONVERSAS CASUAIS
 

@@ -13,9 +13,9 @@ import {
 import { Search } from 'lucide-react'
 
 interface MedidasData {
-    larguras: string[]
+    aros: string[]
+    aroLarguras: Record<string, string[]>
     larguraPerfis: Record<string, string[]>
-    perfilAros: Record<string, string[]>
 }
 
 export function BuscaMedidas() {
@@ -23,12 +23,12 @@ export function BuscaMedidas() {
     const [medidas, setMedidas] = useState<MedidasData | null>(null)
     const [loading, setLoading] = useState(true)
 
+    const [aro, setAro] = useState<string>('')
     const [largura, setLargura] = useState<string>('')
     const [perfil, setPerfil] = useState<string>('')
-    const [aro, setAro] = useState<string>('')
 
+    const [largurasDisponiveis, setLargurasDisponiveis] = useState<string[]>([])
     const [perfisDisponiveis, setPerfisDisponiveis] = useState<string[]>([])
-    const [arosDisponiveis, setArosDisponiveis] = useState<string[]>([])
 
     useEffect(() => {
         async function fetchMedidas() {
@@ -45,26 +45,26 @@ export function BuscaMedidas() {
         fetchMedidas()
     }, [])
 
+    // Quando aro muda, atualizar larguras disponíveis
+    useEffect(() => {
+        if (medidas && aro) {
+            const larguras = medidas.aroLarguras[aro] || []
+            setLargurasDisponiveis(larguras)
+            setLargura('')
+            setPerfil('')
+            setPerfisDisponiveis([])
+        }
+    }, [aro, medidas])
+
     // Quando largura muda, atualizar perfis disponíveis
     useEffect(() => {
-        if (medidas && largura) {
-            const perfis = medidas.larguraPerfis[largura] || []
+        if (medidas && aro && largura) {
+            const key = `${aro}-${largura}`
+            const perfis = medidas.larguraPerfis[key] || []
             setPerfisDisponiveis(perfis)
             setPerfil('')
-            setAro('')
-            setArosDisponiveis([])
         }
-    }, [largura, medidas])
-
-    // Quando perfil muda, atualizar aros disponíveis
-    useEffect(() => {
-        if (medidas && largura && perfil) {
-            const key = `${largura}-${perfil}`
-            const aros = medidas.perfilAros[key] || []
-            setArosDisponiveis(aros)
-            setAro('')
-        }
-    }, [perfil, largura, medidas])
+    }, [largura, aro, medidas])
 
     const handlePesquisar = () => {
         const params = new URLSearchParams()
@@ -74,7 +74,7 @@ export function BuscaMedidas() {
         router.push(`/catalogo?${params.toString()}`)
     }
 
-    const canSearch = largura && perfil && aro
+    const canSearch = aro && largura && perfil
 
     if (loading) {
         return (
@@ -87,7 +87,7 @@ export function BuscaMedidas() {
         )
     }
 
-    if (!medidas || medidas.larguras.length === 0) {
+    if (!medidas || medidas.aros.length === 0) {
         return null
     }
 
@@ -98,12 +98,23 @@ export function BuscaMedidas() {
             </span>
 
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center">
-                <Select value={largura} onValueChange={setLargura}>
+                <Select value={aro} onValueChange={setAro}>
+                    <SelectTrigger className="w-24 sm:w-28 bg-background">
+                        <SelectValue placeholder="Aro" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {medidas.aros.map((a) => (
+                            <SelectItem key={a} value={a}>{a}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                <Select value={largura} onValueChange={setLargura} disabled={!aro}>
                     <SelectTrigger className="w-24 sm:w-28 bg-background">
                         <SelectValue placeholder="Largura" />
                     </SelectTrigger>
                     <SelectContent>
-                        {medidas.larguras.map((l) => (
+                        {largurasDisponiveis.map((l) => (
                             <SelectItem key={l} value={l}>{l}</SelectItem>
                         ))}
                     </SelectContent>
@@ -116,17 +127,6 @@ export function BuscaMedidas() {
                     <SelectContent>
                         {perfisDisponiveis.map((p) => (
                             <SelectItem key={p} value={p}>{p}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-
-                <Select value={aro} onValueChange={setAro} disabled={!perfil}>
-                    <SelectTrigger className="w-24 sm:w-28 bg-background">
-                        <SelectValue placeholder="Aro" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {arosDisponiveis.map((a) => (
-                            <SelectItem key={a} value={a}>{a}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>

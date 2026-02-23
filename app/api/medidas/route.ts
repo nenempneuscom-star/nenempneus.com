@@ -17,7 +17,7 @@ export async function GET() {
         })
 
         // Extrair combinações únicas de medidas
-        const medidasMap = new Map<string, Set<string>>()
+        const medidasMap = new Map<string, boolean>()
         const combinacoes: { largura: string; perfil: string; aro: string }[] = []
 
         produtos.forEach(produto => {
@@ -25,7 +25,7 @@ export async function GET() {
             if (specs?.largura && specs?.perfil && specs?.aro) {
                 const key = `${specs.largura}-${specs.perfil}-${specs.aro}`
                 if (!medidasMap.has(key)) {
-                    medidasMap.set(key, new Set())
+                    medidasMap.set(key, true)
                     combinacoes.push({
                         largura: String(specs.largura),
                         perfil: String(specs.perfil),
@@ -35,37 +35,39 @@ export async function GET() {
             }
         })
 
-        // Organizar por largura -> perfis disponíveis -> aros disponíveis
-        const larguras = [...new Set(combinacoes.map(c => c.largura))].sort((a, b) => Number(a) - Number(b))
+        // Hierarquia: Aro > Largura > Perfil
 
-        // Criar mapa de largura -> perfis
+        // Lista única de aros (nível raiz)
+        const aros = [...new Set(combinacoes.map(c => c.aro))].sort((a, b) => Number(a) - Number(b))
+
+        // Mapa aro -> larguras disponíveis
+        const aroLarguras: Record<string, string[]> = {}
+        aros.forEach(aro => {
+            const larguras = [...new Set(combinacoes.filter(c => c.aro === aro).map(c => c.largura))]
+            aroLarguras[aro] = larguras.sort((a, b) => Number(a) - Number(b))
+        })
+
+        // Mapa aro+largura -> perfis disponíveis
         const larguraPerfis: Record<string, string[]> = {}
-        larguras.forEach(largura => {
-            const perfis = [...new Set(combinacoes.filter(c => c.largura === largura).map(c => c.perfil))]
-            larguraPerfis[largura] = perfis.sort((a, b) => Number(a) - Number(b))
-        })
-
-        // Criar mapa de largura+perfil -> aros
-        const perfilAros: Record<string, string[]> = {}
         combinacoes.forEach(c => {
-            const key = `${c.largura}-${c.perfil}`
-            if (!perfilAros[key]) {
-                perfilAros[key] = []
+            const key = `${c.aro}-${c.largura}`
+            if (!larguraPerfis[key]) {
+                larguraPerfis[key] = []
             }
-            if (!perfilAros[key].includes(c.aro)) {
-                perfilAros[key].push(c.aro)
+            if (!larguraPerfis[key].includes(c.perfil)) {
+                larguraPerfis[key].push(c.perfil)
             }
         })
 
-        // Ordenar aros
-        Object.keys(perfilAros).forEach(key => {
-            perfilAros[key].sort((a, b) => Number(a) - Number(b))
+        // Ordenar perfis
+        Object.keys(larguraPerfis).forEach(key => {
+            larguraPerfis[key].sort((a, b) => Number(a) - Number(b))
         })
 
         return NextResponse.json({
-            larguras,
-            larguraPerfis,
-            perfilAros
+            aros,
+            aroLarguras,
+            larguraPerfis
         })
     } catch (error) {
         console.error('Erro ao buscar medidas:', error)

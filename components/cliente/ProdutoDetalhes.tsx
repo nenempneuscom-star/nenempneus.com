@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatPrice } from '@/lib/utils'
-import { ShoppingCart, Check, MapPin, Shield, Minus, Plus, Zap, ChevronLeft, ChevronRight, X, ZoomIn } from 'lucide-react'
+import { ShoppingCart, Check, MapPin, Shield, Minus, Plus, Zap, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
 import { useCarrinhoStore } from '@/lib/store/carrinho-store'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -22,6 +22,15 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
     const [taxaJuros, setTaxaJuros] = useState(0)
     const [imagemAtual, setImagemAtual] = useState(0)
     const [lightboxAberto, setLightboxAberto] = useState(false)
+    const [zoom, setZoom] = useState(1)
+    const [pan, setPan] = useState({ x: 0, y: 0 })
+    const [isPanning, setIsPanning] = useState(false)
+    const panStart = useRef({ x: 0, y: 0 })
+    const panOffset = useRef({ x: 0, y: 0 })
+    const lastPinchDist = useRef(0)
+    const lightboxImgRef = useRef<HTMLDivElement>(null)
+    const MIN_ZOOM = 1
+    const MAX_ZOOM = 4
     const { adicionarItem } = useCarrinhoStore()
 
     // Combina imagens array com imagemUrl para compatibilidade
@@ -32,17 +41,151 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
     const specs = produto.specs as any
     const veiculos = produto.veiculos as any[]
 
-    // Fechar lightbox com ESC e navegar com setas
+    const resetZoom = useCallback(() => {
+        setZoom(1)
+        setPan({ x: 0, y: 0 })
+    }, [])
+
+    const closeLightbox = useCallback(() => {
+        setLightboxAberto(false)
+        resetZoom()
+    }, [resetZoom])
+
+    const clampZoom = useCallback((z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z)), [])
+
+    // Fechar lightbox com ESC, navegar com setas, zoom com +/-
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (!lightboxAberto) return
-            if (e.key === 'Escape') setLightboxAberto(false)
-            if (e.key === 'ArrowLeft') setImagemAtual(prev => prev === 0 ? imagens.length - 1 : prev - 1)
-            if (e.key === 'ArrowRight') setImagemAtual(prev => prev === imagens.length - 1 ? 0 : prev + 1)
+            if (e.key === 'Escape') closeLightbox()
+            if (e.key === 'ArrowLeft' && zoom === 1) {
+                setImagemAtual(prev => prev === 0 ? imagens.length - 1 : prev - 1)
+            }
+            if (e.key === 'ArrowRight' && zoom === 1) {
+                setImagemAtual(prev => prev === imagens.length - 1 ? 0 : prev + 1)
+            }
+            if (e.key === '+' || e.key === '=') {
+                setZoom(prev => clampZoom(prev + 0.5))
+            }
+            if (e.key === '-') {
+                const newZoom = clampZoom(zoom - 0.5)
+                setZoom(newZoom)
+                if (newZoom === 1) setPan({ x: 0, y: 0 })
+            }
+            if (e.key === '0') resetZoom()
         }
         window.addEventListener('keydown', handleKeyDown)
         return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [lightboxAberto, imagens.length])
+    }, [lightboxAberto, imagens.length, zoom, closeLightbox, clampZoom, resetZoom])
+
+    // Scroll para zoom no lightbox
+    useEffect(() => {
+        if (!lightboxAberto) return
+        const handleWheel = (e: WheelEvent) => {
+            e.preventDefault()
+            const delta = e.deltaY > 0 ? -0.3 : 0.3
+            setZoom(prev => {
+                const newZoom = clampZoom(prev + delta)
+                if (newZoom === 1) setPan({ x: 0, y: 0 })
+                return newZoom
+            })
+        }
+        window.addEventListener('wheel', handleWheel, { passive: false })
+        return () => window.removeEventListener('wheel', handleWheel)
+    }, [lightboxAberto, clampZoom])
+
+    // Touch handlers para pinch-to-zoom e pan
+    useEffect(() => {
+        if (!lightboxAberto) return
+        const el = lightboxImgRef.current
+        if (!el) return
+
+        const handleTouchStart = (e: TouchEvent) => {
+            if (e.touches.length === 2) {
+                e.preventDefault()
+                const dx = e.touches[0].clientX - e.touches[1].clientX
+                const dy = e.touches[0].clientY - e.touches[1].clientY
+                lastPinchDist.current = Math.hypot(dx, dy)
+            } else if (e.touches.length === 1 && zoom > 1) {
+                setIsPanning(true)
+                panStart.current = { x: e.touches[0].clientX - pan.x, y: e.touches[0].clientY - pan.y }
+            }
+        }
+
+        const handleTouchMove = (e: TouchEvent) => {
+            if (e.touches.length === 2) {
+                e.preventDefault()
+                const dx = e.touches[0].clientX - e.touches[1].clientX
+                const dy = e.touches[0].clientY - e.touches[1].clientY
+                const dist = Math.hypot(dx, dy)
+                if (lastPinchDist.current > 0) {
+                    const scale = dist / lastPinchDist.current
+                    setZoom(prev => {
+                        const newZoom = clampZoom(prev * scale)
+                        if (newZoom === 1) setPan({ x: 0, y: 0 })
+                        return newZoom
+                    })
+                }
+                lastPinchDist.current = dist
+            } else if (e.touches.length === 1 && isPanning && zoom > 1) {
+                e.preventDefault()
+                setPan({
+                    x: e.touches[0].clientX - panStart.current.x,
+                    y: e.touches[0].clientY - panStart.current.y
+                })
+            }
+        }
+
+        const handleTouchEnd = () => {
+            lastPinchDist.current = 0
+            setIsPanning(false)
+        }
+
+        el.addEventListener('touchstart', handleTouchStart, { passive: false })
+        el.addEventListener('touchmove', handleTouchMove, { passive: false })
+        el.addEventListener('touchend', handleTouchEnd)
+        return () => {
+            el.removeEventListener('touchstart', handleTouchStart)
+            el.removeEventListener('touchmove', handleTouchMove)
+            el.removeEventListener('touchend', handleTouchEnd)
+        }
+    }, [lightboxAberto, zoom, isPanning, pan, clampZoom])
+
+    // Mouse drag to pan
+    useEffect(() => {
+        if (!lightboxAberto || zoom <= 1) return
+
+        const handleMouseDown = (e: MouseEvent) => {
+            if (!(e.target as HTMLElement)?.closest('[data-lightbox-img]')) return
+            e.preventDefault()
+            setIsPanning(true)
+            panStart.current = { x: e.clientX - pan.x, y: e.clientY - pan.y }
+        }
+
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isPanning) return
+            setPan({
+                x: e.clientX - panStart.current.x,
+                y: e.clientY - panStart.current.y
+            })
+        }
+
+        const handleMouseUp = () => setIsPanning(false)
+
+        window.addEventListener('mousedown', handleMouseDown)
+        window.addEventListener('mousemove', handleMouseMove)
+        window.addEventListener('mouseup', handleMouseUp)
+        return () => {
+            window.removeEventListener('mousedown', handleMouseDown)
+            window.removeEventListener('mousemove', handleMouseMove)
+            window.removeEventListener('mouseup', handleMouseUp)
+        }
+    }, [lightboxAberto, zoom, isPanning, pan])
+
+    // Reset zoom when changing image
+    useEffect(() => {
+        resetZoom()
+    }, [imagemAtual, resetZoom])
 
     // Bloquear scroll do body quando lightbox está aberto
     useEffect(() => {
@@ -385,43 +528,110 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
                 </div>
             </div>
 
-            {/* Lightbox Modal */}
+            {/* Lightbox Modal com Zoom Interativo */}
             {lightboxAberto && imagens.length > 0 && (
                 <div
                     className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
-                    onClick={() => setLightboxAberto(false)}
+                    onClick={() => zoom === 1 && closeLightbox()}
                 >
                     {/* Botão fechar */}
                     <Button
                         variant="ghost"
                         size="icon"
                         className="absolute top-4 right-4 text-white hover:bg-white/20 z-50"
-                        onClick={() => setLightboxAberto(false)}
+                        onClick={closeLightbox}
                     >
                         <X className="h-6 w-6" />
                     </Button>
 
-                    {/* Indicador */}
-                    {imagens.length > 1 && (
-                        <div className="absolute top-4 left-4 text-white text-sm bg-black/50 px-3 py-1 rounded-full">
-                            {imagemAtual + 1} / {imagens.length}
-                        </div>
-                    )}
+                    {/* Controles de zoom */}
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-50">
+                        {imagens.length > 1 && (
+                            <span className="text-white text-sm bg-black/50 px-3 py-1 rounded-full mr-2">
+                                {imagemAtual + 1} / {imagens.length}
+                            </span>
+                        )}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-white hover:bg-white/20 h-8 w-8"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                const newZoom = clampZoom(zoom - 0.5)
+                                setZoom(newZoom)
+                                if (newZoom === 1) setPan({ x: 0, y: 0 })
+                            }}
+                            disabled={zoom <= MIN_ZOOM}
+                        >
+                            <ZoomOut className="h-4 w-4" />
+                        </Button>
+                        <span className="text-white text-sm bg-black/50 px-3 py-1 rounded-full min-w-[3rem] text-center">
+                            {zoom.toFixed(1)}x
+                        </span>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-white hover:bg-white/20 h-8 w-8"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                setZoom(prev => clampZoom(prev + 0.5))
+                            }}
+                            disabled={zoom >= MAX_ZOOM}
+                        >
+                            <ZoomIn className="h-4 w-4" />
+                        </Button>
+                        {zoom > 1 && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-white hover:bg-white/20 h-8 w-8"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    resetZoom()
+                                }}
+                            >
+                                <RotateCcw className="h-4 w-4" />
+                            </Button>
+                        )}
+                    </div>
 
-                    {/* Imagem principal */}
+                    {/* Imagem principal com zoom */}
                     <div
-                        className="relative max-w-[90vw] max-h-[85vh] flex items-center justify-center"
-                        onClick={(e) => e.stopPropagation()}
+                        ref={lightboxImgRef}
+                        data-lightbox-img
+                        className="relative max-w-[90vw] max-h-[85vh] flex items-center justify-center overflow-hidden"
+                        style={{
+                            cursor: zoom >= MAX_ZOOM ? 'zoom-out' : zoom > 1 ? (isPanning ? 'grabbing' : 'grab') : 'zoom-in'
+                        }}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            if (isPanning) return
+                            if (zoom === 1) {
+                                setZoom(2)
+                            } else {
+                                resetZoom()
+                            }
+                        }}
+                        onDoubleClick={(e) => {
+                            e.stopPropagation()
+                            resetZoom()
+                        }}
                     >
                         <img
                             src={imagens[imagemAtual]}
                             alt={`${produto.nome} - Foto ${imagemAtual + 1}`}
-                            className="max-w-full max-h-[85vh] object-contain rounded-lg"
+                            className="max-w-full max-h-[85vh] object-contain rounded-lg select-none"
+                            style={{
+                                transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+                                transition: isPanning ? 'none' : 'transform 0.2s ease-out',
+                                pointerEvents: 'none'
+                            }}
+                            draggable={false}
                         />
                     </div>
 
-                    {/* Setas de navegação */}
-                    {imagens.length > 1 && (
+                    {/* Setas de navegação (só quando não está em zoom) */}
+                    {imagens.length > 1 && zoom === 1 && (
                         <>
                             <Button
                                 variant="ghost"
@@ -448,8 +658,8 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
                         </>
                     )}
 
-                    {/* Miniaturas no lightbox */}
-                    {imagens.length > 1 && (
+                    {/* Miniaturas no lightbox (só quando não está em zoom) */}
+                    {imagens.length > 1 && zoom === 1 && (
                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                             {imagens.map((img, index) => (
                                 <button
@@ -477,7 +687,7 @@ export function ProdutoDetalhes({ produto }: ProdutoDetalhesProps) {
 
                     {/* Dica de teclado */}
                     <div className="absolute bottom-4 right-4 text-white/50 text-xs hidden md:block">
-                        ESC para fechar • ← → para navegar
+                        {zoom > 1 ? 'Arraste para mover • Duplo-clique para resetar' : 'Scroll para zoom • Clique para ampliar • ESC para fechar'}
                     </div>
                 </div>
             )}
