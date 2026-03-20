@@ -7,6 +7,15 @@ import { processarAudioWhatsApp, isAudioSuportado } from '@/lib/whatsapp/audio'
 
 const whatsapp = new WhatsAppClient()
 
+// Deduplicação: evita reprocessar mensagens que o WhatsApp reenvia
+const mensagensProcessadas = new Set<string>()
+
+function marcarComoProcessada(messageId: string): void {
+    mensagensProcessadas.add(messageId)
+    // Limpar após 5 minutos para não crescer indefinidamente
+    setTimeout(() => mensagensProcessadas.delete(messageId), 5 * 60 * 1000)
+}
+
 // Valida se o nome do contato é um nome real (não emoji, símbolo, etc)
 function validarNomeContato(nome: string): string {
     if (!nome || nome.trim().length === 0) {
@@ -31,6 +40,154 @@ function validarNomeContato(nome: string): string {
 
     // Capitaliza a primeira letra
     return primeiroNome.charAt(0).toUpperCase() + primeiroNome.slice(1).toLowerCase()
+}
+
+/**
+ * Processa mensagem em background (fire-and-forget)
+ * Toda a lógica pesada (IA, envio de resposta, triggers) roda aqui
+ */
+async function processarMensagemAsync(
+    telefone: string,
+    nomeContato: string,
+    conteudo: string,
+    messageId: string,
+    conversaId: string,
+): Promise<void> {
+    try {
+        // Marcar como lida e mostrar "digitando..."
+        await whatsapp.markAsRead(messageId)
+        await whatsapp.sendTypingIndicator(messageId)
+
+        // Trigger: mensagem recebida (métricas)
+        const { onMensagemRecebida } = await import('@/lib/whatsapp/follow-up/triggers')
+        onMensagemRecebida(conversaId, conteudo).catch(err =>
+            console.error('Erro no trigger onMensagemRecebida:', err)
+        )
+
+        // Verificar se precisa transferir para humano
+        const { verificarTransferenciaHumano, isEncerramento } = await import('@/lib/whatsapp/ai-engine')
+        if (verificarTransferenciaHumano(conteudo)) {
+            const { db } = await import('@/lib/db')
+            await db.conversaWhatsApp.update({
+                where: { id: conversaId },
+                data: { modo: 'humano' },
+            })
+
+            const respostaTransferencia = `Entendido! Vou transferir você para um de nossos atendentes. 👨‍💼\n\nUm momento, por favor...`
+            await whatsapp.sendMessage(telefone, respostaTransferencia)
+            await salvarMensagemEnviada(conversaId, respostaTransferencia)
+
+            // Trigger: transferência para humano
+            const { onTransferenciaHumano } = await import('@/lib/whatsapp/follow-up/triggers')
+            onTransferenciaHumano(conversaId, 'solicitacao_cliente').catch(err =>
+                console.error('Erro no trigger onTransferenciaHumano:', err)
+            )
+
+            console.log('🔄 Conversa transferida para atendente humano')
+            return
+        }
+
+        // Se modo for 'humano', não responder automaticamente
+        const { db } = await import('@/lib/db')
+        const conversaAtual = await db.conversaWhatsApp.findUnique({
+            where: { id: conversaId },
+        })
+
+        if (conversaAtual?.modo === 'humano') {
+            // Verificar timeout de 30 minutos
+            const agora = new Date()
+            const ultimaMsgBot = await db.mensagemWhatsApp.findFirst({
+                where: { conversaId, direcao: 'saida' },
+                orderBy: { createdAt: 'desc' },
+                select: { createdAt: true }
+            })
+            const ultimaRespostaBot = ultimaMsgBot?.createdAt ? new Date(ultimaMsgBot.createdAt) : agora
+            const minutosEmHumano = (agora.getTime() - ultimaRespostaBot.getTime()) / (1000 * 60)
+
+            if (minutosEmHumano > 30) {
+                // Timeout: reverter para modo bot
+                await db.conversaWhatsApp.update({
+                    where: { id: conversaId },
+                    data: { modo: 'bot' },
+                })
+                console.log(`⏰ Timeout modo humano (${Math.round(minutosEmHumano)}min) - revertendo para bot`)
+
+                const msgDesculpa = 'Desculpe a demora! Nosso atendente não está disponível no momento. Vou te atender por aqui mesmo! 😊 Como posso te ajudar?'
+                await whatsapp.sendMessage(telefone, msgDesculpa)
+                await salvarMensagemEnviada(conversaId, msgDesculpa)
+
+                // Se a mensagem é só saudação/casual, a desculpa já basta
+                const { isSaudacaoOuCasual } = await import('@/lib/whatsapp/ai-engine')
+                if (isSaudacaoOuCasual(conteudo)) {
+                    console.log('💬 Timeout + saudação: desculpa já enviada, pulando IA')
+                    return
+                }
+            } else {
+                console.log(`👤 Aguardando atendente humano (${Math.round(minutosEmHumano)}min de ${30}min)`)
+                return
+            }
+        }
+
+        // Gerar resposta com IA Anti-Alucinação
+        console.log('🤖 Gerando resposta com IA (Claude Sonnet + Banco de Dados)...')
+        const { gerarRespostaIA } = await import('@/lib/whatsapp/ai-engine')
+        const { texto: respostaBot, produtosComImagem } = await gerarRespostaIA(
+            conversaId,
+            nomeContato,
+            conteudo,
+            telefone
+        )
+
+        // Enviar resposta de texto
+        const responseData = await whatsapp.sendMessage(telefone, respostaBot)
+
+        // Salvar resposta no banco
+        await salvarMensagemEnviada(
+            conversaId,
+            respostaBot,
+            responseData.messages?.[0]?.id
+        )
+
+        console.log('✅ Resposta IA (Claude Sonnet) enviada com sucesso')
+
+        // Trigger: mensagem enviada (métricas)
+        const { onMensagemEnviada, onOrcamentoEnviado, onLeadPerdido } = await import('@/lib/whatsapp/follow-up/triggers')
+        onMensagemEnviada(conversaId, respostaBot, true).catch(err =>
+            console.error('Erro no trigger onMensagemEnviada:', err)
+        )
+
+        // Trigger: orçamento enviado (se a resposta contém produto com preço)
+        if (respostaBot.includes('R$') && produtosComImagem.length > 0) {
+            const primeiroPreco = produtosComImagem[0].preco
+            onOrcamentoEnviado(conversaId, primeiroPreco).catch(err =>
+                console.error('Erro no trigger onOrcamentoEnviado:', err)
+            )
+        }
+
+        // Trigger: lead perdido (se é encerramento)
+        if (isEncerramento(conteudo)) {
+            onLeadPerdido(conversaId, 'cliente_resolveu').catch(err =>
+                console.error('Erro no trigger onLeadPerdido:', err)
+            )
+        }
+
+        // Enviar imagem do primeiro produto (se disponível) — máximo 1 por resposta
+        if (produtosComImagem.length > 0) {
+            const produto = produtosComImagem[0]
+            if (produto.imagemUrl) {
+                const caption = `🛞 *${produto.nome}* — R$ ${produto.preco.toFixed(2)} | Instalação inclusa`
+                try {
+                    await whatsapp.sendImage(telefone, produto.imagemUrl, caption)
+                    console.log(`📸 Imagem enviada: ${produto.nome}`)
+                } catch (err) {
+                    console.error('Erro ao enviar imagem do produto:', err)
+                }
+            }
+        }
+
+    } catch (error) {
+        console.error('❌ Erro ao processar mensagem async:', error)
+    }
 }
 
 // GET - Verificação do webhook (Meta exige)
@@ -59,7 +216,7 @@ export async function GET(req: NextRequest) {
     return new Response('Forbidden', { status: 403 })
 }
 
-// POST - Receber mensagens
+// POST - Receber mensagens (retorna 200 imediato, processa em background)
 export async function POST(req: NextRequest) {
     try {
         const body: WhatsAppWebhook = await req.json()
@@ -80,8 +237,15 @@ export async function POST(req: NextRequest) {
                     for (const message of value.messages) {
                         const telefone = message.from
                         const messageId = message.id
+
+                        // Deduplicação: ignorar mensagens já processadas
+                        if (mensagensProcessadas.has(messageId)) {
+                            console.log(`🔁 Mensagem duplicada ignorada: ${messageId}`)
+                            continue
+                        }
+                        marcarComoProcessada(messageId)
+
                         const nomeRaw = value.contacts?.[0]?.profile?.name || ''
-                        // Validar se é um nome válido (não apenas emojis, símbolos ou muito curto)
                         const nomeContato = validarNomeContato(nomeRaw)
 
                         let conteudo = ''
@@ -90,7 +254,6 @@ export async function POST(req: NextRequest) {
                         if (message.type === 'text') {
                             conteudo = message.text?.body || ''
                         } else if (message.type === 'audio') {
-                            // Processar áudio - transcrever para texto
                             const audioId = message.audio?.id
                             const mimeType = message.audio?.mime_type || 'audio/ogg'
 
@@ -102,7 +265,6 @@ export async function POST(req: NextRequest) {
                                     conteudo = resultado.texto
                                     console.log(`✅ Áudio transcrito: "${conteudo.substring(0, 100)}..."`)
                                 } else {
-                                    // Informa que não conseguiu processar o áudio
                                     await whatsapp.sendMessage(
                                         telefone,
                                         'Desculpe, não consegui entender seu áudio. Pode digitar sua mensagem? 😊'
@@ -118,14 +280,12 @@ export async function POST(req: NextRequest) {
                                 continue
                             }
                         } else if (message.type === 'image' || message.type === 'video' || message.type === 'document') {
-                            // Para outros tipos de mídia, pedir para digitar
                             await whatsapp.sendMessage(
                                 telefone,
                                 'Recebi sua mídia! Por enquanto só consigo processar textos e áudios. Pode me contar por escrito o que precisa? 😊'
                             )
                             continue
                         } else {
-                            // Tipo não suportado
                             continue
                         }
 
@@ -143,7 +303,7 @@ export async function POST(req: NextRequest) {
                         }
                         console.log(`✅ Rate limit OK (${rateLimit.remaining} remaining)`)
 
-                        // Salvar mensagem no banco
+                        // Salvar mensagem no banco (síncrono, antes de retornar 200)
                         const { conversa } = await salvarMensagemRecebida(
                             telefone,
                             nomeContato,
@@ -151,94 +311,14 @@ export async function POST(req: NextRequest) {
                             messageId
                         )
 
-                        // Marcar como lida e mostrar "digitando..."
-                        await whatsapp.markAsRead(messageId)
-                        await whatsapp.sendTypingIndicator(messageId)
-
-                        // Verificar se precisa transferir para humano
-                        const { verificarTransferenciaHumano } = await import('@/lib/whatsapp/ai-engine')
-                        if (verificarTransferenciaHumano(conteudo)) {
-                            // Atualizar modo da conversa
-                            const { db } = await import('@/lib/db')
-                            await db.conversaWhatsApp.update({
-                                where: { id: conversa.id },
-                                data: { modo: 'humano' },
-                            })
-
-                            const respostaTransferencia = `Entendido! Vou transferir você para um de nossos atendentes. 👨‍💼\n\nUm momento, por favor...`
-
-                            await whatsapp.sendMessage(telefone, respostaTransferencia)
-                            await salvarMensagemEnviada(conversa.id, respostaTransferencia)
-
-                            console.log('🔄 Conversa transferida para atendente humano')
-                            continue
-                        }
-
-                        // Se modo for 'humano', não responder automaticamente
-                        const { db } = await import('@/lib/db')
-                        const conversaAtual = await db.conversaWhatsApp.findUnique({
-                            where: { id: conversa.id },
-                        })
-
-                        if (conversaAtual?.modo === 'humano') {
-                            // Verificar timeout de 30 minutos
-                            // Usa timestamp da última mensagem de SAÍDA (bot), não updatedAt da conversa
-                            // (updatedAt é atualizado a cada mensagem recebida, invalidando o timeout)
-                            const agora = new Date()
-                            const ultimaMsgBot = await db.mensagemWhatsApp.findFirst({
-                                where: { conversaId: conversa.id, direcao: 'saida' },
-                                orderBy: { createdAt: 'desc' },
-                                select: { createdAt: true }
-                            })
-                            const ultimaRespostaBot = ultimaMsgBot?.createdAt ? new Date(ultimaMsgBot.createdAt) : agora
-                            const minutosEmHumano = (agora.getTime() - ultimaRespostaBot.getTime()) / (1000 * 60)
-
-                            if (minutosEmHumano > 30) {
-                                // Timeout: reverter para modo bot
-                                await db.conversaWhatsApp.update({
-                                    where: { id: conversa.id },
-                                    data: { modo: 'bot' },
-                                })
-                                console.log(`⏰ Timeout modo humano (${Math.round(minutosEmHumano)}min) - revertendo para bot`)
-
-                                const msgDesculpa = 'Desculpe a demora! Nosso atendente não está disponível no momento. Vou te atender por aqui mesmo! 😊 Como posso te ajudar?'
-                                await whatsapp.sendMessage(telefone, msgDesculpa)
-                                await salvarMensagemEnviada(conversa.id, msgDesculpa)
-
-                                // Se a mensagem é só saudação/casual, a desculpa já basta — evita resposta dupla
-                                const { isSaudacaoOuCasual } = await import('@/lib/whatsapp/ai-engine')
-                                if (isSaudacaoOuCasual(conteudo)) {
-                                    console.log('💬 Timeout + saudação: desculpa já enviada, pulando IA')
-                                    continue
-                                }
-                                // Se é pergunta de produto, processar com IA abaixo
-                            } else {
-                                console.log(`👤 Aguardando atendente humano (${Math.round(minutosEmHumano)}min de ${30}min)`)
-                                continue
-                            }
-                        }
-
-                        // Gerar resposta com IA Anti-Alucinação
-                        console.log('🤖 Gerando resposta com IA (Grok + Banco de Dados)...')
-                        const { gerarRespostaIA } = await import('@/lib/whatsapp/ai-engine')
-                        const respostaBot = await gerarRespostaIA(
-                            conversa.id,
+                        // Fire-and-forget: processar IA + envio em background
+                        processarMensagemAsync(
+                            telefone,
                             nomeContato,
                             conteudo,
-                            telefone
-                        )
-
-                        // Enviar resposta de texto
-                        const responseData = await whatsapp.sendMessage(telefone, respostaBot)
-
-                        // Salvar resposta no banco
-                        await salvarMensagemEnviada(
+                            messageId,
                             conversa.id,
-                            respostaBot,
-                            responseData.messages?.[0]?.id
-                        )
-
-                        console.log('✅ Resposta IA (Grok) enviada com sucesso')
+                        ).catch(err => console.error('❌ Erro no processamento async:', err))
                     }
                 }
 
@@ -249,12 +329,11 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        // Retorna 200 imediato — processamento da IA acontece em background
         return NextResponse.json({ success: true })
     } catch (error: any) {
         console.error('❌ Erro no webhook WhatsApp:', error)
-        return NextResponse.json(
-            { success: false, error: error.message },
-            { status: 500 }
-        )
+        // Retorna 200 mesmo em erro para evitar retries do Meta
+        return NextResponse.json({ success: true })
     }
 }

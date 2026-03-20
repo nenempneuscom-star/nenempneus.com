@@ -1,7 +1,7 @@
 import { db } from '../../db'
 import { LOJA_SLUG } from '../../constants'
 import { addHours } from 'date-fns'
-import { gerarFollowUp } from '../bot'
+import { gerarFollowUp } from '../ai-engine'
 import { WhatsAppClient } from '../client'
 import { salvarMensagemEnviada } from '../messages'
 

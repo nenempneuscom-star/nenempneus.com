@@ -13,9 +13,18 @@
  */
 
 import { db } from '../db'
+import Anthropic from '@anthropic-ai/sdk'
 
-// Cliente Grok (xAI)
-const GROK_API_URL = 'https://api.x.ai/v1/chat/completions'
+// Cliente Claude (Anthropic)
+let _anthropicClient: Anthropic | null = null
+function getAnthropicClient(): Anthropic {
+    if (!_anthropicClient) {
+        _anthropicClient = new Anthropic({
+            apiKey: process.env.ANTHROPIC_API_KEY,
+        })
+    }
+    return _anthropicClient
+}
 
 interface ProdutoContexto {
     id: string
@@ -57,6 +66,7 @@ const LOJA_INFO = {
     nome: 'Nenem Pneus',
     endereco: 'Av. Nereu Ramos, 740 - Centro, Capivari de Baixo - SC',
     telefone: '(48) 99997-3889',
+    dono: { nome: 'Handerson', whatsapp: '(48) 99997-3889' },
     site: 'https://nenempneus.com',
     horario: {
         semana: 'Segunda a Sexta: 8h às 18h',
@@ -133,6 +143,62 @@ function isPerguntaMoto(mensagem: string): boolean {
     ]
     const msgLower = mensagem.toLowerCase()
     return keywords.some(k => msgLower.includes(k))
+}
+
+/**
+ * Detecta se o cliente está negociando preço / pedindo desconto
+ */
+function isNegociacao(mensagem: string): boolean {
+    const msgLower = mensagem.toLowerCase()
+    const patterns = [
+        'desconto', 'baixar', 'abaixar', 'diminuir', 'diminui',
+        'menos', 'mais barato', 'caro', 'salgado', 'puxado',
+        'melhor preço', 'melhor preco', 'preço melhor', 'preco melhor',
+        'cotação', 'cotacao', 'cotando', 'cotei',
+        'consegue baixar', 'faz por', 'faz menos', 'faz um preço',
+        'negocia', 'negociar', 'negociação', 'negociacao',
+        'valor alto', 'valor puxado', 'muito caro',
+        'achei caro', 'tá caro', 'ta caro', 'está caro',
+        'pneu novo por', 'novo por', 'novo sai', 'novo custa'
+    ]
+    return patterns.some(p => msgLower.includes(p))
+}
+
+/**
+ * Detecta se o cliente está encerrando / já resolveu
+ */
+function isEncerramento(mensagem: string): boolean {
+    const msgLower = mensagem.toLowerCase()
+    const patterns = [
+        'já resolvi', 'ja resolvi', 'já consegui', 'ja consegui',
+        'já comprei', 'ja comprei', 'já achei', 'ja achei',
+        'não preciso mais', 'nao preciso mais',
+        'não quero mais', 'nao quero mais',
+        'já encontrei', 'ja encontrei', 'já arrumei', 'ja arrumei',
+        'obrigado não precisa', 'obrigada não precisa',
+        'não precisa', 'nao precisa', 'pode parar',
+        'resolvi aqui', 'resolvi já', 'resolvido',
+        'comprei em outro', 'achei em outro', 'peguei em outro',
+        'consegui resolver', 'consegui aqui'
+    ]
+    return patterns.some(p => msgLower.includes(p))
+}
+
+/**
+ * Extrai medida de pneu do histórico da conversa
+ * Usado quando a mensagem atual não contém medida (ex: pedido de desconto)
+ */
+function extrairMedidaDoHistorico(
+    historico: Array<{ role: 'user' | 'assistant'; content: string }>
+): { largura?: string; perfil?: string; aro?: string } | null {
+    // Percorre do mais recente ao mais antigo
+    for (let i = historico.length - 1; i >= 0; i--) {
+        const medida = extrairMedidaPneu(historico[i].content)
+        if (medida && medida.largura && medida.aro) {
+            return medida
+        }
+    }
+    return null
 }
 
 /**
@@ -422,8 +488,12 @@ async function buscarProdutosRelevantes(
 
 /**
  * Busca contexto completo do banco de dados
+ * Aceita historico para manter contexto de medida entre mensagens
  */
-async function buscarContextoDados(mensagem: string): Promise<ContextoDados> {
+async function buscarContextoDados(
+    mensagem: string,
+    historico: Array<{ role: 'user' | 'assistant'; content: string }> = []
+): Promise<ContextoDados> {
     const defaultResult: ContextoDados = {
         produtos: [],
         totalProdutos: 0,
@@ -444,6 +514,21 @@ async function buscarContextoDados(mensagem: string): Promise<ContextoDados> {
         let resultado: ResultadoBusca = { produtos: [], matchExato: true, medidaSolicitada: null }
         if (isPerguntaProduto(mensagem) && !isForaDeContexto(mensagem)) {
             resultado = await buscarProdutosRelevantes(mensagem)
+        }
+
+        // Se não encontrou produto na mensagem atual, mas é negociação ou mensagem contextual,
+        // buscar a medida do histórico da conversa para manter o contexto
+        if (resultado.produtos.length === 0 && historico.length > 0) {
+            const ehNegociacao = isNegociacao(mensagem)
+            const temMedidaNoHistorico = extrairMedidaDoHistorico(historico)
+
+            if (ehNegociacao && temMedidaNoHistorico) {
+                // Reconstruir a busca usando a medida do histórico
+                const medidaStr = [temMedidaNoHistorico.largura, temMedidaNoHistorico.perfil]
+                    .filter(Boolean).join('/') + (temMedidaNoHistorico.aro ? `R${temMedidaNoHistorico.aro}` : '')
+                console.log(`🔄 [AI Engine] Mensagem sem medida mas com negociação - buscando medida do histórico: ${medidaStr}`)
+                resultado = await buscarProdutosRelevantes(medidaStr)
+            }
         }
 
         // Contar total de produtos ativos
@@ -520,7 +605,16 @@ function gerarSystemPrompt(contexto: ContextoDados, historicoLength: number = 0)
         statusLoja = 'ABERTA'
     }
 
-    let prompt = `Você é a Cinthia, atendente virtual da Nenem Pneus via WhatsApp.
+    let prompt = `Você é a Cinthia, VENDEDORA virtual da Nenem Pneus via WhatsApp.
+
+## SEU OBJETIVO PRINCIPAL
+
+Você é uma **vendedora**, não apenas uma atendente. Seu trabalho é:
+1. Entender a necessidade do cliente
+2. Apresentar o produto certo com ENTUSIASMO
+3. Argumentar valor (não só preço)
+4. Criar URGÊNCIA quando o estoque for baixo
+5. **FECHAR A VENDA** — sempre conduza para o próximo passo concreto
 
 ## DATA E HORA ATUAL
 
@@ -530,7 +624,7 @@ A loja está **${statusLoja}** neste momento.
 ## REGRAS ABSOLUTAS (NUNCA QUEBRE ESTAS REGRAS)
 
 1. **NUNCA INVENTE** preços, produtos, medidas ou informações que não estejam nos dados abaixo
-2. **NUNCA PROMETA** prazos, descontos ou condições que não existem
+2. **NUNCA PROMETA** descontos ou condições que não existem
 3. **SE NÃO SOUBER**, direcione para o site: ${LOJA_INFO.site}
 4. **SEMPRE USE** os dados reais fornecidos abaixo
 ${historicoLength > 0 ? `5. **NUNCA COMECE COM "Oi"** — esta conversa já está em andamento. NÃO diga "Oi, [nome]". Comece direto com a resposta (ex: "Temos sim!", "Infelizmente não temos...", "Claro!", "Sim,", "Não temos essa medida, mas..."). IGNORE qualquer padrão do histórico que comece com "Oi".` : ''}
@@ -548,6 +642,9 @@ Horário:
 - ${LOJA_INFO.horario.domingo}
 
 Pagamento: ${LOJA_INFO.pagamento.join(', ')}
+
+Dono da loja: ${LOJA_INFO.dono.nome} — WhatsApp: ${LOJA_INFO.dono.whatsapp}
+(Só passe o contato do dono quando o cliente INSISTIR em desconto, após você já ter argumentado valor)
 
 Diferenciais:
 ${LOJA_INFO.diferenciais.map(d => `- ${d}`).join('\n')}
@@ -594,50 +691,52 @@ Direcione o cliente para ver todas as opções no site: ${LOJA_INFO.site}/produt
 - Total de produtos ativos: ${contexto.totalProdutos}
 - Categorias: ${contexto.categorias.join(', ') || 'Pneus para carros e motos'}
 
-## COMO RESPONDER
+## COMO RESPONDER (MENTALIDADE DE VENDEDORA)
 
-1. Seja simpática e direta (máximo 3 parágrafos)
+1. Seja simpática, direta e PROATIVA (máximo 3 parágrafos)
 2. ${historicoLength > 0 ? 'NÃO cumprimente — vá DIRETO ao assunto (regra 5 acima)' : 'Esta é a PRIMEIRA mensagem do cliente. Pode cumprimentar normalmente.'}
 3. Use emojis com moderação: 😊 ✅ 🛞 🏍️
-4. SEMPRE inclua o link do site quando falar de produtos ou medidas específicas
-5. Se o cliente perguntar algo que você não tem nos dados, diga que ele pode ver no site
-6. Termine com uma pergunta ou próximo passo claro
-7. Use *asteriscos* para negrito (formato WhatsApp)
-8. Se o produto TEM foto, informe: "Temos foto real no site, dá uma olhada!"
-9. Se o estoque for 1-2 unidades, avise: "Temos sim, mas restam apenas X unidade(s), garanta o seu!"
+4. Inclua o link DIRETO do produto (não o link genérico do site) quando tiver produto específico
+5. Use *asteriscos* para negrito (formato WhatsApp)
+6. Se o produto TEM foto, diga: "Temos foto real no site, dá uma olhada: [link do produto]"
+7. **SEMPRE termine com um FECHAMENTO** — conduza para o próximo passo:
+   - "Quer garantir o seu? Posso te passar o link de pagamento!"
+   - "Consegue passar aqui hoje? Estamos abertos até Xh!"
+   - "Quer que eu separe pra você?"
+   - "Posso agendar a instalação pra você?"
+8. **CRIE URGÊNCIA** quando o estoque for baixo (1-3 unidades):
+   - "Últimas X unidades! Quando acaba, demora pra chegar mais."
+   - "Só restam X — recomendo garantir logo!"
+9. **ANCORE O PREÇO** — sempre destaque o valor que o cliente está GANHANDO:
+   - Instalação inclusa (em outras lojas cobra R$ 50-80)
+   - Garantia inclusa
+   - Seminovo com sulco mínimo de 6mm (quase novo)
+   - Comparar com preço de pneu novo quando possível
+10. **UPSELL de serviços** — quando fizer sentido, sugira:
+    - "Quer aproveitar e já fazer alinhamento e balanceamento? Deixa o carro redondinho!"
 
-## CONVERSAS CASUAIS
+## SITUAÇÕES DE URGÊNCIA
 
-Para risadas (kkk, haha), expressões (oxe, eita), ou respostas curtas (joia, top, show):
-- Responda de forma CURTA e NATURAL (máximo 1 linha)
-- NÃO se apresente novamente como "Sou a Cinthia" em conversa casual
-- Exemplos: "😄 Posso te ajudar com alguma coisa?" ou "Haha 😅 Precisa de pneus?"
+Se o cliente mencionar pneu furado/rasgado/estourou, viagem, emergência:
+- PRIORIDADE MÁXIMA — vá direto ao produto
+- Destaque instalação na hora e inclusa
+- Pergunte se consegue vir AGORA
 
-## PERGUNTAS FORA DO CONTEXTO (MUITO IMPORTANTE!)
+## NEGOCIAÇÃO DE PREÇO
 
-Se o cliente perguntar algo que NÃO É sobre pneus, carros, motos ou a loja:
-- Exemplos: "tem ibuprofeno?", "vende pizza?", "sal é doce?", "quanto custa um celular?"
-- NUNCA ofereça pneus como resposta a perguntas fora de contexto
-- Responda de forma CURTA, bem-humorada, e volte ao assunto
-- NÃO se apresente nem explique o que a loja faz
-- Máximo 2 linhas
+Se o cliente pedir desconto:
+1. **NUNCA ofereça desconto** — você não tem autoridade
+2. Mantenha o foco no produto atual (não mude de assunto)
+3. Argumente valor: instalação inclusa, garantia, fotos reais, loja física, 12x no cartão
+4. Se comparar com pneu novo: "O seminovo sai por menos da metade e inclui instalação!"
+5. Se INSISTIR após argumentação, passe o contato do dono: "Sobre desconto, só o Handerson pode avaliar: (48) 99997-3889 📲"
+   **Só passe o contato do dono na segunda vez** — primeiro argumente valor.
 
-Exemplos de respostas corretas:
-- "Haha, isso não tenho não! 😅 Aqui é só pneus. Posso te ajudar com alguma medida?"
-- "Eita, essa não é comigo! 😄 Mas se precisar de pneus, tô aqui!"
-- "Opa, isso aí não vendo não! 🛞 Mas pneus eu tenho de monte, quer ver?"
+## ENCERRAMENTO DA CONVERSA
 
-## DIFERENCIANDO MOTO E CARRO (CRÍTICO!)
-
-Preste MUITA atenção se o cliente menciona MOTO ou CARRO:
-- Se mencionar "moto", "motocicleta", "Honda CG", "Biz", etc → mostrar pneus de MOTO
-- Se mencionar "carro", "veículo", medidas de carro (175/70R14) → mostrar pneus de CARRO
-- NUNCA ofereça pneu de carro quando o cliente pedir de moto (e vice-versa)
-- Pneus de MOTO são NOVOS (zero km)
-- Pneus de CARRO são SEMINOVOS
-
-Se o cliente pedir "pneu de moto" mas você não tem dados de moto no contexto:
-→ "Temos pneus novos pra moto sim! 🏍️ Me fala a medida (tipo 100/80-17) ou o modelo da moto!"
+Se o cliente já resolveu/comprou/não precisa mais:
+- Aceite com educação, agradeça e deseje bem
+- NÃO insista nem sugira mais produtos (máximo 2 linhas)
 
 ## RESPOSTAS PROIBIDAS
 
@@ -661,9 +760,14 @@ SE NÃO TIVER A INFORMAÇÃO NOS DADOS ACIMA:
  * Verifica se não inventou preços ou produtos
  * IMPORTANTE: Só valida rigorosamente quando fala de produtos/preços
  */
-function validarResposta(resposta: string, contexto: ContextoDados, mensagemOriginal: string): { valida: boolean; motivo?: string } {
-    // Se for conversa casual ou saudação, não precisa validar rigorosamente
-    if (isSaudacao(mensagemOriginal) || isConversaCasual(mensagemOriginal)) {
+function validarResposta(resposta: string, contexto: ContextoDados, mensagemOriginal: string, historico: Array<{ role: string; content: string }> = []): { valida: boolean; motivo?: string } {
+    // Se for conversa casual, saudação, encerramento ou negociação, não precisa validar rigorosamente
+    if (isSaudacao(mensagemOriginal) || isConversaCasual(mensagemOriginal) || isEncerramento(mensagemOriginal)) {
+        return { valida: true }
+    }
+
+    // Se é negociação, a IA pode citar valores que o cliente mencionou (ex: "pneu novo por 650")
+    if (isNegociacao(mensagemOriginal)) {
         return { valida: true }
     }
 
@@ -676,8 +780,24 @@ function validarResposta(resposta: string, contexto: ContextoDados, mensagemOrig
     const valoresMatch = resposta.match(/R\$\s*[\d.,]+/g)
 
     if (valoresMatch) {
-        // Verificar se cada valor mencionado existe nos produtos
+        // Verificar se cada valor mencionado existe nos produtos OU foi citado pelo cliente
         const precosReais = contexto.produtos.map(p => p.preco)
+
+        // Extrair valores mencionados pelo cliente no histórico
+        const valoresCliente: number[] = []
+        for (const msg of historico) {
+            if (msg.role === 'user') {
+                const matches = msg.content.match(/\d{3,}/g)
+                if (matches) {
+                    matches.forEach(m => valoresCliente.push(parseFloat(m)))
+                }
+            }
+        }
+        // Também da mensagem atual
+        const matchesAtual = mensagemOriginal.match(/\d{3,}/g)
+        if (matchesAtual) {
+            matchesAtual.forEach(m => valoresCliente.push(parseFloat(m)))
+        }
 
         for (const valorStr of valoresMatch) {
             const valor = parseFloat(valorStr.replace('R$', '').replace('.', '').replace(',', '.').trim())
@@ -685,7 +805,10 @@ function validarResposta(resposta: string, contexto: ContextoDados, mensagemOrig
             // Verificar se o valor está próximo de algum preço real (tolerância de 1%)
             const existePreco = precosReais.some(p => Math.abs(p - valor) < p * 0.01)
 
-            if (!existePreco && valor > 50) { // Ignorar valores muito baixos (podem ser porcentagens)
+            // Verificar se o valor foi mencionado pelo cliente (tolerância de 5%)
+            const clienteMencionou = valoresCliente.some(v => Math.abs(v - valor) < v * 0.05)
+
+            if (!existePreco && !clienteMencionou && valor > 50) {
                 return {
                     valida: false,
                     motivo: `Preço inventado detectado: ${valorStr}`
@@ -715,13 +838,12 @@ function validarResposta(resposta: string, contexto: ContextoDados, mensagemOrig
         }
     }
 
-    // BLACKLIST EXPANDIDA - Frases que NUNCA devem aparecer
+    // BLACKLIST - Frases que NUNCA devem aparecer (apenas coisas realmente proibidas)
     const blacklist = [
-        // Inventando capacidades
+        // Inventando descontos (IA não pode dar desconto)
         /posso te dar.*(desconto|cupom)/i,
         /desconto especial/i,
         /promoção exclusiva/i,
-        /só pra você/i,
         /preço especial/i,
         // Vazando instruções
         /meu prompt/i,
@@ -734,11 +856,7 @@ function validarResposta(resposta: string, contexto: ContextoDados, mensagemOrig
         /frete grátis/i,
         /garantia vitalícia/i,
         /pneu zero km.*carro/i, // pneu novo pra carro (só moto tem novo)
-        // Prometendo coisas
-        /vou reservar/i,
-        /deixa guardado/i,
-        /te garanto/i,
-        /pode confiar/i,
+        // Prometendo coisas irreais
         /100% garantido/i,
         // Identidade errada
         /super pneus/i,
@@ -762,12 +880,65 @@ function validarResposta(resposta: string, contexto: ContextoDados, mensagemOrig
 }
 
 /**
- * Resposta de fallback segura
+ * Retorna status atual da loja (aberta/fechada) e dia da semana
  */
-function respostaFallback(contexto: ContextoDados, mensagem: string, nomeCliente?: string): string {
-    const msgLower = mensagem.toLowerCase().trim()
+function getStatusLoja(): { statusLoja: string; diaNum: number; horaFechamento: string } {
+    const agora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+    const diaNum = agora.getDay()
+    const hora = agora.getHours()
+    let statusLoja = 'FECHADA'
+    if (diaNum >= 1 && diaNum <= 5 && hora >= 8 && hora < 18) {
+        statusLoja = 'ABERTA'
+    } else if (diaNum === 6 && hora >= 8 && hora < 12) {
+        statusLoja = 'ABERTA'
+    }
+    const horaFechamento = diaNum === 6 ? '12h' : '18h'
+    return { statusLoja, diaNum, horaFechamento }
+}
 
-    // PRIMEIRO: Se for claramente fora de contexto, responder de forma leve
+/**
+ * Resposta de fallback segura
+ * @param temHistorico indica se já tem conversa em andamento (evita saudação repetida)
+ */
+function respostaFallback(contexto: ContextoDados, mensagem: string, nomeCliente?: string, temHistorico: boolean = false): string {
+    const msgLower = mensagem.toLowerCase().trim()
+    const { statusLoja, diaNum, horaFechamento } = getStatusLoja()
+
+    // PRIMEIRO: Se cliente está encerrando, aceitar sem insistir
+    if (isEncerramento(mensagem)) {
+        return `Que bom que resolveu! 😊 Quando precisar de pneus, é só chamar!`
+    }
+
+    // Se for negociação e temos produto no contexto, argumentar com valor
+    if (isNegociacao(mensagem) && contexto.produtos.length > 0) {
+        const produto = contexto.produtos[0]
+        const urgencia = produto.estoque <= 2
+            ? `\n⚠️ E só restam *${produto.estoque} unidade(s)* — quando acaba, demora pra repor!`
+            : ''
+        const fechamento = statusLoja === 'ABERTA'
+            ? `Consegue passar aqui hoje? A instalação é na hora! 😊`
+            : `Quer garantir o seu? Posso te passar o link de pagamento!`
+
+        return `Entendo! Mas olha o que você leva por *R$ ${produto.preco.toFixed(2)}*:
+
+✅ *Instalação inclusa* (em outras lojas cobra R$ 50-80 só pra montar)
+✅ *Garantia*
+✅ Pneu conferido com *sulco mínimo de 6mm*
+✅ Parcela em até *12x no cartão*
+
+Um pneu novo dessa medida sai por R$ 600-800+ e ainda paga instalação à parte. A economia é real! 😊${urgencia}
+
+${fechamento}`
+    }
+
+    // Se for negociação mas SEM produto no contexto, passar contato do dono
+    if (isNegociacao(mensagem)) {
+        return `Sobre desconto, só o *Handerson* (dono da loja) pode avaliar! Fala com ele direto: *(48) 99997-3889* 📲
+
+Ele te atende pelo WhatsApp mesmo! 😊`
+    }
+
+    // Se for claramente fora de contexto, responder de forma leve
     if (isForaDeContexto(mensagem)) {
         const respostasForaContexto = [
             `Haha, isso não tenho não! 😅 Aqui é só pneus mesmo. Posso te ajudar com alguma medida?`,
@@ -778,9 +949,12 @@ function respostaFallback(contexto: ContextoDados, mensagem: string, nomeCliente
     }
 
     // Se for saudação PURA (sem pergunta de produto junto), retornar saudação
-    // Ex: "oi" → saudação, mas "oi, tem pneu 175/70r14?" → priorizar produtos
+    // MAS se já tem histórico, NÃO se apresentar de novo
     if (isSaudacao(mensagem) && !isPerguntaProduto(mensagem)) {
         const nome = nomeCliente ? `, ${nomeCliente}` : ''
+        if (temHistorico) {
+            return `E aí${nome}! 😊 Posso te ajudar com algum pneu ou medida específica?`
+        }
         return `Oi${nome}! Sou a Cinthia, da *Nenem Pneus*! 😊
 
 Como posso te ajudar hoje?
@@ -859,20 +1033,42 @@ Dá uma olhada no nosso site: ${LOJA_INFO.site}`
             const emoji = isMoto ? '🏍️' : '🛞'
             const tipo = isMoto ? 'moto' : 'carro'
 
-            // Prefixo de match aproximado
-            const prefixo = (!contexto.matchExato && contexto.medidaSolicitada)
-                ? `Não encontrei a medida *${contexto.medidaSolicitada}* no estoque, mas temos essas opções de ${tipo}:`
-                : `Oi! Encontrei essa opção de ${tipo} pra você:`
+            // Prefixo de match aproximado (sem "Oi!" quando tem histórico)
+            let prefixo: string
+            if (!contexto.matchExato && contexto.medidaSolicitada) {
+                prefixo = `Não encontrei a medida *${contexto.medidaSolicitada}* no estoque, mas temos essas opções de ${tipo}:`
+            } else if (temHistorico) {
+                prefixo = `Temos sim! 😊`
+            } else {
+                prefixo = `Oi! Temos sim! 😊`
+            }
+
+            // Urgência de estoque
+            let urgencia = ''
+            if (produto.estoque <= 2) {
+                urgencia = `\n⚠️ *Últimas ${produto.estoque} unidade(s)!* Quando acaba, demora pra chegar mais.`
+            } else if (produto.estoque <= 5) {
+                urgencia = `\n📦 ${produto.estoque} em estoque — garanta o seu!`
+            }
+
+            // Fechamento
+            let fechamento = ''
+            if (statusLoja === 'ABERTA') {
+                fechamento = `Consegue passar aqui hoje? Estamos abertos até ${diaNum === 6 ? '12h' : '18h'}! A instalação é na hora e já tá *inclusa* no preço 😊`
+            } else {
+                fechamento = `Quer garantir o seu? Me fala que te passo o link de pagamento! A instalação já tá *inclusa* no preço 😊`
+            }
 
             return `${prefixo}
 
 ${emoji} *${produto.nome}*
-💰 R$ ${produto.preco.toFixed(2)}
-📦 ${produto.estoque} em estoque
+💰 *R$ ${produto.preco.toFixed(2)}*
+✅ Instalação *inclusa*
+✅ Com *garantia*${urgencia}
 
-Veja mais detalhes aqui: ${produto.link}
+Temos foto real no site: ${produto.link}
 
-Quer ver mais opções? Dá uma olhada no nosso site: ${LOJA_INFO.site} 😊`
+${fechamento}`
         }
     }
 
@@ -887,55 +1083,47 @@ Dá uma olhada no site também: ${LOJA_INFO.site}`
 
     // Resposta genérica (só quando realmente não souber o que fazer)
     const nome = nomeCliente ? `, ${nomeCliente}` : ''
+    if (temHistorico) {
+        return `Posso te ajudar com algum pneu${nome}? Me conta o que você precisa! 😊`
+    }
     return `Oi${nome}! 😊 Posso te ajudar com pneus? Me conta o que você precisa!`
 }
 
 /**
- * Chama a API do Grok
+ * Chama a API do Claude (Anthropic)
  */
-async function chamarGrok(
+async function chamarClaude(
     systemPrompt: string,
     mensagem: string,
     historico: Array<{ role: 'user' | 'assistant'; content: string }>
 ): Promise<string | null> {
     try {
-        const apiKey = process.env.XAI_API_KEY
-        if (!apiKey) {
-            console.error('XAI_API_KEY não configurada')
+        if (!process.env.ANTHROPIC_API_KEY) {
+            console.error('ANTHROPIC_API_KEY não configurada')
             return null
         }
 
-        const messages = [
-            { role: 'system', content: systemPrompt },
-            ...historico,
-            { role: 'user', content: mensagem }
-        ]
+        const client = getAnthropicClient()
 
-        const response = await fetch(GROK_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model: 'grok-3',
-                messages,
-                temperature: 0.3, // Baixa temperatura = menos criatividade = menos alucinação
-                max_tokens: 500
-            })
+        const response = await client.messages.create({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 500,
+            temperature: 0.3,
+            system: systemPrompt,
+            messages: [
+                ...historico.map(m => ({
+                    role: m.role as 'user' | 'assistant',
+                    content: m.content,
+                })),
+                { role: 'user', content: mensagem },
+            ],
         })
 
-        if (!response.ok) {
-            const error = await response.text()
-            console.error('Erro na API Grok:', error)
-            return null
-        }
-
-        const data = await response.json()
-        return data.choices?.[0]?.message?.content || null
+        const textBlock = response.content.find(b => b.type === 'text')
+        return textBlock ? textBlock.text : null
 
     } catch (error) {
-        console.error('Erro ao chamar Grok:', error)
+        console.error('Erro ao chamar Claude:', error)
         return null
     }
 }
@@ -943,24 +1131,28 @@ async function chamarGrok(
 /**
  * Função principal: Gera resposta com IA anti-alucinação
  */
+export interface RespostaIA {
+    texto: string
+    produtosComImagem: ProdutoContexto[]
+}
+
 export async function gerarRespostaIA(
     conversaId: string,
     nomeCliente: string,
     mensagem: string,
     telefone?: string
-): Promise<string> {
+): Promise<RespostaIA> {
     try {
         console.log('🤖 [AI Engine] Iniciando geração de resposta...')
 
-        // 1. Buscar contexto do banco de dados
-        console.log('📊 [AI Engine] Buscando dados do banco...')
-        const contexto = await buscarContextoDados(mensagem)
-        console.log(`📦 [AI Engine] ${contexto.produtos.length} produtos encontrados`)
-
-        // 2. Buscar histórico da conversa
+        // 1. Buscar histórico da conversa (antes do contexto, pois precisamos dele)
         const historico = await buscarHistoricoConversa(conversaId)
         console.log(`💬 [AI Engine] ${historico.length} mensagens no histórico`)
 
+        // 2. Buscar contexto do banco de dados (com histórico para manter contexto de medida)
+        console.log('📊 [AI Engine] Buscando dados do banco...')
+        const contexto = await buscarContextoDados(mensagem, historico)
+        console.log(`📦 [AI Engine] ${contexto.produtos.length} produtos encontrados`)
         // 3. Gerar system prompt com dados reais
         const systemPrompt = gerarSystemPrompt(contexto, historico.length)
 
@@ -970,21 +1162,27 @@ export async function gerarRespostaIA(
             : mensagem
 
         // 5. Chamar IA
-        console.log('🧠 [AI Engine] Chamando Grok...')
-        const respostaIA = await chamarGrok(systemPrompt, mensagemComContexto, historico)
+        console.log('🧠 [AI Engine] Chamando Claude Sonnet...')
+        const respostaIA = await chamarClaude(systemPrompt, mensagemComContexto, historico)
 
         if (!respostaIA) {
-            console.log('⚠️ [AI Engine] Grok não respondeu, usando fallback')
-            return respostaFallback(contexto, mensagem, nomeCliente)
+            console.log('⚠️ [AI Engine] Claude não respondeu, usando fallback')
+            return { texto: respostaFallback(contexto, mensagem, nomeCliente, historico.length > 0), produtosComImagem: contexto.produtos.filter(p => p.imagemUrl) }
         }
 
         // 5.5. Remover saudação repetida em conversas em andamento
         let respostaLimpa = respostaIA
-        if (historico.length > 0 && nomeCliente) {
-            // Remove "Oi, Nome!", "Sim, Nome!", "Claro, Nome!", etc. no início da resposta
-            const escapedName = nomeCliente.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-            const regexSaudacao = new RegExp(`^\\w{2,10}[,!]?\\s*${escapedName}[,!]?\\s*😊?\\s*`, 'i')
-            respostaLimpa = respostaLimpa.replace(regexSaudacao, '').trim()
+        if (historico.length > 0) {
+            // Remove saudações no início: "Oi!", "Oi, Nome!", "Olá!", "E aí!", etc.
+            // Padrão 1: Com nome do cliente
+            if (nomeCliente) {
+                const escapedName = nomeCliente.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                const regexComNome = new RegExp(`^(Oi|Olá|Ola|E aí|Eai)[,!]?\\s*${escapedName}[,!]?\\s*😊?\\s*`, 'i')
+                respostaLimpa = respostaLimpa.replace(regexComNome, '').trim()
+            }
+            // Padrão 2: Saudação genérica seguida de apresentação ("Oi! Sou a Cinthia..." ou "Oi! Posso te ajudar...")
+            respostaLimpa = respostaLimpa.replace(/^(Oi|Olá|Ola)[!,.]?\s*(😊\s*)?Sou a Cinthia[^!]*!\s*(😊\s*)?/i, '').trim()
+            respostaLimpa = respostaLimpa.replace(/^(Oi|Olá|Ola)[!,.]?\s*(😊\s*)?Posso te ajudar/i, 'Posso te ajudar').trim()
             // Capitalizar primeira letra se ficou minúscula
             if (respostaLimpa.length > 0) {
                 respostaLimpa = respostaLimpa.charAt(0).toUpperCase() + respostaLimpa.slice(1)
@@ -996,14 +1194,14 @@ export async function gerarRespostaIA(
 
         // 6. Validar resposta (passa mensagem original para contexto)
         console.log('✅ [AI Engine] Validando resposta...')
-        const validacao = validarResposta(respostaLimpa, contexto, mensagem)
+        const validacao = validarResposta(respostaLimpa, contexto, mensagem, historico)
 
         if (!validacao.valida) {
             console.log(`🚫 [AI Engine] Resposta inválida: ${validacao.motivo}`)
             console.log(`🚫 [AI Engine] Resposta rejeitada: ${respostaIA.substring(0, 100)}...`)
 
             // Gerar resposta fallback
-            const fallback = respostaFallback(contexto, mensagem, nomeCliente)
+            const fallback = respostaFallback(contexto, mensagem, nomeCliente, historico.length > 0)
 
             // Salvar log de rejeição no banco (async, não bloqueia)
             salvarLogRejeicao({
@@ -1015,7 +1213,7 @@ export async function gerarRespostaIA(
                 respostaUsada: fallback
             }).catch(err => console.error('Erro ao salvar log de rejeição:', err))
 
-            return fallback
+            return { texto: fallback, produtosComImagem: contexto.produtos.filter(p => p.imagemUrl) }
         }
 
         console.log('✅ [AI Engine] Resposta validada com sucesso')
@@ -1032,11 +1230,11 @@ export async function gerarRespostaIA(
             }
         })
 
-        return respostaLimpa
+        return { texto: respostaLimpa, produtosComImagem: contexto.produtos.filter(p => p.imagemUrl) }
 
     } catch (error) {
         console.error('❌ [AI Engine] Erro:', error)
-        return respostaFallback({
+        return { texto: respostaFallback({
             produtos: [],
             totalProdutos: 0,
             categorias: [],
@@ -1045,7 +1243,7 @@ export async function gerarRespostaIA(
             formasPagamento: LOJA_INFO.pagamento,
             matchExato: true,
             medidaSolicitada: null
-        }, mensagem, nomeCliente)
+        }, mensagem, nomeCliente, true), produtosComImagem: [] }
     }
 }
 
@@ -1069,7 +1267,7 @@ async function salvarLogRejeicao(dados: {
                 respostaRejeitada: dados.respostaRejeitada,
                 motivoRejeicao: dados.motivoRejeicao,
                 respostaUsada: dados.respostaUsada,
-                modelo: 'grok-3'
+                modelo: 'claude-sonnet-4.6'
             }
         })
         console.log('📝 [AI Engine] Log de rejeição salvo')
@@ -1099,6 +1297,41 @@ export function verificarTransferenciaHumano(mensagem: string): boolean {
  */
 export function isSaudacaoOuCasual(mensagem: string): boolean {
     return (isSaudacao(mensagem) || isConversaCasual(mensagem)) && !isPerguntaProduto(mensagem)
+}
+
+/**
+ * Verifica se o cliente está encerrando a conversa
+ * Exportado para uso no webhook
+ */
+export { isEncerramento }
+
+/**
+ * Verifica se o cliente está negociando preço
+ * Exportado para uso no webhook
+ */
+export { isNegociacao }
+
+/**
+ * Gera follow-up para leads (movido de bot.ts)
+ */
+export function gerarFollowUp(nome: string, contexto: 'orcamento' | 'interesse' | 'abandonou'): string {
+    switch (contexto) {
+        case 'orcamento':
+        case 'interesse':
+            return `Oi${nome ? `, ${nome}` : ''}! 😊
+
+Vi que você tava interessado em pneus. Dá uma olhada no nosso site que lá tem tudo atualizado: https://nenempneus.com
+
+Se tiver dúvida, é só me chamar!`
+
+        case 'abandonou':
+            return `Oi${nome ? `, ${nome}` : ''}!
+
+Posso te ajudar com alguma coisa? Nosso site tá sempre atualizado: https://nenempneus.com 😊`
+
+        default:
+            return `Oi${nome ? `, ${nome}` : ''}! Como posso te ajudar hoje?`
+    }
 }
 
 /**
