@@ -5,6 +5,9 @@ import { salvarMensagemRecebida, salvarMensagemEnviada } from '@/lib/whatsapp/me
 import { checkRateLimit, getRateLimitMessage } from '@/lib/whatsapp/rate-limiter'
 import { processarAudioWhatsApp, isAudioSuportado } from '@/lib/whatsapp/audio'
 
+// Aumentar timeout para 60s (necessário para IA processar e responder)
+export const maxDuration = 60
+
 const whatsapp = new WhatsAppClient()
 
 // Deduplicação: evita reprocessar mensagens que o WhatsApp reenvia
@@ -311,14 +314,15 @@ export async function POST(req: NextRequest) {
                             messageId
                         )
 
-                        // Fire-and-forget: processar IA + envio em background
-                        processarMensagemAsync(
+                        // Aguardar processamento da IA antes de retornar
+                        // (Vercel mata a function após enviar o response)
+                        await processarMensagemAsync(
                             telefone,
                             nomeContato,
                             conteudo,
                             messageId,
                             conversa.id,
-                        ).catch(err => console.error('❌ Erro no processamento async:', err))
+                        )
                     }
                 }
 
@@ -329,7 +333,6 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Retorna 200 imediato — processamento da IA acontece em background
         return NextResponse.json({ success: true })
     } catch (error: any) {
         console.error('❌ Erro no webhook WhatsApp:', error)
